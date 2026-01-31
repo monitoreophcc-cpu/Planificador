@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useAppStore } from '@/store/useAppStore'
 import { PlanningSection } from './planning/PlanningSection'
 import { DailyLogView } from './logs/DailyLogView'
@@ -57,6 +58,17 @@ function AppShellInner() {
   }, [isLoading])
 
   const [activeView, setActiveView] = useState<'PLANNING' | 'DAILY_LOG' | 'STATS' | 'SETTINGS'>('DAILY_LOG')
+
+  // 🧭 Navigation Listener
+  const navigationRequest = useAppStore(s => s.navigationRequest)
+  const clearNavigationRequest = useAppStore(s => s.clearNavigationRequest)
+
+  useEffect(() => {
+    if (navigationRequest) {
+      setActiveView(navigationRequest.view)
+      clearNavigationRequest()
+    }
+  }, [navigationRequest, clearNavigationRequest])
 
   // Pre-fetch the summary for the modal
   const monthlySummary = useMonthlySummary(detailModalState.month)
@@ -141,6 +153,7 @@ function AppShellInner() {
           >
             Planificación
           </button>
+
           <button
             style={viewTabStyle(activeView === 'STATS')}
             onClick={() => setActiveView('STATS')}

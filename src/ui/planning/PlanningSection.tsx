@@ -14,6 +14,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react'
 import { PlanView } from './PlanView'
+import { ManagerScheduleManagement } from '../settings/ManagerScheduleManagement'
 import {
   DayInfo,
   CoverageRule,
@@ -107,6 +108,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
   const { weeklyPlan } = useWeeklyPlan(weekDays) // Consumes weekDays
 
   const [activeShift, setActiveShift] = useState<ShiftType>('DAY')
+  const [viewMode, setViewMode] = useState<'OPERATIONAL' | 'MANAGERIAL'>('OPERATIONAL')
   const [editingDay, setEditingDay] = useState<DayInfo | null>(null)
   // Coverage rule editing is now handled in Settings > Demand
   const [swapModalState, setSwapModalState] = useState<{
@@ -569,122 +571,134 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         >
           <div>
             <button
-              style={shiftTabStyle(activeShift === 'DAY')}
-              onClick={() => setActiveShift('DAY')}
+              style={shiftTabStyle(activeShift === 'DAY' && viewMode === 'OPERATIONAL')}
+              onClick={() => { setActiveShift('DAY'); setViewMode('OPERATIONAL') }}
             >
               Turno Día
             </button>
             <button
-              style={shiftTabStyle(activeShift === 'NIGHT')}
-              onClick={() => setActiveShift('NIGHT')}
+              style={shiftTabStyle(activeShift === 'NIGHT' && viewMode === 'OPERATIONAL')}
+              onClick={() => { setActiveShift('NIGHT'); setViewMode('OPERATIONAL') }}
             >
               Turno Noche
             </button>
-          </div>
-          <button
-            onClick={() =>
-              setSwapModalState({
-                isOpen: true,
-                repId: null,
-                date: planningAnchorDate,
-                shift: activeShift,
-                existingSwap: null,
-              })
-            }
-            style={{
-              padding: 'var(--space-sm) var(--space-md)',
-              backgroundColor: 'var(--accent)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 'var(--font-weight-semibold)',
-              fontSize: 'var(--font-size-base)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-sm)',
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <button
+              style={shiftTabStyle(viewMode === 'MANAGERIAL')}
+              onClick={() => setViewMode('MANAGERIAL')}
             >
-              <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-            </svg>
-            Gestionar Cambios
-          </button>
+              Horario Gerencial
+            </button>
+          </div>
+          {viewMode === 'OPERATIONAL' && (
+            <button
+              onClick={() =>
+                setSwapModalState({
+                  isOpen: true,
+                  repId: null,
+                  date: planningAnchorDate,
+                  shift: activeShift,
+                  existingSwap: null,
+                })
+              }
+              style={{
+                padding: 'var(--space-sm) var(--space-md)',
+                backgroundColor: 'var(--accent)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                fontWeight: 'var(--font-weight-semibold)',
+                fontSize: 'var(--font-size-base)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)',
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+              Gestionar Cambios
+            </button>
+          )}
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={weeklyPlan ? weeklyPlan.weekStart + activeShift : activeShift}
-          initial={{
-            opacity: 0,
-          }}
-          animate={{ opacity: 1 }}
-          exit={{
-            opacity: 0,
-          }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
-        >
-          {weeklyPlan ? (
-            <div
-              style={{
-                display: 'flex',
-                overflowX: 'hidden', // Containment
-                gap: 'var(--space-xl)',
-                alignItems: 'start',
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <PlanView
-                  weeklyPlan={weeklyPlan}
-                  weekDays={weekDays}
-                  agents={agentsToRender}
-                  activeShift={activeShift}
-                  assignmentsMap={assignmentsMap}
-                  onCellClick={(repId, date) => togglePlanOverride(repId, date)}
-                  onCellContextMenu={handleCellContextMenu}
-                  onEditDay={setEditingDay}
-                />
-              </div>
-
-              <aside style={{ position: 'sticky', top: '20px', width: '340px', flexShrink: 0 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--space-lg)',
-                  }}
-                >
-                  {hasAnyCoverageRule ? (
-                    <CoverageChart data={coverageData} />
-                  ) : (
-                    /* Empty state handled now by Matrix in Settings */
-                    <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-strong)', textAlign: 'center', color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}>
-                      Sin reglas de cobertura activas.
-                    </div>
-                  )}
-
-                  <CoverageRulesPanel
-                    onNavigateToSettings={onNavigateToSettings}
+      {viewMode === 'OPERATIONAL' ? (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={weeklyPlan ? weeklyPlan.weekStart + activeShift : activeShift}
+            initial={{
+              opacity: 0,
+            }}
+            animate={{ opacity: 1 }}
+            exit={{
+              opacity: 0,
+            }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            {weeklyPlan ? (
+              <div
+                style={{
+                  display: 'flex',
+                  overflowX: 'hidden', // Containment
+                  gap: 'var(--space-xl)',
+                  alignItems: 'start',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <PlanView
+                    weeklyPlan={weeklyPlan}
+                    weekDays={weekDays}
+                    agents={agentsToRender}
+                    activeShift={activeShift}
+                    assignmentsMap={assignmentsMap}
+                    onCellClick={(repId, date) => togglePlanOverride(repId, date)}
+                    onCellContextMenu={handleCellContextMenu}
+                    onEditDay={setEditingDay}
                   />
                 </div>
-              </aside>
-            </div>
-          ) : (
-            <div>Cargando plan...</div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+
+                <aside style={{ position: 'sticky', top: '20px', width: '340px', flexShrink: 0 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 'var(--space-lg)',
+                    }}
+                  >
+                    {hasAnyCoverageRule ? (
+                      <CoverageChart data={coverageData} />
+                    ) : (
+                      /* Empty state handled now by Matrix in Settings */
+                      <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-strong)', textAlign: 'center', color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}>
+                        Sin reglas de cobertura activas.
+                      </div>
+                    )}
+
+                    <CoverageRulesPanel
+                      onNavigateToSettings={onNavigateToSettings}
+                    />
+                  </div>
+                </aside>
+              </div>
+            ) : (
+              <div>Cargando plan...</div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        <ManagerScheduleManagement embedded />
+      )}
 
       {editingDay && (
         <CalendarDayModal

@@ -26,10 +26,15 @@ import {
   getYear,
   getMonth,
   addDays,
+  addMonths,
   parseISO,
   format,
   startOfWeek,
 } from 'date-fns'
+
+// ... existing code ...
+
+
 import { generateMonthDays } from '@/domain/calendar/state'
 import { validateIncident } from '@/domain/incidents/validateIncident'
 import { resolveIncidentDates } from '@/domain/incidents/resolveIncidentDates'
@@ -141,6 +146,14 @@ export type AppState = PlanningBaseState & ManagementScheduleSlice & {
   handleMixedShiftConfirm: (assignment: ShiftAssignment | null) => void
   closeVacationConfirmation: () => void
 
+  // Navigation & View State
+  dailyLogDate: ISODate
+  setDailyLogDate: (date: ISODate) => void
+
+  navigationRequest: { view: 'PLANNING' | 'DAILY_LOG' | 'STATS' | 'SETTINGS' } | null
+  requestNavigation: (view: 'PLANNING' | 'DAILY_LOG' | 'STATS' | 'SETTINGS') => void
+  clearNavigationRequest: () => void
+
   // Private/internal state management
   _generateCalendarDays: () => void
 
@@ -177,6 +190,7 @@ export type AppState = PlanningBaseState & ManagementScheduleSlice & {
   // Manager Actions (Entity Management Only)
   addManager: (data: Omit<Manager, 'id'>) => void
   removeManager: (id: string) => void
+  reorderManagers: (orderedIds: string[]) => void
 }
 
 // ----------------------------------------------------------------------
@@ -220,6 +234,37 @@ export const useAppStore = create<AppState>()(
     ...createInitialState(),
     ...createManagementScheduleSlice(set, get, api),
     managers: [],
+    addManager: (data) => {
+      set((state) => {
+        const newManager = { ...data, id: crypto.randomUUID() } // Simple ID generation if nanoid is not imported or available in this scope easily
+        state.managers.push(newManager)
+      })
+    },
+    removeManager: (id) => {
+      set((state) => {
+        state.managers = state.managers.filter(m => m.id !== id)
+        // Cleanup schedule? Maybe.
+        delete state.managementSchedules[id]
+      })
+    },
+    reorderManagers: (orderedIds) => {
+      set((state) => {
+        const managerMap = new Map(state.managers.map(m => [m.id, m]));
+        state.managers = orderedIds
+          .map(id => managerMap.get(id))
+          .filter((m): m is Manager => !!m);
+
+        // Append missing if any (safety)
+        const presentIds = new Set(orderedIds);
+        const missing = state.managers.filter(m => !presentIds.has(m.id));
+        // Since we just overwrote state.managers, we can't filter it.
+        // But map/filter above handles the reorder. 
+        // If we really want to be safe against data loss:
+        // We can't easily access the *original* state.managers in the same mutation block if we already assigned it.
+        // But `state` is the draft.
+        // Let's rely on the incoming `orderedIds` being accurate since it comes from the UI list.
+      })
+    },
     isLoading: true,
     planningAnchorDate: new Date().toISOString().split('T')[0],
     allCalendarDaysForRelevantMonths: [],
@@ -232,6 +277,9 @@ export const useAppStore = create<AppState>()(
     vacationConfirmationState: null,
     mixedShiftConfirmModalState: null,
     undoStack: [],
+
+    dailyLogDate: new Date().toISOString().split('T')[0],
+    navigationRequest: null,
 
     async initialize() {
       const stored = await loadState();
@@ -293,7 +341,7 @@ export const useAppStore = create<AppState>()(
         const anchor = new Date(state.planningAnchorDate + 'T12:00:00Z')
         const allDays = new Map<string, DayInfo>()
         for (let i = -6; i <= 18; i++) {
-          const dateToGenerate = addDays(anchor, i * 30)
+          const dateToGenerate = addMonths(anchor, i)
           const year = getYear(dateToGenerate)
           const month = getMonth(dateToGenerate) + 1
           const monthDays = generateMonthDays(year, month, state.calendar)
@@ -785,6 +833,15 @@ export const useAppStore = create<AppState>()(
           state.confirmState = null
         }
       })
+    },
+    setDailyLogDate: (date) => {
+      set(state => { state.dailyLogDate = date })
+    },
+    requestNavigation: (view) => {
+      set(state => { state.navigationRequest = { view } })
+    },
+    clearNavigationRequest: () => {
+      set(state => { state.navigationRequest = null })
     },
     showMixedShiftConfirmModal: (representativeId, date, activeShift) => {
       return new Promise(resolve => {

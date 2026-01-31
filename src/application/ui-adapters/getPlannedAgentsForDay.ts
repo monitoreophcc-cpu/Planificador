@@ -32,22 +32,21 @@ export interface PlannedAgent {
  * All filtering for operational lists MUST use this function.
  */
 export function getPlannedAgentsForDay(
-    weeklyPlan: WeeklyPlan,
+    agents: Representative[], // Changed from WeeklyPlan to direct list
     incidents: Incident[],
     date: ISODate,
     shift: ShiftType,
     allCalendarDays: DayInfo[],
-    representatives: Representative[],
     specialSchedules: SpecialSchedule[] = []
 ): PlannedAgent[] {
     const planned: PlannedAgent[] = []
 
-    // Ensure only valid agents from the plan are processed
-    if (!weeklyPlan?.agents) return []
+    // Ensure only valid active agents are processed
+    if (!agents) return []
 
-    for (const agent of weeklyPlan.agents) {
-        const repId = agent.representativeId
-        const representative = representatives.find(r => r.id === repId)
+    for (const representative of agents) {
+        const repId = representative.id
+        // const representative = representatives.find(r => r.id === repId) // No longer needed
 
         // 🛡️ DEFENSIVE: Skip if representative doesn't exist or is inactive
         // This handles historical data that may reference soft-deleted representatives
@@ -66,6 +65,38 @@ export function getPlannedAgentsForDay(
         })
 
         if (blockingIncident) continue // ⛔ NO está planificado
+
+        // ─────────────────────────────
+        // 1.5. MANUAL OVERRIDES (PRIORITY HIGHEST)
+        // ─────────────────────────────
+        // Check for manual overrides (e.g. Manual OFF, Manual Shift Change)
+        // These take precedence over Effective Schedule (Rules/Base).
+        const overrideIncident = incidents.find((i) => {
+            // Basic strict check first for optimization, overrides are usually single day
+            if (i.representativeId !== repId || i.type !== 'OVERRIDE') return false
+
+            // Allow for multi-day overrides support via resolver
+            const resolved = resolveIncidentDates(i, allCalendarDays, representative)
+            return resolved.dates.includes(date)
+        })
+
+        if (overrideIncident && overrideIncident.assignment) {
+            if (overrideIncident.assignment.type === 'NONE') {
+                continue // ⛔ Manually overridden to OFF
+            }
+
+            if (overrideIncident.assignment.type === 'SINGLE' && overrideIncident.assignment.shift) {
+                // Manually assigned to specific shift
+                if (overrideIncident.assignment.shift === shift) {
+                    planned.push({
+                        representativeId: repId,
+                        shift,
+                        source: 'BASE' // Technically 'OVERRIDE', but mapping to simplified source
+                    })
+                }
+                continue // Handled
+            }
+        }
 
         // ─────────────────────────────
         // 2 & 3. CANONICAL SCHEDULE RESOLUTION

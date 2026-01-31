@@ -5,8 +5,9 @@ import { StatsTabs, type StatsTab } from './StatsTabs'
 import { MonthlySummaryView } from './monthly/MonthlySummaryView'
 import { PointsReportView } from './reports/PointsReportView'
 import { OperationalReportView } from './reports/OperationalReportView'
+import { CallCenterAnalysisView } from './reports/CallCenterAnalysisView'
 
-export type ExtendedStatsTab = StatsTab | 'points' | 'executive'
+export type ExtendedStatsTab = StatsTab | 'points' | 'executive' | 'analysis'
 
 export function StatsView() {
   const [activeTab, setActiveTab] = useState<ExtendedStatsTab>('monthly')
@@ -59,6 +60,12 @@ export function StatsView() {
         >
           Reporte Operativo
         </button>
+        <button
+          style={tabStyle(activeTab === 'analysis')}
+          onClick={() => setActiveTab('analysis')}
+        >
+          Análisis (Beta)
+        </button>
       </div>
 
       <div
@@ -73,6 +80,7 @@ export function StatsView() {
         {activeTab === 'monthly' && <MonthlySummaryView />}
         {activeTab === 'points' && <PointsReportView />}
         {activeTab === 'executive' && <OperationalReportView />}
+        {activeTab === 'analysis' && <CallCenterAnalysisView />}
       </div>
     </div>
   )
