@@ -4,25 +4,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-
 import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
 import { Line, LineChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
+import { toTimeSlot } from "@/domain/call-center-analysis/time/shiftResolver";
+import { formatPercent } from "@/domain/call-center-analysis/utils/format";
 
 export default function HourlyAbandonmentRateChart() {
     const { data } = useOperationalDashboardStore();
 
     const chartData = useMemo(() => {
         if (!data?.answered || !data?.abandoned?.clean) return [];
-        const hours = new Set<string>();
-        data.answered.forEach(c => hours.add(c.hora.split(':')[0]));
-        data.abandoned.clean.forEach(c => hours.add(c.hora.split(':')[0]));
 
-        return Array.from(hours).sort().map(h => {
-            const prefix = `${h}:`;
-            const ans = data.answered.filter(c => c.hora.startsWith(prefix)).reduce((sum, c) => sum + c.llamadas, 0);
-            const abn = data.abandoned.clean.filter(c => c.hora.startsWith(prefix)).length;
-            const total = ans + abn;
+        // Get all unique time slots
+        const slots = new Set<string>();
+        data.answered.forEach(c => slots.add(toTimeSlot(c.hora)));
+        data.abandoned.clean.forEach(c => slots.add(toTimeSlot(c.hora)));
+
+        // Aggregate by slot (same logic as ShiftDetailTable)
+        return Array.from(slots).sort().map(slot => {
+            const ans = data.answered.filter(c => c.periodo === slot);
+            const abn = data.abandoned.clean.filter(c => c.periodo === slot);
+
+            const answeredCount = ans.reduce((acc, c) => acc + c.llamadas, 0);
+            const total = answeredCount + abn.length;
 
             return {
-                hour: `${h}:00`,
-                Rate: total > 0 ? (abn / total) * 100 : 0
+                hour: slot,
+                Rate: total > 0 ? (abn.length / total) * 100 : 0
             };
         });
     }, [data]);
@@ -40,7 +46,7 @@ export default function HourlyAbandonmentRateChart() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="hour" />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip formatter={(value) => typeof value === 'number' ? formatPercent(value, 2) : value} />
                         <Legend />
                         <Line type="monotone" dataKey="Rate" stroke="#ff0000" />
                     </LineChart>

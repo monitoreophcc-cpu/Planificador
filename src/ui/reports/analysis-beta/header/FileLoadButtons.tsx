@@ -12,13 +12,16 @@ import {
     processAbandonedCalls,
     processTransactions
 } from '@/domain/call-center-analysis/parser.service';
+import { SalesAttributionService } from '@/domain/call-center-analysis/services/SalesAttributionService';
 import { KPIService } from '@/domain/call-center-analysis/kpi.service';
+import { ActualOperationalLoadBuilder } from '@/domain/call-center-analysis/builder/ActualOperationalLoadBuilder';
 import { AnsweredCall, AbandonedCall, Transaction } from '@/domain/call-center-analysis/dashboard.types';
 import { PredictionService } from '@/domain/call-center-analysis/prediction/PredictionService';
 import { useToast } from '@/hooks/use-toast';
 import { DateRange } from '@/domain/reporting/types';
 import { AnalysisPersistence } from '@/infra/persistence/analysis-session.db';
 import { AnalysisSession } from '@/store/useOperationalDashboardStore';
+import { parseISO, differenceInDays } from 'date-fns';
 import SessionHistory from './SessionHistory';
 
 // Validation Services
@@ -122,6 +125,24 @@ export default function FileLoadButtons() {
             const kpis = KPIService.calculateKPIs(answered, abandoned.clean, transactions.clean);
             const kpisByShift = KPIService.calculateKPIsByShift(answered, abandoned.raw, transactions.clean);
 
+            // 5.5. Calculate Attribution (Restricted to Call Center)
+            const salesAttribution = SalesAttributionService.attribute(transactions.clean);
+
+            // 5.8. Final Prediction Engine Implementation (Honest V1)
+            // We use history-based trends and ranges for realistic forecasting.
+            const historicalLoad = ActualOperationalLoadBuilder.build(answered, abandoned.raw, transactions.clean);
+            const predictedLoad = range
+                ? PredictionService.generate(
+                    range.from,
+                    7,
+                    historicalLoad.map(h => ({
+                        date: h.date,
+                        shift: h.shift,
+                        receivedCalls: h.receivedCalls
+                    }))
+                )
+                : [];
+
             // 6. Construct Session
             const session: AnalysisSession = {
                 status: 'READY',
@@ -130,7 +151,9 @@ export default function FileLoadButtons() {
                     answered,
                     abandoned: { clean: abandoned.clean, raw: abandoned.raw },
                     transactions: transactions.clean,
-                    predictedLoad: range ? PredictionService.generate(range.from, 7) : []
+                    salesAttribution, // NEW: Restricted attribution
+                    stats: transactions.stats, // NEW: Filter statistics
+                    predictedLoad
                 },
                 metrics: { kpis, kpisByShift }
             };
@@ -151,10 +174,16 @@ export default function FileLoadButtons() {
                         <span className="text-xs">
                             📞 Contestadas: {answered.length} | 🚫 Abandonadas: {abandoned.clean.length}
                         </span>
-                        <span className="font-semibold mt-1">Transacciones:</span>
+                        <span className="font-semibold mt-1">Transacciones (Filtros de Integridad):</span>
                         <span className="text-xs">
                             📥 Leídas: {transactions.raw.length} | ✅ Válidas: {transactions.clean.length}
                         </span>
+                        {(transactions.stats.ignored > 0 || transactions.stats.duplicates > 0) && (
+                            <span className="text-[10px] text-muted-foreground flex gap-2 mt-0.5">
+                                <span>❌ Anuladas: {transactions.stats.ignored}</span>
+                                <span>👯 Duplicadas: {transactions.stats.duplicates}</span>
+                            </span>
+                        )}
                         {transactions.clean.length === 0 && transactions.raw.length > 0 && (
                             <div className="mt-2 p-2 bg-red-100 text-red-800 text-xs rounded border border-red-200">
                                 <strong>Columnas encontradas (Primeras 5):</strong><br />

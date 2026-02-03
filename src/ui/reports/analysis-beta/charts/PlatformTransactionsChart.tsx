@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-
 import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
+import { formatNumber } from "@/domain/call-center-analysis/utils/format";
 
 export default function PlatformTransactionsChart() {
     const { data } = useOperationalDashboardStore();
@@ -33,7 +34,7 @@ export default function PlatformTransactionsChart() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip formatter={(value) => typeof value === 'number' ? formatNumber(value) : value} />
                         <Legend />
                         <Bar dataKey="Transacciones" fill="#8884d8" />
                     </BarChart>

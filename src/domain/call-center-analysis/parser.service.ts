@@ -284,6 +284,10 @@ export function processAbandonedCalls(raw: RawRow[]): {
 export function processTransactions(raw: RawRow[]): {
   clean: Transaction[];
   raw: Transaction[];
+  stats: {
+    ignored: number;
+    duplicates: number;
+  };
 } {
   const PLATFORM_LABELS: { [key: string]: string } = {
     CC: 'Call Center',
@@ -343,13 +347,57 @@ export function processTransactions(raw: RawRow[]): {
     };
   });
 
+  const uniqueMap = new Map<string, boolean>();
+  let ignoredCount = 0;
+  let duplicateCount = 0;
+
   const cleanTransactions = allTransactions.filter((r) => {
-    const s = r.estatus;
-    // Expanded exclusion list based on user feedback (Anuladas were leaking through)
-    // REMOVED 'A' and 'N' as they might mean 'Active' or 'Normal' in some datasets.
-    return s !== 'ANULADA' && s !== 'CANCELADA' && s !== 'VOID' && s !== 'DEVUELTA';
+    // Normalize status
+    const s = r.estatus.trim().toUpperCase();
+
+    // 1. LEGACY REQUIREMENT: Explicitly exclude 'A' (Anulada in legacy datasets)
+    if (s === 'A') {
+      ignoredCount++;
+      return false;
+    }
+
+    // 2. ROBUST FUZZY MATCH: Exclude any status containing these signatures
+    const exclusionPatterns = [
+      'ANUL',     // ANULADA, ANULADO...
+      'CANC',     // CANCELADA...
+      'VOID',
+      'DEVU',     // Matches DEVUELTA, DEVUELTO
+      'REEMB',    // Matches REEMBOLSO, REEMBOLSADA
+      'ERROR',
+      'FAIL',
+      'RECHAZ'
+    ];
+
+    // If it contains any bad pattern, exclude it
+    if (exclusionPatterns.some(p => s.includes(p))) {
+      ignoredCount++;
+      return false;
+    }
+
+    // 3. DEDUPLICATION: Avoid double-counting if the file has same line-items or duplicate rows
+    // Signature: Date + Time + Value + Agent + Sucursal
+    const signature = `${r.fecha}|${r.hora}|${r.valor}|${r.agentName}|${r.sucursal}`;
+    if (uniqueMap.has(signature)) {
+      duplicateCount++;
+      return false;
+    }
+    uniqueMap.set(signature, true);
+
+    return true;
   });
 
   // Filtering logic optimized for robustness (Test Suite: parser.service.test.ts)
-  return { clean: cleanTransactions, raw: allTransactions };
+  return {
+    clean: cleanTransactions,
+    raw: allTransactions,
+    stats: {
+      ignored: ignoredCount,
+      duplicates: duplicateCount
+    }
+  };
 }

@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-
 import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
+import { toTimeSlot } from "@/domain/call-center-analysis/time/shiftResolver";
+import { formatNumber } from "@/domain/call-center-analysis/utils/format";
 
 export default function HourlyDistributionChart() {
     const { data } = useOperationalDashboardStore();
@@ -11,19 +13,22 @@ export default function HourlyDistributionChart() {
     const chartData = useMemo(() => {
         if (!data?.answered || !data?.abandoned?.clean) return [];
 
-        const hours = new Set<string>();
-        data.answered.forEach(c => hours.add(c.hora.split(':')[0]));
-        data.abandoned.clean.forEach(c => hours.add(c.hora.split(':')[0]));
+        // Get all unique time slots
+        const slots = new Set<string>();
+        data.answered.forEach(c => slots.add(toTimeSlot(c.hora)));
+        data.abandoned.clean.forEach(c => slots.add(toTimeSlot(c.hora)));
 
-        return Array.from(hours).sort().map(h => {
-            const prefix = `${h}:`;
-            const ans = data.answered.filter(c => c.hora.startsWith(prefix)).reduce((sum, c) => sum + c.llamadas, 0);
-            const abn = data.abandoned.clean.filter(c => c.hora.startsWith(prefix)).length;
+        // Aggregate by slot (same logic as ShiftDetailTable)
+        return Array.from(slots).sort().map(slot => {
+            const ans = data.answered.filter(c => c.periodo === slot);
+            const abn = data.abandoned.clean.filter(c => c.periodo === slot);
+
+            const answeredCount = ans.reduce((acc, c) => acc + c.llamadas, 0);
 
             return {
-                hour: `${h}:00`,
-                Contestadas: ans,
-                Abandonadas: abn
+                hour: slot,
+                Contestadas: answeredCount,
+                Abandonadas: abn.length
             };
         });
     }, [data]);
@@ -41,7 +46,7 @@ export default function HourlyDistributionChart() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="hour" />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip formatter={(value) => typeof value === 'number' ? formatNumber(value) : value} />
                         <Legend />
                         <Area type="monotone" dataKey="Contestadas" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
                         <Area type="monotone" dataKey="Abandonadas" stackId="1" stroke="#ff8042" fill="#ff8042" />

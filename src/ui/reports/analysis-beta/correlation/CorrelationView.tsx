@@ -15,7 +15,7 @@ import { DEFAULT_THRESHOLDS } from "@/domain/reporting/thresholds/defaultThresho
 import { deriveSemanticStatus } from "@/domain/reporting/semantics/correlation.semantics";
 import SemanticBadge from "@/ui/reports/analysis-beta/semantics/SemanticBadge";
 import CorrelationSummaryCard from "./CorrelationSummaryCard";
-import { TransactionLeaderboard } from "./TransactionLeaderboard";
+import SalesByAgentTable from "../components/SalesByAgentTable";
 import OperationalHeatmap from "./OperationalHeatmap";
 
 export default function CorrelationView() {
@@ -98,15 +98,28 @@ export default function CorrelationView() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-sm text-blue-800 flex items-start gap-3">
                 <Info className="h-5 w-5 mt-0.5 shrink-0" />
-                <div>
-                    <h4 className="font-semibold mb-1">¿Cómo se calcula esto?</h4>
-                    <p>
-                        La métrica principal es <strong>CPA (Llamadas Por Agente)</strong>.<br />
-                        <code className="text-xs bg-blue-100 px-1 py-0.5 rounded">CPA = Llamadas Recibidas / Agentes Planificados (Netos)</code>
-                    </p>
-                    <p className="mt-2 text-xs text-blue-600">
-                        * Agentes Planificados descuenta automáticamente vacaciones, licencias y días libres.
-                    </p>
+                <div className="space-y-2">
+                    <div>
+                        <h4 className="font-semibold mb-1">¿Cómo se calcula esto?</h4>
+                        <p>
+                            La métrica principal es <strong>CPA (Llamadas Por Agente)</strong>.<br />
+                            <code className="text-xs bg-blue-100 px-1 py-0.5 rounded">CPA = Llamadas Recibidas / Agentes Planificados (Netos)</code>
+                        </p>
+                        <p className="mt-1 text-[10px] text-blue-600">
+                            * Agentes Planificados descuenta automáticamente vacaciones, licencias y días libres.
+                        </p>
+                    </div>
+                    {data?.predictedLoad && data.predictedLoad.length > 0 && (
+                        <div className="pt-2 border-t border-blue-200">
+                            <h4 className="font-semibold mb-1 flex items-center gap-1.5 grayscale opacity-70">
+                                <span className="h-2 w-2 rounded-full bg-indigo-500"></span> Escenario Teórico (7d)
+                            </h4>
+                            <p className="text-xs opacity-80 leading-relaxed italic">
+                                Este es un escenario proyectado a 7 días basado en la tendencia reciente de tus datos.
+                                Diseñado para simulación de carga, no para decisiones de staffing definitivas.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -120,8 +133,8 @@ export default function CorrelationView() {
                 </div>
             </div>
 
-            {/* 🏆 PROVISIONAL LEADERBOARD */}
-            {data?.transactions && <TransactionLeaderboard transactions={data.transactions} />}
+            {/* 🏆 SALES ATTRIBUTION (CC-ONLY) */}
+            <SalesByAgentTable />
 
             <OperationalHeatmap results={correlationResults} />
 

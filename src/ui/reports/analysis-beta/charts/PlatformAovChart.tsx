@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-
 import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
+import { formatCurrency } from "@/domain/call-center-analysis/utils/format";
 
 export default function PlatformAovChart() {
     const { data } = useOperationalDashboardStore();
@@ -38,7 +39,7 @@ export default function PlatformAovChart() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip formatter={(value) => typeof value === 'number' ? formatCurrency(value) : value} />
                         <Legend />
                         <Bar dataKey="TicketPromedio" fill="#ffc658" />
                     </BarChart>

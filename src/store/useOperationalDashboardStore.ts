@@ -5,10 +5,8 @@ import type {
   Transaction,
   KPIs,
   ShiftKPIs,
-  Shift,
 } from '@/domain/call-center-analysis/dashboard.types';
 import { DateRange } from '@/domain/reporting/types';
-import { PredictionService } from '@/domain/call-center-analysis/prediction/PredictionService';
 
 export interface AnalysisSession {
   status: 'IDLE' | 'ANALYZING' | 'READY' | 'ERROR';
@@ -25,7 +23,12 @@ export interface AnalysisSession {
       raw: AbandonedCall[];
     };
     transactions: Transaction[];
-    predictedLoad?: import('@/domain/call-center-analysis/prediction/PredictionService').PredictedOperationalLoad[];
+    salesAttribution?: import('@/domain/call-center-analysis/services/SalesAttributionService').SalesAttributionResult;
+    stats?: {
+      ignored: number;
+      duplicates: number;
+    };
+    predictedLoad?: import('@/domain/call-center-analysis/prediction/PredictionService').PredictionResult[];
   };
 
   metrics: {
@@ -58,20 +61,19 @@ export interface DashboardUiState {
 export type OperationalStore = AnalysisSession & DashboardUiState & {
   // Actions
   startAnalysis: () => void;
-  // Deprecated: Use restoreSession instead
   setAnalysisData: (payload: {
     range: DateRange | null;
     answered: AnsweredCall[];
     abandoned: { clean: AbandonedCall[]; raw: AbandonedCall[] };
     transactions: Transaction[];
+    stats?: { ignored: number; duplicates: number };
     kpis: KPIs;
     kpisByShift: { Día: ShiftKPIs; Noche: ShiftKPIs };
+    predictedLoad?: import('@/domain/call-center-analysis/prediction/PredictionService').PredictionResult[];
   }) => void;
   clearSession: () => void;
   setError: () => void;
   restoreSession: (saved: AnalysisSession) => void;
-
-  // ... UI Actions ...
 };
 
 const initialSession: AnalysisSession = {
@@ -103,22 +105,15 @@ export const useOperationalDashboardStore = create<OperationalStore>((set) => ({
 
   startAnalysis: () => set({ status: 'ANALYZING' }),
 
-  // Deprecated but kept for type signature compatibility if needed temporarily (though we changed interface)
-  setAnalysisData: ({ range, answered, abandoned, transactions, kpis, kpisByShift }: {
-    range: DateRange | null;
-    answered: AnsweredCall[];
-    abandoned: { clean: AbandonedCall[]; raw: AbandonedCall[] };
-    transactions: Transaction[];
-    kpis: KPIs;
-    kpisByShift: { Día: ShiftKPIs; Noche: ShiftKPIs };
-  }) => set({
+  setAnalysisData: ({ range, answered, abandoned, transactions, stats, kpis, kpisByShift, predictedLoad }) => set({
     status: 'READY',
     scope: { range, source: 'GENERIC_CSV' },
     data: {
       answered,
       abandoned,
       transactions,
-      predictedLoad: range ? PredictionService.generate(range.from, 7) : []
+      stats,
+      predictedLoad: predictedLoad ?? []
     },
     metrics: { kpis, kpisByShift },
     dataDate: range ? range.from : null,
@@ -133,10 +128,8 @@ export const useOperationalDashboardStore = create<OperationalStore>((set) => ({
   restoreSession: (saved: AnalysisSession) => {
     // Defensive migration for legacy sessions where abandoned might be an array
     const abandonedData = Array.isArray(saved.data.abandoned)
-      ? { clean: saved.data.abandoned, raw: saved.data.abandoned } // Fallback: Assume legacy array is both (imperfect but safe)
+      ? { clean: saved.data.abandoned, raw: saved.data.abandoned }
       : saved.data.abandoned;
-
-    const predictedData = saved.data.predictedLoad ?? (saved.scope.range ? PredictionService.generate(saved.scope.range.from, 7) : []);
 
     set({
       status: 'READY',
@@ -144,7 +137,7 @@ export const useOperationalDashboardStore = create<OperationalStore>((set) => ({
       data: {
         ...saved.data,
         abandoned: abandonedData,
-        predictedLoad: predictedData
+        predictedLoad: saved.data.predictedLoad ?? []
       },
       metrics: saved.metrics,
       dataDate: saved.scope.range?.from || null

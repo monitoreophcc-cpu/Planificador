@@ -4,24 +4,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-
 import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
 import { Line, LineChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
+import { toTimeSlot } from "@/domain/call-center-analysis/time/shiftResolver";
+import { formatPercent } from "@/domain/call-center-analysis/utils/format";
 
 export default function HourlyConversionRateChart() {
     const { data } = useOperationalDashboardStore();
 
     const chartData = useMemo(() => {
         if (!data?.answered || !data.transactions) return [];
-        // Assuming calculation: Transactions / Answered
-        const hours = new Set<string>();
-        data.answered.forEach(c => hours.add(c.hora.split(':')[0]));
 
-        return Array.from(hours).sort().map(h => {
-            const prefix = `${h}:`;
-            const ans = data.answered.filter(c => c.hora.startsWith(prefix)).reduce((sum, c) => sum + c.llamadas, 0);
-            const trx = data.transactions.filter(t => t.hora.startsWith(prefix)).length;
+        // Get all unique time slots
+        const slots = new Set<string>();
+        data.answered.forEach(c => slots.add(toTimeSlot(c.hora)));
+        data.transactions.forEach(t => t.hora && slots.add(toTimeSlot(t.hora)));
+
+        // Aggregate by slot (same logic as ShiftDetailTable)
+        return Array.from(slots).sort().map(slot => {
+            const ans = data.answered.filter(c => c.periodo === slot);
+            const trx = data.transactions.filter(t => t.periodo === slot);
+
+            const answeredCount = ans.reduce((acc, c) => acc + c.llamadas, 0);
 
             return {
-                hour: `${h}:00`,
-                Conversion: ans > 0 ? (trx / ans) * 100 : 0
+                hour: slot,
+                Conversion: answeredCount > 0 ? (trx.length / answeredCount) * 100 : 0
             };
         });
     }, [data]);
@@ -39,7 +45,7 @@ export default function HourlyConversionRateChart() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="hour" />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip formatter={(value) => typeof value === 'number' ? formatPercent(value, 2) : value} />
                         <Legend />
                         <Line type="monotone" dataKey="Conversion" stroke="#82ca9d" />
                     </LineChart>
