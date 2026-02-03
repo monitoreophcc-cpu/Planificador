@@ -246,27 +246,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         : { type: 'SINGLE', shift: activeShift }
     }
 
-    // 📝 CONTEXT: Ask for explanation logic
-    const requiresExplanation =
-      previousAssignment?.type !== finalAssignment?.type ||
-      (previousAssignment?.type === 'SINGLE' &&
-        finalAssignment?.type === 'SINGLE' &&
-        previousAssignment.shift !== finalAssignment.shift)
-
-    let note: string | undefined
-
-    if (requiresExplanation) {
-      const result = await showConfirmWithInput({
-        title: 'Cambio de día libre',
-        description: '¿Por qué se realiza este cambio?',
-        placeholder: 'Ej: Permiso especial, cita médica, etc.',
-        optional: true,
-      })
-      if (result === undefined) return // User cancelled
-      // Sanitization: Empty strings become undefined
-      note = result.trim() || undefined
-    }
-
+    // ⚡️ SPEED: Override is instant now, explanation via right-click
     const incidentInput: IncidentInput = {
       representativeId,
       startDate: date,
@@ -274,7 +254,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
       duration: 1,
       assignment: finalAssignment,
       previousAssignment,
-      note,
+      note: undefined, // No note initially
     }
 
     // Since we're not confirming, we add the incident directly.
@@ -301,71 +281,69 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     }
   }
 
-  const handleCellContextMenu = (
+  const handleCellContextMenu = async (
     repId: string,
     date: ISODate,
     e: React.MouseEvent
   ) => {
     e.preventDefault();
 
-    // ✅ NEW: Check if this cell has a coverage badge
-    const agentPlan = weeklyPlan?.agents.find(a => a.representativeId === repId)
-    const dayData = agentPlan?.days[date]
-    const badge = dayData?.badge
+    // Find existing incident (override) to edit its note
+    const existingIncident = incidents.find(
+      i =>
+        i.representativeId === repId &&
+        i.startDate === date &&
+        i.type === 'OVERRIDE'
+    );
 
-    if (badge === 'CUBIERTO' || badge === 'CUBRIENDO') {
-      // Find the coverage ID for this cell
-      const { getActiveCoverages } = useCoverageStore.getState()
-      const activeCoverages = getActiveCoverages()
+    const currentNote = existingIncident?.note || '';
 
-      const coverage = activeCoverages.find(c => {
-        if (c.date !== date || c.shift !== activeShift) return false
+    const result = await showConfirmWithInput({
+      title: 'Comentario de Planificación',
+      description: 'Agrega o edita una nota para este día:',
+      placeholder: 'Ej: Permiso especial, cita médica, etc.',
+      optional: true,
+      // Provide current value if mechanism supported it, but prompt is simple.
+      // We will handle the "add/update" logic below.
+    });
 
-        // If badge is CUBIERTO, this person is being covered
-        if (badge === 'CUBIERTO') {
-          return c.coveredRepId === repId
-        }
+    if (result === undefined) return; // Specially handled by prompt cancel
 
-        // If badge is CUBRIENDO, this person is covering
-        if (badge === 'CUBRIENDO') {
-          return c.coveringRepId === repId
-        }
+    const newNote = result.trim() || undefined;
 
-        return false
-      })
+    if (existingIncident) {
+      // ✅ Update existing incident using the action
+      useAppStore.getState().updateIncident(existingIncident.id, { note: newNote });
+    } else {
+      // If no override exists, we might want to attach a note to the day?
+      // For now, let's create a 'NOTE' type incident or just an OVERRIDE that preserves assignment?
+      // Simplest approach: Create an override that effectively changes nothing in assignment but adds the note.
+      // However, that might be complex.
+      // Given user requirements "sustituir esa acción por la de poner comentarios... al hacer override no aparece mensaje",
+      // The primary use case is documenting an override.
+      // If user right clicks a NORMAL day, they probably want to leave a note.
+      // Let's create an OVERRIDE that REPLICATES current assignment but adds note.
 
-      if (coverage) {
-        // Show coverage detail modal instead of swap modal
-        setCoverageDetailState({
-          isOpen: true,
-          coverageId: coverage.id
-        })
-        return
+      const rep = representatives.find(r => r.id === repId);
+      if (!weeklyPlan || !rep) return;
+      const agentPlan = weeklyPlan.agents.find(a => a.representativeId === repId);
+      const dayPresence = agentPlan?.days[date];
+      const currentAssignment = dayPresence?.assignment ?? { type: 'NONE' };
+
+      const incidentInput: IncidentInput = {
+        representativeId: repId,
+        startDate: date,
+        type: 'OVERRIDE',
+        duration: 1,
+        assignment: currentAssignment, // Preserve current state
+        previousAssignment: currentAssignment,
+        note: newNote,
+      }
+
+      if (newNote) { // Only create if there is a note
+        addIncident(incidentInput, true);
       }
     }
-
-    // Normal flow: check for existing swap and show swap modal
-    const existingSwap = swaps.find(swap => {
-      if (swap.date !== date) return false;
-      if (swap.type === 'COVER') {
-        return (swap.fromRepresentativeId === repId || swap.toRepresentativeId === repId) && swap.shift === activeShift;
-      }
-      if (swap.type === 'DOUBLE') {
-        return swap.representativeId === repId && swap.shift === activeShift;
-      }
-      if (swap.type === 'SWAP') {
-        return swap.fromRepresentativeId === repId || swap.toRepresentativeId === repId;
-      }
-      return false;
-    });
-
-    setSwapModalState({
-      isOpen: true,
-      repId,
-      date,
-      shift: activeShift,
-      existingSwap: existingSwap || null,
-    });
   };
 
   const assignmentsMap = useMemo(() => {

@@ -99,9 +99,11 @@ export function getMonthlyPointsSummary(
     })
 
   const filterReps = (role: RepresentativeRole, shift: ShiftType) => {
-    return representatives.filter(
-      r => r.isActive !== false && (r.role ?? 'SALES') === role && r.baseShift === shift
-    )
+    return representatives
+      .filter(
+        r => r.isActive !== false && (r.role ?? 'SALES') === role && r.baseShift === shift
+      )
+      .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
   }
 
   return {

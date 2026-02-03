@@ -12,7 +12,8 @@ export function AgentPerformanceTable() {
         getAgentPerformance,
         getDateRange,
         resetMonth,
-        currentMonth
+        currentMonth,
+        processedDates // NEW: Needed for overlap check
     } = useAgentPerformanceStore();
 
     const agentRecords = getAgentPerformance();
@@ -20,6 +21,22 @@ export function AgentPerformanceTable() {
     // Procesar transacciones cuando se cargan
     useEffect(() => {
         if (data.transactions && data.transactions.length > 0) {
+
+            // CRITICAL LOGIC: Smart Merge vs Replacement
+            // 1. Get unique dates from the incoming batch
+            const incomingDates = new Set(data.transactions.map(tx => tx.fecha).filter(Boolean));
+
+            // 2. Check for ANY overlap with existing stored data
+            const hasOverlap = processedDates.some(pd => incomingDates.has(pd.date));
+
+            // 3. Decision: 
+            // - If OVERLAP (e.g. reloading Jan 27, or loading Jan 1-31 after Jan 1-30): RESET first to avoid duplicates.
+            // - If NO OVERLAP (e.g. loading Jan 2 after Jan 1): APPEND (do not reset).
+            if (hasOverlap) {
+                console.log('♻️ Overlap detected in dates. Resetting store for clean replacement.');
+                resetMonth();
+            }
+
             // Agrupar transacciones por fecha
             const transactionsByDate = new Map<string, any[]>();
 
@@ -34,12 +51,11 @@ export function AgentPerformanceTable() {
             });
 
             // Procesar cada grupo de fecha por separado
-            // Esto permite que el sistema registre múltiples fechas en processedDates
             transactionsByDate.forEach((transactions, date) => {
                 processTransactions(transactions, date);
             });
         }
-    }, [data.transactions, processTransactions]);
+    }, [data.transactions, processTransactions]); // Remove processedDates from dep array to avoid loops, or rely on internal store stability
 
     const copyTableToClipboard = () => {
         const headers = ['Agente', 'Transacciones', 'Ventas Netas ($)', 'Ticket Promedio ($)'];

@@ -10,7 +10,9 @@ import { useOperationalDashboardStore } from '@/store/useOperationalDashboardSto
 import { formatCurrency } from '@/domain/call-center-analysis/utils/format'
 import { format, subMonths, addMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Clipboard, ClipboardCheck, Download } from 'lucide-react'
+import { Clipboard, ClipboardCheck, Download, ListOrdered } from 'lucide-react'
+import { ReorderAgentsModal } from './components/ReorderAgentsModal'
+import { ShiftType } from '@/domain/types'
 
 const ReportHeader = ({
   monthLabel,
@@ -212,6 +214,10 @@ export function PointsReportView() {
     incidents: state.incidents,
   }))
   const [copiedTitle, setCopiedTitle] = useState<string | false>(false)
+  const [reorderModal, setReorderModal] = useState<{ isOpen: boolean; shift: ShiftType }>({
+    isOpen: false,
+    shift: 'DAY'
+  })
 
   const monthISO = useMemo(() => format(currentDate, 'yyyy-MM'), [currentDate])
   const monthLabel = useMemo(
@@ -246,12 +252,59 @@ export function PointsReportView() {
         onNext={() => setCurrentDate(m => addMonths(m, 1))}
       />
 
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+        <button
+          onClick={() => setReorderModal({ isOpen: true, shift: 'DAY' })}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            padding: '8px 12px',
+            background: 'white',
+            border: '1px solid var(--border-strong)',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            color: 'var(--text-main)'
+          }}
+        >
+          <ListOrdered size={16} /> Reordenar Turno Día
+        </button>
+        <button
+          onClick={() => setReorderModal({ isOpen: true, shift: 'NIGHT' })}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            padding: '8px 12px',
+            background: 'white',
+            border: '1px solid var(--border-strong)',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            color: 'var(--text-main)'
+          }}
+        >
+          <ListOrdered size={16} /> Reordenar Turno Noche
+        </button>
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         <ReportTable title="Ventas - Turno Día" data={summary.salesDay} onCopy={handleCopy} />
         <ReportTable title="Ventas - Turno Noche" data={summary.salesNight} onCopy={handleCopy} />
         <ReportTable title="Servicio al Cliente - Turno Día" data={summary.serviceDay} onCopy={handleCopy} />
         <ReportTable title="Servicio al Cliente - Turno Noche" data={summary.serviceNight} onCopy={handleCopy} />
       </div>
+
+      {reorderModal.isOpen && (
+        <ReorderAgentsModal
+          shift={reorderModal.shift}
+          isOpen={reorderModal.isOpen}
+          onClose={() => setReorderModal({ ...reorderModal, isOpen: false })}
+        />
+      )}
 
       {/* Copy Confirmation Toast */}
       {copiedTitle && (
@@ -278,4 +331,3 @@ export function PointsReportView() {
     </div>
   )
 }
-
