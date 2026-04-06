@@ -59,3 +59,17 @@ export type ResponsibilityResolution =
             subtitle: string
         }
     }
+
+export type ResolvedResponsibilityResolution = Extract<
+    ResponsibilityResolution,
+    { kind: 'RESOLVED' }
+>
+
+export type CoverageResponsibilityResolution =
+    ResolvedResponsibilityResolution & { source: 'COVERAGE' }
+
+export function isCoverageResponsibilityResolution(
+    resolution: ResponsibilityResolution
+): resolution is CoverageResponsibilityResolution {
+    return resolution.kind === 'RESOLVED' && resolution.source === 'COVERAGE'
+}

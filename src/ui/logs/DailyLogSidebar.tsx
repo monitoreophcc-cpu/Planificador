@@ -1,6 +1,7 @@
 import React from 'react'
 import { AlertTriangle, RefreshCw, Shield } from 'lucide-react'
 import type { IncidentType } from '@/domain/types'
+import type { DailyLogRepresentativeRow } from './dailyLogTypes'
 
 const styles = {
   label: {
@@ -37,18 +38,6 @@ const styles = {
     color: '#1e40af',
     fontWeight: 600,
   },
-}
-
-export type DailyLogRepresentativeRow = {
-  id: string
-  name: string
-  isOperationallyAbsent: boolean
-  isAbsent: boolean
-  isUnassigned: boolean
-  isCovered: boolean
-  coveredByName?: string
-  isCovering: boolean
-  coveringName?: string
 }
 
 function ShiftStatusDisplay({

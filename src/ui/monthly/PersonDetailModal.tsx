@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MonthlySummary } from '@/domain/analytics/types'
-import {
-  format,
-  parseISO,
-} from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useAppStore'
-import { type CalendarDay } from '../components/CalendarGrid'
+import {
+  type CalendarDay,
+  type DayVisualType,
+} from '../components/CalendarGrid'
 import { resolveIncidentDates } from '@/domain/incidents/resolveIncidentDates'
 import { calculatePoints } from '@/domain/analytics/computeMonthlySummary'
 import { parseLocalDate } from '@/domain/calendar/parseLocalDate'
@@ -96,7 +96,10 @@ export function PersonDetailModal({
   const calendarDays = useMemo((): CalendarDay[] => {
     if (!currentPersonSummary || !currentRepresentative) return []
 
-    const daysWithIncidents = new Map<string, { points: number, isOffDay: boolean, visualTypes: import('@/ui/components/CalendarGrid').DayVisualType[] }>()
+    const daysWithIncidents = new Map<
+      string,
+      { points: number; isOffDay: boolean; visualTypes: DayVisualType[] }
+    >()
 
     // Marcar días del mes completo con sus días OFF
     const year = parseInt(summary.month.split('-')[0])
@@ -125,7 +128,7 @@ export function PersonDetailModal({
           if (existing) {
             const incidentPoints = calculatePoints(incident)
             existing.points += incidentPoints
-            existing.visualTypes.push(visualType as any)
+            existing.visualTypes.push(visualType)
           }
         }
       } else {
@@ -135,17 +138,14 @@ export function PersonDetailModal({
           const incidentPoints = calculatePoints(incident)
           existing.points += incidentPoints
 
-          // Mapear tipo de incidencia a capa visual
           if (incident.type === 'AUSENCIA') {
-            existing.visualTypes.push('ABSENT' as any)
+            existing.visualTypes.push('ABSENT')
           }
-          // TODO: Agregar HOLIDAY y SHIFT_CHANGE cuando estén disponibles en el dominio
         }
       }
     }
 
-    // Resolver visual final por prioridad
-    function resolveDayVisual(types: import('@/ui/components/CalendarGrid').DayVisualType[]): import('@/ui/components/CalendarGrid').DayVisualType {
+    function resolveDayVisual(types: DayVisualType[]): DayVisualType {
       if (types.includes('ABSENT')) return 'ABSENT'
       if (types.includes('VACATION')) return 'VACATION'
       if (types.includes('LICENSE')) return 'LICENSE'
