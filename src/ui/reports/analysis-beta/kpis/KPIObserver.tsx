@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 
 export default function KPIObserver() {
     const { metrics } = useOperationalDashboardStore();

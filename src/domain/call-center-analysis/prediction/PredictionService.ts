@@ -1,6 +1,6 @@
 
 import { addDays, format, parseISO } from 'date-fns'
-import { ActualOperationalLoad } from '../adapter/OperationalCorrelationAdapter'
+import { ActualOperationalLoad } from '@/domain/reporting/correlation/correlation.types'
 
 export type Trend = 'UP' | 'STABLE' | 'DOWN'
 

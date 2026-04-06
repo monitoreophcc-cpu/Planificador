@@ -1,4 +1,4 @@
-import { OperationalCorrelationResult } from '@/domain/call-center-analysis/correlation/correlation.types';
+import { OperationalCorrelationResult } from '@/domain/reporting/correlation/correlation.types';
 import { OperationalMetricSeries } from './series.types';
 
 export const OperationalSeriesBuilder = {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useOperationalDashboardStore, OperationalStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore, OperationalStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import { useAgentMappingStore } from '@/store/useAgentMappingStore';
 import { useRouter } from 'next/navigation';
 

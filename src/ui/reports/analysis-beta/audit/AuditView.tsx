@@ -7,7 +7,7 @@ import {
     SheetTitle,
     SheetDescription
 } from "@/ui/reports/analysis-beta/ui/sheet";
-import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
+import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/ui/reports/analysis-beta/ui/table";
 
 export default function AuditView() {

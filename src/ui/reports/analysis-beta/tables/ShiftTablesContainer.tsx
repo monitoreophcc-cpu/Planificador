@@ -1,6 +1,6 @@
 'use client';
 
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import ShiftDetailTable from './ShiftDetailTable';
 import { getShift } from '@/domain/call-center-analysis/shift.service';
 

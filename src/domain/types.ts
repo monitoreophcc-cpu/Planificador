@@ -19,7 +19,7 @@ import { ResolvedCoverage } from './planning/resolveCoverage'
 import { AvailabilityStatus } from './availability/getAvailabilityStatus'
 import { AuditEvent } from './audit/types'
 import type { HistoryEvent } from './history/types'
-import { SwapEvent, SwapType } from './planning/swap'
+import { SwapEvent, SwapEventInput, SwapType } from './planning/swap'
 import { ShiftAssignment } from './planning/shiftAssignment'
 
 
@@ -46,7 +46,7 @@ export type { ResolvedCoverage }
 export type { AvailabilityStatus }
 export type { AuditEvent }
 export type { HistoryEvent } from './history/types'
-export type { SwapEvent, SwapType }
+export type { SwapEvent, SwapEventInput, SwapType }
 export type { ShiftAssignment }
 export type { WeeklyPattern, DailyDuty } from './planning/effectiveSchedulePeriod'
 import { Manager, ManagerSchedule, ManagerDuty, ManagerAssignment } from './management/types'

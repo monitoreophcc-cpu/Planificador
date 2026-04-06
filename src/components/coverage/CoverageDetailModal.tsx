@@ -8,8 +8,7 @@
 import React, { useState } from 'react'
 import { CoverageModalProps, CoverageDetailView, CoverageCreationForm as CoverageCreationFormData } from '@/application/ui-models/coverageViewModels'
 import { useCoverageStore } from '@/store/useCoverageStore'
-// TODO: Create representativeStore
-import { useRepresentativeStore } from '@/store/representativeStore'
+import { useAppStore } from '@/store/useAppStore'
 import { Representative } from '@/domain/types'
 
 export function CoverageDetailModal({
@@ -25,8 +24,9 @@ export function CoverageDetailModal({
     const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
     const { getCoverageById, cancelCoverage: storeCancelCoverage } = useCoverageStore()
-    // TODO: Uncomment when representativeStore is created
-    const { getRepresentativeById } = useRepresentativeStore()
+    const representatives = useAppStore(state => state.representatives)
+    const getRepresentativeById = (id: string) =>
+        representatives.find(rep => rep.id === id)
 
     // Resolve coverage detail from store
     const coverage = coverageId ? getCoverageById(coverageId) : null
@@ -154,7 +154,7 @@ function CoverageCreationFormComponent({
     onClose
 }: any) {
     const { createCoverage } = useCoverageStore()
-    const { representatives } = useRepresentativeStore()
+    const representatives = useAppStore(state => state.representatives)
 
     const [formData, setFormData] = useState<CoverageCreationFormData>({
         date: initialDate || '',

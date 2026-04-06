@@ -5,6 +5,7 @@ import {
   RepresentativeRole,
   ShiftType,
 } from '@/domain/types'
+import type { SalesAttributionSummary } from '@/domain/reporting/types'
 import { calculatePoints } from '@/domain/analytics/computeMonthlySummary'
 
 export interface PayrollRow {
@@ -36,7 +37,7 @@ export function getMonthlyPointsSummary(
   representatives: Representative[],
   incidents: Incident[],
   month: string, // YYYY-MM
-  attribution?: import('@/domain/call-center-analysis/services/SalesAttributionService').SalesAttributionResult
+  attribution?: SalesAttributionSummary
 ): MonthlyPointsSummary {
   const incidentsForMonth = incidents.filter(
     i =>

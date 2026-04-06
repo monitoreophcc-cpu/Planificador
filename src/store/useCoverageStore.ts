@@ -39,6 +39,8 @@ interface CoverageState extends CoveragePersistedState {
     getCoverageById: (id: string) => Coverage | undefined
 
     getActiveCoverages: () => Coverage[]
+
+    replaceCoverages: (coverages: Coverage[]) => void
 }
 
 export const useCoverageStore = create<CoverageState>()(
@@ -120,7 +122,13 @@ export const useCoverageStore = create<CoverageState>()(
 
             getActiveCoverages: () => {
                 return get().coverages.filter(c => c.status === 'ACTIVE')
-            }
+            },
+
+            replaceCoverages: (coverages) => {
+                set({
+                    coverages: Array.isArray(coverages) ? coverages : []
+                })
+            },
         }),
         {
             name: 'coverage-store',

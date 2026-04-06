@@ -1,6 +1,5 @@
 import { openDB, DBSchema } from 'idb';
-import { AnalysisSession } from '@/store/useOperationalDashboardStore';
-import { DateRange } from '@/domain/reporting/types';
+import { AnalysisSession } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 
 interface AnalysisDB extends DBSchema {
     sessions: {

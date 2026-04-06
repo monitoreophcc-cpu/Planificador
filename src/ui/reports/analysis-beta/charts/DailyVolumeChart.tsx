@@ -9,7 +9,7 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts';
-import { useOperationalDashboardStore, OperationalStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore, OperationalStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import { buildDailyVolumeSeries } from '@/domain/call-center-analysis/prediction/builders/dailyAggregationBuilder';
 import { formatNumber } from '@/domain/call-center-analysis/utils/format';
 

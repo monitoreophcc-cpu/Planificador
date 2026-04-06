@@ -11,7 +11,7 @@
  */
 
 import { runRealDataValidation } from './test-real-data'
-import { ActualOperationalLoad } from '../adapter/OperationalCorrelationAdapter'
+import { ActualOperationalLoad } from '@/domain/reporting/correlation/correlation.types'
 
 // ============================================
 // DATASET MÍNIMO REAL (14 días históricos + 3 días validación)

@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/ui/reports/analysis-beta/ui/sheet';
-import { AnalysisPersistence, SessionSummary } from '@/infra/persistence/analysis-session.db';
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
-import { useToast } from '@/hooks/use-toast';
+import { AnalysisPersistence, SessionSummary } from '@/ui/reports/analysis-beta/persistence/analysis-session.db';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
+import { useReportingDataStore } from '@/store/useReportingDataStore';
+import { useToast } from '@/ui/reports/analysis-beta/hooks/use-toast';
 import { History, Trash2, Database } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -46,6 +47,7 @@ export default function SessionHistory() {
                     metrics: session.metrics
                 };
                 restoreSession(fullSession);
+                useReportingDataStore.getState().setSalesAttribution(session.data.salesAttribution);
                 toast({ title: 'Sesión restaurada', description: session.label });
                 setIsOpen(false);
             }

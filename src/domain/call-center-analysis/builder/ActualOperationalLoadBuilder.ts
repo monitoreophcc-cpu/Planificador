@@ -5,7 +5,7 @@ import {
     Transaction
 } from '../dashboard.types';
 import { getShift } from '../shift.service';
-import { ActualOperationalLoad } from '../adapter/OperationalCorrelationAdapter';
+import { ActualOperationalLoad } from '@/domain/reporting/correlation/correlation.types';
 
 /**
  * Builds the ActualOperationalLoad[] from raw lists.

@@ -1,13 +1,20 @@
-import { persistence } from '@/application/persistence'
+import { createInitialState } from '@/domain/state'
 import type { PlanningBaseState } from '@/domain/types'
 import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
+import { openDB, type IDBPDatabase } from 'idb'
 
-export async function loadState(): Promise<PlanningBaseState | null> {
-  const state = await persistence.loadState()
-  if (!state) return null
+export const DB_NAME = 'control-puntos-db'
+export const STATE_OBJECT_STORE_NAME = 'baseState'
+export const STATE_KEY = 'singleton'
+const DB_VERSION = 7
+const LEGACY_LOCALSTORAGE_KEY = 'control-puntos:v1'
 
-  // --- Data Integrity & Migration ---
-  // Ensure all top-level arrays exist to prevent crashes on older states.
+const isBrowserWithIndexedDb =
+  typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined'
+const isBrowserWithLocalStorage =
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+
+function normalizeLoadedState(state: PlanningBaseState): PlanningBaseState {
   state.incidents ??= []
   state.historyEvents ??= []
   state.auditLog = normalizeAuditLog(state.auditLog)
@@ -15,19 +22,153 @@ export async function loadState(): Promise<PlanningBaseState | null> {
   state.specialSchedules ??= []
   state.coverageRules ??= []
   state.representatives ??= []
-
+  state.managers ??= []
+  state.managementSchedules ??= {}
 
   return state
 }
 
-export async function saveState(state: PlanningBaseState): Promise<void> {
-  return persistence.saveState(state)
+async function loadStateFromHttp(baseUrl: string): Promise<PlanningBaseState | null> {
+  try {
+    const res = await fetch(`${baseUrl}/state`)
+    if (!res.ok) {
+      if (res.status === 404) return null
+      throw new Error(`Failed to load state: ${res.statusText}`)
+    }
+
+    return await res.json()
+  } catch (error) {
+    console.error('HTTP Load Error:', error)
+    return null
+  }
 }
 
-/**
- * @deprecated Use persistence.saveState or clear manually if needed.
- */
+async function saveStateToHttp(
+  baseUrl: string,
+  state: PlanningBaseState
+): Promise<void> {
+  try {
+    const res = await fetch(`${baseUrl}/state`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state),
+    })
+
+    if (!res.ok) {
+      throw new Error(`Failed to save state: ${res.statusText}`)
+    }
+  } catch (error) {
+    console.error('HTTP Save Error:', error)
+    throw error
+  }
+}
+
+async function migrateFromLegacyLocalStorage(): Promise<void> {
+  if (!isBrowserWithLocalStorage) return
+
+  try {
+    const stored = localStorage.getItem(LEGACY_LOCALSTORAGE_KEY)
+    if (!stored) return
+
+    localStorage.removeItem(LEGACY_LOCALSTORAGE_KEY)
+    console.log('Legacy localStorage data discarded due to new data model.')
+  } catch (error) {
+    console.error('Failed to clear legacy localStorage:', error)
+    try {
+      localStorage.removeItem(LEGACY_LOCALSTORAGE_KEY)
+    } catch {
+      // ignore cleanup failure
+    }
+  }
+}
+
+export function openDatabase(): Promise<IDBPDatabase> {
+  if (!isBrowserWithIndexedDb) {
+    const mockDb: any = {
+      get: () => Promise.resolve(undefined),
+      put: () => Promise.resolve(undefined),
+      clear: () => Promise.resolve(undefined),
+      close: () => {},
+    }
+
+    return Promise.resolve(mockDb as IDBPDatabase)
+  }
+
+  return openDB(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains(STATE_OBJECT_STORE_NAME)) {
+        db.createObjectStore(STATE_OBJECT_STORE_NAME)
+      }
+    },
+  })
+}
+
+export async function loadState(): Promise<PlanningBaseState | null> {
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    const state = await loadStateFromHttp(process.env.NEXT_PUBLIC_BACKEND_URL)
+    return state ? normalizeLoadedState(state) : null
+  }
+
+  if (!isBrowserWithIndexedDb) {
+    return createInitialState()
+  }
+
+  try {
+    await migrateFromLegacyLocalStorage()
+
+    const db = await openDatabase()
+    const state: PlanningBaseState | undefined = await db.get(
+      STATE_OBJECT_STORE_NAME,
+      STATE_KEY
+    )
+    db.close()
+
+    if (!state || !state.version || state.version < DB_VERSION) {
+      const initialState = createInitialState()
+      await saveState(initialState)
+      return initialState
+    }
+
+    return normalizeLoadedState(structuredClone(state))
+  } catch (error) {
+    console.error(
+      'Failed to load state from IndexedDB, returning initial state:',
+      error
+    )
+    return createInitialState()
+  }
+}
+
+export async function saveState(state: PlanningBaseState): Promise<void> {
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return saveStateToHttp(process.env.NEXT_PUBLIC_BACKEND_URL, state)
+  }
+
+  if (!isBrowserWithIndexedDb) return
+
+  try {
+    const db = await openDatabase()
+    await db.put(STATE_OBJECT_STORE_NAME, structuredClone(state), STATE_KEY)
+    db.close()
+  } catch (error) {
+    console.error('Failed to save state to IndexedDB:', error)
+    throw error
+  }
+}
+
 export async function clearStorage(): Promise<void> {
-  // Option: Expose a clear method on adapter if needed, but for now strict to contract.
-  console.warn('clearStorage is deprecated/not directly supported by adapter interface')
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    console.warn('clearStorage is not supported for HTTP persistence')
+    return
+  }
+
+  if (!isBrowserWithIndexedDb) return
+
+  try {
+    const db = await openDatabase()
+    await db.clear(STATE_OBJECT_STORE_NAME)
+    db.close()
+  } catch (error) {
+    console.error('Failed to clear storage:', error)
+  }
 }

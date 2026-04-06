@@ -38,3 +38,8 @@ export type SwapEvent =
     note?: string
     createdAt: string
   }
+
+export type SwapEventInput =
+  | Omit<Extract<SwapEvent, { type: 'COVER' }>, 'id' | 'createdAt'>
+  | Omit<Extract<SwapEvent, { type: 'DOUBLE' }>, 'id' | 'createdAt'>
+  | Omit<Extract<SwapEvent, { type: 'SWAP' }>, 'id' | 'createdAt'>

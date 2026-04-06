@@ -1,6 +1,6 @@
 'use client';
 
-import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
+import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
 import ShiftCard from "@/ui/reports/analysis-beta/kpis/ShiftCard";
 
 export default function ShiftGrid() {

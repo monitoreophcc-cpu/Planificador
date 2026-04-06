@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { type StatsTab } from './StatsTabs'
 
-export type ExtendedStatsTab = StatsTab | 'points' | 'executive' | 'analysis'
+export type ExtendedStatsTab = StatsTab | 'points' | 'executive'
 
 function StatsPanelLoading() {
   return (
@@ -24,10 +24,6 @@ const PointsReportView = dynamic(
 )
 const OperationalReportView = dynamic(
   () => import('./reports/OperationalReportView').then(mod => mod.OperationalReportView),
-  { loading: () => <StatsPanelLoading /> }
-)
-const CallCenterAnalysisView = dynamic(
-  () => import('./reports/CallCenterAnalysisView').then(mod => mod.CallCenterAnalysisView),
   { loading: () => <StatsPanelLoading /> }
 )
 
@@ -82,12 +78,6 @@ export function StatsView() {
         >
           Reporte Operativo
         </button>
-        <button
-          style={tabStyle(activeTab === 'analysis')}
-          onClick={() => setActiveTab('analysis')}
-        >
-          Análisis (Beta)
-        </button>
       </div>
 
       <div
@@ -102,7 +92,6 @@ export function StatsView() {
         {activeTab === 'monthly' && <MonthlySummaryView />}
         {activeTab === 'points' && <PointsReportView />}
         {activeTab === 'executive' && <OperationalReportView />}
-        {activeTab === 'analysis' && <CallCenterAnalysisView />}
       </div>
     </div>
   )

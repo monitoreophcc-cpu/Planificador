@@ -1,9 +1,9 @@
-import { PlanningBaseState } from '@/domain/types'
+import type { BackupPayload } from '@/application/backup/types'
 
 /**
  * Exports the current application state as a JSON file
  */
-export function exportBackup(state: PlanningBaseState, filename?: string): void {
+export function exportBackup(state: BackupPayload, filename?: string): void {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
     const defaultFilename = `planning-backup-${timestamp}.json`
 
@@ -22,19 +22,21 @@ export function exportBackup(state: PlanningBaseState, filename?: string): void 
 /**
  * Imports application state from a JSON file
  */
-export function importBackup(file: File): Promise<PlanningBaseState> {
+export function importBackup(file: File): Promise<BackupPayload> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()
 
         reader.onload = (e) => {
             try {
                 const content = e.target?.result as string
-                const state = JSON.parse(content) as PlanningBaseState
+                const state = JSON.parse(content) as BackupPayload
 
                 // Basic validation
                 if (!state.representatives || !state.calendar || !state.version) {
                     throw new Error('Invalid backup file format')
                 }
+
+                state.coverages = Array.isArray(state.coverages) ? state.coverages : []
 
                 resolve(state)
             } catch (error) {
@@ -96,7 +98,7 @@ export function getAutoBackupMetadata(): { timestamp: string, size: number } | n
 /**
  * Saves a backup to localStorage
  */
-export function saveBackupToLocalStorage(state: PlanningBaseState, type: 'manual' | 'auto' = 'manual'): void {
+export function saveBackupToLocalStorage(state: BackupPayload, type: 'manual' | 'auto' = 'manual'): void {
     const timestamp = new Date().toISOString()
 
     // Fix: Auto-backups use a fixed key to overwrite (Single Snapshot)
@@ -157,12 +159,14 @@ export function getLastBackupDate(): Date | null {
 /**
  * Loads a backup from localStorage
  */
-export function loadBackupFromLocalStorage(key: string): PlanningBaseState | null {
+export function loadBackupFromLocalStorage(key: string): BackupPayload | null {
     const value = localStorage.getItem(key)
     if (!value) return null
 
     try {
-        return JSON.parse(value) as PlanningBaseState
+        const parsed = JSON.parse(value) as BackupPayload
+        parsed.coverages = Array.isArray(parsed.coverages) ? parsed.coverages : []
+        return parsed
     } catch {
         return null
     }

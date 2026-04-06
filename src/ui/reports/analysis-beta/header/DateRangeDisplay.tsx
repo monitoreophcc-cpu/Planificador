@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import { Calendar } from 'lucide-react';
 
 /**

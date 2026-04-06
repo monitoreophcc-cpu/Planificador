@@ -1,7 +1,14 @@
 'use client'
 
-import React, { useState, useMemo, useEffect, useRef } from 'react'
-import { DailyEventsList } from './DailyEventsList'
+import React, { useState, useMemo, useEffect } from 'react'
+import {
+  DailyLogSidebar,
+  type DailyLogRepresentativeRow,
+} from './DailyLogSidebar'
+import { AbsenceConfirmationModal } from './AbsenceConfirmationModal'
+import { DailyLogToolbar } from './DailyLogToolbar'
+import { DailyLogIncidentForm } from './DailyLogIncidentForm'
+import { DailyLogEventPanels } from './DailyLogEventPanels'
 import { buildWeeklySchedule } from '../../domain/planning/buildWeeklySchedule'
 import {
   Representative,
@@ -17,29 +24,15 @@ import { resolveIncidentDates } from '../../domain/incidents/resolveIncidentDate
 import { checkIncidentConflicts } from '../../domain/incidents/checkIncidentConflicts'
 import { isSlotOperationallyEmpty } from '@/domain/planning/isSlotOperationallyEmpty'
 import {
-  MoreVertical,
-  Clock,
   AlertTriangle,
-  UserX,
-  UserCheck,
-  FileText,
-  MessageSquare,
-  Shield,
-  RefreshCw,
-  ChevronLeft, // 🔧 FIX: Re-added missing icon
-  ChevronRight, // 🔧 FIX: Re-added missing icon
-  Calendar as CalendarIcon, // 🔧 FIX: Re-added missing icon
 } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
-import { useEditMode } from '@/hooks/useEditMode'
 import { useCoverageStore } from '@/store/useCoverageStore'
 import { findCoverageForDay } from '@/domain/planning/coverage'
-import { InlineAlert } from '../components/InlineAlert'
-import { ConfirmDialog } from '../components/ConfirmDialog'
-import { CoverageManagerModal } from '../planning/coverage/CoverageManagerModal' // 🔄 NEW
-import { CoverageAbsenceModal } from './CoverageAbsenceModal' // 🎯 SLOT RESPONSIBILITY
-import { resolveSlotResponsibility } from '@/domain/planning/resolveSlotResponsibility' // 🎯 SLOT RESPONSIBILITY
-import type { ResponsibilityResolution } from '@/domain/planning/slotResponsibility' // 🎯 SLOT RESPONSIBILITY
+import { CoverageManagerModal } from '../planning/coverage/CoverageManagerModal'
+import { CoverageAbsenceModal } from './CoverageAbsenceModal'
+import { resolveSlotResponsibility } from '@/domain/planning/resolveSlotResponsibility'
+import type { ResponsibilityResolution } from '@/domain/planning/slotResponsibility'
 import {
   DailyLogEntry,
   LogStatus
@@ -48,72 +41,8 @@ import { getPlannedAgentsForDay } from '@/application/ui-adapters/getPlannedAgen
 
 import { getDailyShiftStats } from '@/application/ui-adapters/getDailyShiftStats'
 import { getOngoingIncidents } from '@/application/ui-adapters/getOngoingIncidents'
-import { format, parseISO, addDays, subDays, isToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { CalendarGrid } from '../components/CalendarGrid'
+import { format, parseISO, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { EnrichedIncident } from './logHelpers'
-
-
-
-const styles = {
-  label: { display: 'block', marginBottom: 4, fontWeight: 500, fontSize: '0.875rem', color: '#374151' },
-  input: {
-    width: '100%',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    border: '1px solid #d1d5db',
-    fontSize: '0.875rem',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-  listItem: {
-    padding: '8px 12px',
-    borderRadius: '6px',
-    border: '1px solid transparent',
-    background: 'transparent',
-    textAlign: 'left' as const,
-    cursor: 'pointer',
-    fontSize: '14px',
-    display: 'block',
-    width: '100%',
-    color: '#374151'
-  },
-  activeListItem: {
-    background: '#eff6ff',
-    borderColor: '#bfdbfe',
-    color: '#1e40af',
-    fontWeight: 600
-  }
-}
-
-// Local Component
-function ShiftStatusDisplay({ label, isActive, onClick, presentCount, plannedCount }: {
-  label: string, isActive: boolean, onClick: () => void, presentCount: number, plannedCount: number
-}) {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        padding: '10px',
-        borderRadius: '8px',
-        border: isActive ? '2px solid #2563eb' : '1px solid #e5e7eb',
-        background: isActive ? '#eff6ff' : 'white',
-        cursor: 'pointer',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}
-    >
-      <span style={{ fontWeight: 600, color: isActive ? '#1e40af' : '#374151' }}>{label}</span>
-      <div style={{ textAlign: 'right' }}>
-        <span style={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>{presentCount}</span>
-        <span style={{ fontSize: '12px', color: '#6b7280' }}> / {plannedCount}</span>
-      </div>
-    </div>
-  )
-}
-
-
 
 export function DailyLogView() {
   const {
@@ -156,7 +85,6 @@ export function DailyLogView() {
   const [duration, setDuration] = useState(1)
   const [note, setNote] = useState('')
   const [customPoints, setCustomPoints] = useState<number | ''>('')
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [activeShift, setActiveShift] = useState<'DAY' | 'NIGHT'>('DAY')
 
 
@@ -175,8 +103,6 @@ export function DailyLogView() {
 
   // 🎯 SLOT RESPONSIBILITY: Coverage Resolution Modal State
   const [coverageResolution, setCoverageResolution] = useState<(Extract<ResponsibilityResolution, { kind: 'RESOLVED' }> & { source: 'COVERAGE' }) | null>(null)
-
-  const calendarRef = useRef<HTMLDivElement>(null)
 
   const dateForLog = useMemo(() => parseISO(logDate), [logDate])
 
@@ -442,6 +368,71 @@ export function DailyLogView() {
     }
   }, [incidentType, baseRepresentativeList, selectedRep])
 
+  const representativeRows = useMemo<DailyLogRepresentativeRow[]>(() => {
+    return filteredRepresentatives.map(rep => {
+      const isOperationallyAbsent = isSlotOperationallyEmpty(
+        rep.id,
+        logDate,
+        activeShift,
+        incidents
+      )
+
+      const isAbsent = incidents.some(
+        incident =>
+          incident.representativeId === rep.id &&
+          incident.type === 'AUSENCIA' &&
+          incident.startDate === logDate
+      )
+
+      const resolution = activeWeeklyPlan
+        ? resolveSlotResponsibility(
+            rep.id,
+            logDate,
+            activeShift,
+            activeWeeklyPlan,
+            activeCoveragesForDay,
+            representatives
+          )
+        : null
+
+      const isUnassigned = resolution?.kind === 'UNASSIGNED'
+      const isCovered =
+        resolution?.kind === 'RESOLVED' && resolution.source === 'COVERAGE'
+
+      const coverage = coverageByRepId.get(rep.id)
+      const isCovering = coverage?.isCovering ?? false
+      const coveringName = coverage?.covering?.repId
+        ? representatives.find(
+            representative => representative.id === coverage.covering!.repId
+          )?.name
+        : undefined
+
+      return {
+        id: rep.id,
+        name: rep.name,
+        isOperationallyAbsent,
+        isAbsent,
+        isUnassigned,
+        isCovered,
+        coveredByName:
+          isCovered && resolution?.kind === 'RESOLVED'
+            ? resolution.displayContext.targetName
+            : undefined,
+        isCovering,
+        coveringName,
+      }
+    })
+  }, [
+    filteredRepresentatives,
+    logDate,
+    activeShift,
+    incidents,
+    activeWeeklyPlan,
+    activeCoveragesForDay,
+    representatives,
+    coverageByRepId,
+  ])
+
   const submit = async (input: IncidentInput, rep: Representative) => {
     // Logic for adding incident
     const conflicts = checkIncidentConflicts(
@@ -575,260 +566,32 @@ export function DailyLogView() {
         alignItems: 'start', // Important for sticky
       }}
     >
-      <aside
-        style={{
-          flexShrink: 0,
-          backgroundColor: 'var(--bg-surface)',
-          borderRadius: 'var(--radius-card)',
-          padding: 'var(--space-lg)',
-          border: '1px solid var(--border-subtle)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-md)',
-          marginBottom: 'var(--space-md)',
-          boxShadow: 'var(--shadow-sm)',
-          position: 'sticky',
-          top: '80px', // Offset for sticky header
-          height: 'calc(100vh - 100px)', // Fit within viewport
-          overflowY: 'hidden', // Internal list handles scroll
+      <DailyLogSidebar
+        activeShift={activeShift}
+        onActiveShiftChange={setActiveShift}
+        dayPresent={dailyStats.dayPresent}
+        dayPlanned={dailyStats.dayPlanned}
+        nightPresent={dailyStats.nightPresent}
+        nightPlanned={dailyStats.nightPlanned}
+        activeCoveragesCount={activeCoveragesForDay.length}
+        onOpenCoverageManager={() => setIsCoverageManagerOpen(true)}
+        hideAbsent={hideAbsent}
+        onToggleHideAbsent={() => setHideAbsent(!hideAbsent)}
+        incidentType={incidentType}
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+        rows={representativeRows}
+        selectedRepId={selectedRep?.id ?? null}
+        onSelectRepresentative={representativeId => {
+          const representative = representatives.find(
+            rep => rep.id === representativeId
+          )
+
+          if (representative) {
+            setSelectedRep(representative)
+          }
         }}
-      >
-        <div>
-          <h3
-            style={{ fontWeight: 'var(--font-weight-medium)', margin: '0 0 var(--space-md) 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}
-          >
-            Estado de Turnos
-          </h3>
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}
-          >
-            <ShiftStatusDisplay
-              label="Día"
-              isActive={activeShift === 'DAY'}
-              onClick={() => setActiveShift('DAY')}
-              presentCount={dailyStats.dayPresent}
-              plannedCount={dailyStats.dayPlanned}
-            />
-            <ShiftStatusDisplay
-              label="Noche"
-              isActive={activeShift === 'NIGHT'}
-              onClick={() => setActiveShift('NIGHT')}
-              presentCount={dailyStats.nightPresent}
-              plannedCount={dailyStats.nightPlanned}
-            />
-          </div>
-        </div>
-
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
-            <label style={{ ...styles.label, marginBottom: 0 }}>
-              Representantes del Turno
-            </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {/* 🔄 NEW: Manage Coverages Button */}
-              {activeCoveragesForDay.length > 0 && (
-                <button
-                  onClick={() => setIsCoverageManagerOpen(true)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#1e40af', // Blue to match coverage theme
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                  title="Gestionar coberturas activas"
-                >
-                  <Shield size={12} />
-                  {activeCoveragesForDay.length}
-                </button>
-              )}
-
-              <button
-                onClick={() => setHideAbsent(!hideAbsent)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: hideAbsent ? '#2563eb' : '#6b7280',
-                  fontSize: '12px',
-                  fontWeight: 500
-                }}
-                title="Solo afecta la vista, no el conteo"
-              >
-                {hideAbsent ? 'Mostrar Ausentes' : 'Ocultar Ausentes'}
-              </button>
-            </div>
-          </div>
-          {(incidentType === 'VACACIONES' || incidentType === 'LICENCIA') && (
-            <div style={{ marginBottom: 'var(--space-sm)', fontSize: 'var(--font-size-xs)', color: '#059669', background: '#ecfdf5', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid #a7f3d0' }}>
-              Mostrando <strong>todos</strong> para registro administrativo.
-            </div>
-          )}
-          <input
-            type="text"
-            placeholder="Buscar representante..."
-            style={{ ...styles.input, marginBottom: 'var(--space-md)' }}
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              overflowY: 'auto',
-              flex: 1,
-            }}
-          >
-            {filteredRepresentatives.map(rep => {
-              // 🧠 OPERATIONAL TRUTH: Use canonical check for strikethrough
-              const isOperationallyAbsent = isSlotOperationallyEmpty(
-                rep.id,
-                logDate,
-                activeShift,
-                incidents
-              )
-
-              const isAbsent = incidents.some(i =>
-                i.representativeId === rep.id &&
-                i.type === 'AUSENCIA' &&
-                i.startDate === logDate
-              )
-
-              // 🎯 SLOT RESPONSIBILITY: Use domain logic for visualization
-              // We need to know if this slot is UNASSIGNED or COVERED
-              const resolution = activeWeeklyPlan ? resolveSlotResponsibility(
-                rep.id,
-                logDate,
-                activeShift,
-                activeWeeklyPlan,
-                activeCoveragesForDay,
-                representatives
-              ) : null
-
-              const isUnassigned = resolution?.kind === 'UNASSIGNED'
-              const isCovered = resolution?.kind === 'RESOLVED' && resolution.source === 'COVERAGE'
-
-              // Helper to check if they are covering someone else
-              const coverage = coverageByRepId.get(rep.id)
-              const isCovering = coverage?.isCovering
-              const coveringName = coverage?.covering?.repId
-                ? representatives.find(r => r.id === coverage.covering!.repId)?.name
-                : undefined
-
-              return (
-                <button
-                  key={rep.id}
-                  onClick={() => setSelectedRep(rep)}
-                  style={{
-                    ...styles.listItem,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    ...(selectedRep?.id === rep.id ? styles.activeListItem : {}),
-                    ...(isOperationallyAbsent ? { opacity: 0.7 } : {}),
-                    ...(isUnassigned ? { borderLeft: '4px solid #ef4444', backgroundColor: '#fef2f2' } : {})
-                  }}
-                >
-                  <span style={{
-                    textDecoration: isOperationallyAbsent ? 'line-through' : 'none',
-                    color: isOperationallyAbsent ? '#6b7280' : (isUnassigned ? '#b91c1c' : 'inherit'),
-                    fontWeight: isUnassigned ? 600 : 400
-                  }}>
-                    {rep.name}
-                  </span>
-
-                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                    {/* 🎯 VISUALIZATION: Unassigned / Failed Coverage */}
-                    {isUnassigned && (
-                      <span
-                        title="Este turno debería estar cubierto pero no tiene responsable asignado"
-                        style={{
-                          fontSize: '10px',
-                          background: '#fee2e2',
-                          color: '#b91c1c',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '2px',
-                          cursor: 'help',
-                          border: '1px solid #fca5a5'
-                        }}
-                      >
-                        <AlertTriangle size={10} /> DESCUBIERTO
-                      </span>
-                    )}
-
-                    {/* 🎯 VISUALIZATION: Covered (Resolved) */}
-                    {isCovered && resolution?.kind === 'RESOLVED' && (
-                      <span
-                        title={`Cubierto por ${resolution.displayContext.targetName}`}
-                        style={{
-                          fontSize: '10px',
-                          background: '#dbeafe',
-                          color: '#1e40af',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '2px',
-                          cursor: 'help'
-                        }}
-                      >
-                        <Shield size={10} /> Cubierto
-                      </span>
-                    )}
-
-                    {/* 🎯 VISUALIZATION: Absent Badge */}
-                    {isAbsent && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          background: '#fee2e2',
-                          color: '#b91c1c',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontWeight: 600
-                        }}
-                      >
-                        Ausente
-                      </span>
-                    )}
-
-                    {isCovering && (
-                      <span
-                        title={`Cubriendo a ${coveringName ?? '—'}`}
-                        style={{
-                          fontSize: '10px',
-                          background: '#f3e8ff',
-                          color: '#6b21a8',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '2px',
-                          cursor: 'help'
-                        }}
-                      >
-                        <RefreshCw size={10} /> Cubriendo
-                      </span>
-                    )}
-
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </aside>
+      />
 
       <section
         style={{
@@ -838,395 +601,44 @@ export function DailyLogView() {
           // overflowY: 'auto', // REMOVED: Let window scroll
         }}
       >
-        <div
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-card)',
-            padding: 'var(--space-md) var(--space-lg)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            height: '74px',
-            boxSizing: 'border-box',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <h2 style={{ margin: '0 0 var(--space-xl) 0', fontWeight: 'var(--font-weight-bold)', fontSize: 'var(--font-size-md)', color: 'var(--text-main)' }}>
-            Registro de Eventos
-          </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} ref={calendarRef}>
-            <button
-              onClick={() => setLogDate(format(subDays(dateForLog, 1), 'yyyy-MM-dd'))}
-              style={{ padding: '8px', border: '1px solid var(--border-strong)', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer' }}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)', minWidth: '220px', textAlign: 'center' }}>
-              {format(dateForLog, "EEEE, dd 'de' MMMM", { locale: es })}
-            </div>
-            <button
-              onClick={() => setLogDate(format(addDays(dateForLog, 1), 'yyyy-MM-dd'))}
-              style={{ padding: '8px', border: '1px solid var(--border-strong)', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer' }}
-            >
-              <ChevronRight size={16} />
-            </button>
+        <DailyLogToolbar
+          date={dateForLog}
+          onDateChange={date => setLogDate(format(date, 'yyyy-MM-dd'))}
+          filterMode={filterMode}
+          onFilterModeChange={setFilterMode}
+        />
+        <DailyLogIncidentForm
+          conflictMessages={
+            conflictCheck.hasConflict
+              ? conflictCheck.messages ?? [
+                  conflictCheck.message ?? 'Conflicto detectado',
+                ]
+              : []
+          }
+          customPoints={customPoints}
+          duration={duration}
+          incidentType={incidentType}
+          note={note}
+          onCustomPointsChange={setCustomPoints}
+          onDurationChange={setDuration}
+          onIncidentTypeChange={setIncidentType}
+          onNoteChange={setNote}
+          onSubmit={handleSubmit}
+          selectedRepName={selectedRep?.name}
+        />
 
-            <button
-              onClick={() => setIsCalendarOpen(prev => !prev)}
-              style={{ padding: '8px', border: '1px solid var(--border-strong)', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer' }}
-            >
-              <CalendarIcon size={16} />
-            </button>
-
-            {!isToday(dateForLog) && (
-              <button
-                onClick={() => setLogDate(format(new Date(), 'yyyy-MM-dd'))}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid var(--border-strong)',
-                  borderRadius: '6px',
-                  background: 'var(--bg-panel)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Hoy
-              </button>
-            )}
-
-            {isCalendarOpen && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: '8px',
-                background: 'var(--bg-panel)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '8px',
-                padding: '16px',
-                zIndex: 10,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              }}>
-                <CalendarGrid
-                  month={dateForLog}
-                  selected={dateForLog}
-                  onSelect={(d) => {
-                    setLogDate(format(d, 'yyyy-MM-dd'));
-                    setIsCalendarOpen(false);
-                  }}
-                  days={[]}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-card)',
-              padding: 'var(--space-lg)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-md)',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <header>
-              <h3 style={{ margin: 0, fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--font-size-md)', color: 'var(--text-main)' }}>
-                {selectedRep ? (
-                  <>
-                    Registrar para:{' '}
-                    <span style={{ fontWeight: 700 }}>{selectedRep.name}</span>
-                  </>
-                ) : (
-                  'Seleccione un representante para comenzar'
-                )}
-              </h3>
-            </header>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: '16px',
-              }}
-            >
-              <div>
-                <label style={styles.label}>Tipo de incidencia</label>
-                <select
-                  style={styles.input}
-                  value={incidentType}
-                  onChange={e =>
-                    setIncidentType(e.target.value as IncidentType)
-                  }
-                >
-                  <option value="TARDANZA">Tardanza</option>
-                  <option value="AUSENCIA">Ausencia</option>
-                  <option value="ERROR">Error</option>
-                  <option value="OTRO">Otro</option>
-                  <option value="LICENCIA">Licencia</option>
-                  <option value="VACACIONES">Vacaciones</option>
-                </select>
-              </div>
-
-              {(incidentType === 'LICENCIA' ||
-                incidentType === 'VACACIONES') && (
-                  <div>
-                    <label style={styles.label}>
-                      Duración (
-                      {incidentType === 'LICENCIA'
-                        ? 'días naturales'
-                        : 'días laborables'}
-                      )
-                    </label>
-                    <input
-                      type="number"
-                      style={styles.input}
-                      min="1"
-                      value={duration}
-                      onChange={e =>
-                        setDuration(Math.max(1, parseInt(e.target.value) || 1))
-                      }
-                      disabled={!selectedRep}
-                    />
-                  </div>
-                )}
-
-              {incidentType === 'OTRO' && (
-                <div>
-                  <label style={styles.label}>Puntos (manual)</label>
-                  <input
-                    type="number"
-                    style={styles.input}
-                    min="0"
-                    value={customPoints}
-                    onChange={e =>
-                      setCustomPoints(
-                        Math.max(0, parseInt(e.target.value) || 0)
-                      )
-                    }
-                    disabled={!selectedRep}
-                  />
-                </div>
-              )}
-            </div>
-            <div>
-              <label style={styles.label}>Comentario (opcional)</label>
-              <textarea
-                style={{ ...styles.input, height: '60px' }}
-                placeholder="Escribe un comentario..."
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                disabled={!selectedRep}
-              />
-            </div>
-
-            {conflictCheck.hasConflict && (
-              <InlineAlert variant="warning">
-                <ul style={{ margin: 0, paddingLeft: 20 }}>
-                  {(conflictCheck.messages ?? [conflictCheck.message ?? 'Conflicto detectado']).map((m: string, i: number) => <li key={i}>{m}</li>)}
-                </ul>
-              </InlineAlert>
-            )}
-
-            <div>
-              <button
-                type="submit"
-                disabled={!selectedRep}
-                style={{
-                  padding: '10px 16px',
-                  fontSize: 'var(--font-size-base)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  backgroundColor: !selectedRep ? 'var(--bg-subtle)' : 'var(--accent)',
-                  color: !selectedRep ? 'var(--text-muted)' : '#ffffff',
-                  border: 'none',
-                  borderRadius: 'var(--radius-md)',
-                  cursor: !selectedRep ? 'not-allowed' : 'pointer',
-                  width: '100%',
-                  transition: 'background-color 0.2s',
-                }}
-              >
-                Registrar evento
-              </button>
-            </div>
-          </div>
-        </form>
-
-        <div style={{ display: 'flex', gap: '8px', paddingBottom: '4px' }}>
-          <button
-            onClick={() => setFilterMode('TODAY')}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              background: filterMode === 'TODAY' ? '#111827' : 'white',
-              color: filterMode === 'TODAY' ? 'white' : '#374151',
-              borderColor: filterMode === 'TODAY' ? '#111827' : '#d1d5db'
-            }}
-          >
-            Hoy
-          </button>
-          <button
-            onClick={() => setFilterMode('WEEK')}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              background: filterMode === 'WEEK' ? '#111827' : 'white',
-              color: filterMode === 'WEEK' ? 'white' : '#374151',
-              borderColor: filterMode === 'WEEK' ? '#111827' : '#d1d5db'
-            }}
-          >
-            Esta Semana
-          </button>
-          <button
-            onClick={() => setFilterMode('MONTH')}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              background: filterMode === 'MONTH' ? '#111827' : 'white',
-              color: filterMode === 'MONTH' ? 'white' : '#374151',
-              borderColor: filterMode === 'MONTH' ? '#111827' : '#d1d5db'
-            }}
-          >
-            Mes Actual
-          </button>
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 'var(--space-md)',
-            overflowY: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-card)',
-              padding: 'var(--space-lg)',
-              overflowY: 'auto',
-              marginBottom: 'var(--space-lg)',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <DailyEventsList
-              title="Incidencias del Día"
-              incidents={dayIncidents}
-              emptyMessage="No hay incidencias puntuales registradas hoy."
-            />
-          </div>
-          <div
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-card)',
-              padding: 'var(--space-xl)', // 🟢 Increased Padding
-              overflowY: 'auto',
-              marginBottom: 'var(--space-md)',
-              boxShadow: 'var(--shadow-sm)',
-              // maxHeight: 'calc(100vh - 200px)', // REMOVED: Caused clipping
-            }}
-          >
-            <DailyEventsList
-              title="Eventos en Curso (Monitor)"
-              incidents={ongoingIncidents}
-              emptyMessage="No hay licencias o vacaciones activas."
-            />
-          </div>
-        </div>
+        <DailyLogEventPanels
+          dayIncidents={dayIncidents}
+          ongoingIncidents={ongoingIncidents}
+        />
       </section>
 
-      {/* GLOBAL CONFIRM DIALOG - Just in case store uses it here, though mostly useAppStore call triggers it */}
-      {/* If confirmConfig is local state used by legacy parts? We removed it locally except lines 87. 
-          The store's confirm is imperative. 
-          Actually DailyLogView DOES NOT need <ConfirmDialog> for the store's confirm if <ConfirmDialog> is rendered in App Layout.
-          BUT if it's not rendered in Layout, we need it here?
-          Usually ConfirmDialog is part of the Layout. 
-          But wait, line 87: `const [confirmConfig...`. We aren't using `confirmConfig` anymore based on my rewrite.
-          I replaced `confirm()` with `showConfirm` from store.
-          Does store render the dialog? 
-          Typically `useAppStore` holds state, but component must render UI.
-          Let's look at `Layout` or similar.
-          However, to be safe, I will include ConfirmDialog for store state if needed, but `useAppStore` has `confirmState`.
-          DailyLogView probably doesn't need to render it if it's global.
-          But wait, the `confirmConfig` in my previous edit was local. 
-          User said: "Toda confirmación debe pasar por showConfirm".
-          `useAppStore.showConfirm` typically sets a state in the store.
-          Who renders it?
-          If I don't see a `GlobalConfirmDialog` in layout, I might need to render it.
-
-          Let's assume the user has a global confirm dialog mechanism or I should render one that listens to store.
-          But for now, to ensure I don't break "visuals", I will rely on `showConfirm` promise flow.
-          If `showConfirm` sets `confirmState` in store, something must render it.
-          I see `confirmState` in `useAppStore`.
-          I'll assume the root layout handles it.
-          I will Remove the local `confirmConfig` usage to avoid confusion.
-      */}
-      {/* Only render store-based confirm if I am the one responsible? No, typically main layout. */}
-      {/* 🟢 CUSTOM ABSENCE CONFIRMATION MODAL */}
       {absenceConfirmState.isOpen && absenceConfirmState.rep && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '400px',
-            maxWidth: '90%',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px'
-          }}>
-            <header>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#111827' }}>
-                Confirmar Ausencia
-              </h3>
-            </header>
-
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '15px', color: '#374151', margin: 0 }}>
-                ¿Registrar <strong>Ausencia</strong> a
-              </p>
-              <p style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '4px 0 0' }}>
-                {absenceConfirmState.rep.name}
-              </p>
-            </div>
-
-            <AbsenceSelector
-              onConfirm={absenceConfirmState.onConfirm}
-              onCancel={absenceConfirmState.onCancel}
-            />
-          </div>
-        </div>
+        <AbsenceConfirmationModal
+          representativeName={absenceConfirmState.rep.name}
+          onConfirm={absenceConfirmState.onConfirm}
+          onCancel={absenceConfirmState.onCancel}
+        />
       )}
       {/* 🎯 SLOT RESPONSIBILITY: Coverage Resolution Modal */}
       {coverageResolution && (
@@ -1258,113 +670,5 @@ export function DailyLogView() {
         date={logDate}
       />
     </div>
-  )
-}
-
-function AbsenceSelector({ onConfirm, onCancel }: { onConfirm: (val: boolean) => void, onCancel: () => void }) {
-  const [justified, setJustified] = useState<boolean | null>(null)
-
-  return (
-    <>
-      <div
-        style={{
-          padding: '16px',
-          borderRadius: '10px',
-          border: '2px solid #e5e7eb',
-          background: '#f9fafb',
-        }}
-      >
-        <div
-          style={{
-            fontSize: '16px',
-            fontWeight: 700,
-            marginBottom: '12px',
-            color: '#111827',
-            textAlign: 'center'
-          }}
-        >
-          ¿La ausencia es justificada?
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            type="button"
-            onClick={() => setJustified(true)}
-            style={{
-              flex: 1,
-              padding: '14px',
-              fontSize: '15px',
-              fontWeight: 700,
-              borderRadius: '8px',
-              border: justified === true ? '2px solid #16a34a' : '1px solid #d1d5db',
-              background: justified === true ? '#dcfce7' : 'white',
-              color: justified === true ? '#166534' : '#374151',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            SÍ
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setJustified(false)}
-            style={{
-              flex: 1,
-              padding: '14px',
-              fontSize: '15px',
-              fontWeight: 700,
-              borderRadius: '8px',
-              border: justified === false ? '2px solid #dc2626' : '1px solid #d1d5db',
-              background: justified === false ? '#fee2e2' : 'white',
-              color: justified === false ? '#7f1d1d' : '#374151',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            NO
-          </button>
-        </div>
-
-        <p style={{ margin: '12px 0 0', fontSize: '13px', color: '#6b7280', textAlign: 'center' }}>
-          Esta decisión impacta puntos y reportes.
-        </p>
-      </div>
-
-      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-        <button
-          onClick={onCancel}
-          style={{
-            flex: 1,
-            padding: '10px',
-            border: 'none',
-            background: 'transparent',
-            color: '#6b7280',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={() => {
-            if (justified !== null) onConfirm(justified)
-          }}
-          disabled={justified === null}
-          style={{
-            flex: 2,
-            padding: '10px',
-            borderRadius: '6px',
-            border: 'none',
-            background: justified === null ? '#e5e7eb' : '#2563eb',
-            color: justified === null ? '#9ca3af' : 'white',
-            fontWeight: 600,
-            cursor: justified === null ? 'not-allowed' : 'pointer'
-          }}
-        >
-          Confirmar Ausencia
-        </button>
-      </div>
-    </>
   )
 }

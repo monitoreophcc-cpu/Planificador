@@ -1,5 +1,5 @@
 import { SemanticState, buildNarrative } from "@/domain/reporting/semantics/correlation.semantics";
-import { CorrelationFlag } from "@/domain/call-center-analysis/correlation/correlation.types";
+import { CorrelationFlag } from "@/domain/reporting/correlation/correlation.types";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import SemanticBadge from "../semantics/SemanticBadge";
 

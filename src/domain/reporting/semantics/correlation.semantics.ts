@@ -1,4 +1,4 @@
-import { CorrelationFlag } from '@/domain/call-center-analysis/correlation/correlation.types';
+import { CorrelationFlag } from '@/domain/reporting/correlation/correlation.types';
 
 export type SemanticState =
     | 'OK'

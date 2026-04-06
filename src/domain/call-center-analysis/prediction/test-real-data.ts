@@ -15,7 +15,7 @@ import {
     Slot,
     PlannedCapacity,
 } from './domain/types'
-import { ActualOperationalLoad } from '../adapter/OperationalCorrelationAdapter'
+import { ActualOperationalLoad } from '@/domain/reporting/correlation/correlation.types'
 
 /**
  * Convierte ActualOperationalLoad a HistoricalSlotData

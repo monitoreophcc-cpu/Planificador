@@ -1,4 +1,4 @@
-import { CorrelationFlag } from "@/domain/call-center-analysis/correlation/correlation.types";
+import { CorrelationFlag } from "@/domain/reporting/correlation/correlation.types";
 import { LoadState } from "./trend.types";
 import { SimpleBaseline } from "../thresholds/baseline.types";
 

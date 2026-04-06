@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
+import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMemo } from "react";
 import { formatNumber } from "@/domain/call-center-analysis/utils/format";

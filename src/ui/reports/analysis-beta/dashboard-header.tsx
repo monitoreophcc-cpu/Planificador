@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Upload } from 'lucide-react';
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import { parseCsvFile, parseXlsxFile } from '@/domain/operational/parser.service';
 import type { AnsweredCall, AbandonedCall, Transaction } from '@/types';
 

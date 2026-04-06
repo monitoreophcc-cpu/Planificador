@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/reports/analysis-beta/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/reports/analysis-beta/ui/table'
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore'
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore'
 import { formatCurrency } from '@/domain/call-center-analysis/utils/format'
 
 export default function SalesByAgentTable() {
