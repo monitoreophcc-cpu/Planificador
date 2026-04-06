@@ -14,9 +14,14 @@
  */
 
 import { ISODate, ShiftType, WeeklyPlan, SwapEvent, Incident, RepresentativeId, Representative, SpecialSchedule } from '../types'
-import { resolveIncidentDates } from '../incidents/resolveIncidentDates'
 import { DayInfo } from '../calendar/types'
-import { getEffectiveSchedule } from '@/application/scheduling/specialScheduleAdapter'
+import {
+  applyRelevantSwap,
+  findAbsenceIncident,
+  findBlockingFormalIncident,
+  resolveOverrideDuty,
+  resolvePlannedDuty,
+} from './resolveEffectiveDutyHelpers'
 
 export type EffectiveDutyRole =
   | 'BASE' // Trabaja según plan base, sin modificaciones
@@ -50,43 +55,15 @@ export function resolveEffectiveDuty(
   representatives: Representative[],
   specialSchedules: SpecialSchedule[] = []
 ): EffectiveDutyResult {
-  // ===============================================
-  // 0. OVERRIDE INCIDENTS: Manual changes to assignments
-  // ===============================================
-  // Overrides are manual interventions that MUST take precedence over everything else,
-  // including Special Schedules (Effective Periods).
-  const overrideIncident = incidents.find(i =>
-    i.representativeId === representativeId &&
-    i.type === 'OVERRIDE' &&
-    i.startDate === date
-  )
+  const overrideDuty = resolveOverrideDuty({
+    date,
+    incidents,
+    representativeId,
+    shift,
+  })
 
-  if (overrideIncident && overrideIncident.assignment) {
-    const assignment = overrideIncident.assignment
-    let overrideRole: EffectiveDutyRole = 'NONE'
-    let shouldWork = false
-
-    if (assignment.type === 'BOTH') {
-      shouldWork = true
-      overrideRole = 'BASE' // Or 'OVERRIDE_WORK'? keeping 'BASE' for now as it means "working standard"
-    } else if (assignment.type === 'SINGLE') {
-      shouldWork = assignment.shift === shift
-      overrideRole = shouldWork ? 'BASE' : 'NONE'
-    } else {
-      // OFF
-      shouldWork = false
-      overrideRole = 'NONE'
-    }
-
-    // If it matches properly, return it.
-    // Note: We return context to help tooltip
-    return {
-      shouldWork,
-      role: overrideRole,
-      reason: 'Manual Override',
-      source: 'OVERRIDE',
-      note: overrideIncident.note
-    }
+  if (overrideDuty) {
+    return overrideDuty
   }
 
   // ===============================================
@@ -100,41 +77,12 @@ export function resolveEffectiveDuty(
     return { shouldWork: false, role: 'NONE', reason: 'Representative not found', source: 'BASE' }
   }
 
-  const effective = getEffectiveSchedule({
+  const plannedDuty = resolvePlannedDuty({
+    date,
     representative,
-    dateStr: date,
-    baseSchedule: representative.baseSchedule,
-    specialSchedules
+    shift,
+    specialSchedules,
   })
-
-  // We need to determine "Planned Duty" before checking incidents.
-  let plannedRole: EffectiveDutyRole = 'NONE'
-  let plannedShouldWork = false
-  let adapterSource: EffectiveDutyResult['source'] = 'BASE'
-  let adapterReason: string | undefined = undefined
-
-  if (effective.type === 'OFF') {
-    plannedShouldWork = false
-    plannedRole = 'NONE'
-    adapterSource = effective.source ? 'EFFECTIVE_PERIOD' : 'BASE'
-    adapterReason = effective.source?.note || 'Día libre'
-  } else if (effective.type === 'MIXTO' || effective.type === 'BASE' || effective.type === 'OVERRIDE') {
-    // If working, does it match the requested shift?
-    adapterSource = effective.source ? 'EFFECTIVE_PERIOD' : 'BASE'
-    adapterReason = effective.source?.note
-
-    if (effective.type === 'MIXTO') {
-      plannedShouldWork = true
-      plannedRole = 'BASE'
-      // ⚠️ SEMANTIC NOTE: 'BASE' role here is correct because MIXTO isn't a separate job.
-      // It just means they are working their base day, but are eligible for swaps/covers in other shifts.
-    } else {
-      // Specific shift
-      const matchesRequest = effective.shift === shift
-      plannedShouldWork = matchesRequest
-      plannedRole = matchesRequest ? 'BASE' : 'NONE'
-    }
-  }
 
   // Precedence Note:
   // We calculate the "Planned State" first via the Adapter (Base + Special).
@@ -157,29 +105,12 @@ export function resolveEffectiveDuty(
     )
   }
 
-  const blockingIncident = incidents.find(i => {
-    if (i.representativeId !== representativeId) return false
-    if (!['VACACIONES', 'LICENCIA'].includes(i.type)) return false
-
-    const resolved = resolveIncidentDates(
-      i,
-      allCalendarDays,
-      representative // Puede ser undefined, pero resolveIncidentDates tiene fallback
-    )
-
-    if (resolved.dates.includes(date)) return true
-
-    if (i.type === 'VACACIONES' && resolved.start && resolved.returnDate) {
-      if (date >= resolved.start && date < resolved.returnDate) {
-        return true
-      }
-    }
-
-    // License is strictly Calendar Days, already expanded in resolved.dates
-    // We should NOT bridge the gap to returnDate visually, as that creates "ghost" days
-    // on OFF days that are past the license duration.
-
-    return false
+  const blockingIncident = findBlockingFormalIncident({
+    allCalendarDays,
+    date,
+    incidents,
+    representative,
+    representativeId,
   })
 
   if (blockingIncident) {
@@ -191,20 +122,16 @@ export function resolveEffectiveDuty(
     }
   }
 
-  const absenceIncident = incidents.find(i => {
-    if (i.representativeId !== representativeId) return false
-    if (i.type !== 'AUSENCIA') return false
-
-    const resolved = resolveIncidentDates(
-      i,
-      allCalendarDays,
-      representative
-    )
-    return resolved.dates.includes(date)
+  const absenceIncident = findAbsenceIncident({
+    allCalendarDays,
+    date,
+    incidents,
+    representative,
+    representativeId,
   })
 
   // 🛡️ GUARD: Absence vs Planned Schedule (Adapter)
-  if (absenceIncident && plannedShouldWork) {
+  if (absenceIncident && plannedDuty.shouldWork) {
     return {
       shouldWork: false, // Although planned, didn't work
       role: 'NONE',
@@ -218,72 +145,15 @@ export function resolveEffectiveDuty(
   // ===============================================
   // 4. EVENTOS DE SWAP: Aplicar modificaciones
   // ===============================================
-  const relevantSwaps = swaps.filter(s => s.date === date)
+  const swapDuty = applyRelevantSwap({
+    date,
+    representativeId,
+    shift,
+    swaps,
+  })
 
-  for (const s of relevantSwaps) {
-    if (s.type === 'COVER' && s.shift === shift) {
-      if (s.fromRepresentativeId === representativeId) {
-        return {
-          shouldWork: false,
-          role: 'COVERED',
-          reason: `Cubierto por ${s.toRepresentativeId}`,
-          source: 'SWAP',
-        }
-      }
-      if (s.toRepresentativeId === representativeId) {
-        return {
-          shouldWork: true,
-          role: 'COVERING',
-          reason: `Cubriendo a ${s.fromRepresentativeId}`,
-          source: 'SWAP',
-        }
-      }
-    }
-
-    if (s.type === 'DOUBLE' && s.shift === shift) {
-      if (s.representativeId === representativeId) {
-        return { shouldWork: true, role: 'DOUBLE', reason: 'Turno adicional', source: 'SWAP' }
-      }
-    }
-
-    if (s.type === 'SWAP') {
-      if (s.fromRepresentativeId === representativeId) {
-        if (s.fromShift === shift) {
-          return {
-            shouldWork: false,
-            role: 'SWAPPED_OUT',
-            reason: `Intercambio con ${s.toRepresentativeId}`,
-            source: 'SWAP',
-          }
-        }
-        if (s.toShift === shift) {
-          return {
-            shouldWork: true,
-            role: 'SWAPPED_IN',
-            reason: `Intercambio con ${s.toRepresentativeId}`,
-            source: 'SWAP',
-          }
-        }
-      }
-      if (s.toRepresentativeId === representativeId) {
-        if (s.toShift === shift) {
-          return {
-            shouldWork: false,
-            role: 'SWAPPED_OUT',
-            reason: `Intercambio con ${s.fromRepresentativeId}`,
-            source: 'SWAP',
-          }
-        }
-        if (s.fromShift === shift) {
-          return {
-            shouldWork: true,
-            role: 'SWAPPED_IN',
-            reason: `Intercambio con ${s.fromRepresentativeId}`,
-            source: 'SWAP',
-          }
-        }
-      }
-    }
+  if (swapDuty) {
+    return swapDuty
   }
 
   // ===============================================
@@ -291,9 +161,9 @@ export function resolveEffectiveDuty(
   // ===============================================
   // If no other event intervened, return the calculated scheduled state.
   return {
-    shouldWork: plannedShouldWork,
-    role: plannedRole,
-    source: adapterSource,
-    reason: adapterReason
+    shouldWork: plannedDuty.shouldWork,
+    role: plannedDuty.role,
+    source: plannedDuty.source,
+    reason: plannedDuty.reason
   }
 }

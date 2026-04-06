@@ -1,10 +1,17 @@
-import React from 'react'
 import type { StateCreator } from 'zustand'
 import type { Incident, IncidentInput } from '@/domain/types'
 import { incidentLabel, repName } from '@/application/presenters/humanizeStore'
 import type { VacationConfirmationPayload } from './useAppUiStore'
 import { useAppUiStore } from './useAppUiStore'
 import type { AppState } from './useAppStore'
+import {
+  applyIncidentToState,
+  assertIncidentInvariants,
+  buildIncidentConfirmOptions,
+  createIncidentRecord,
+  loadIncidentRuntime,
+  recordCreatedIncident,
+} from './incidentSliceHelpers'
 
 export interface IncidentSlice {
   addIncident: (
@@ -32,17 +39,12 @@ export const createIncidentSlice: StateCreator<
       allCalendarDaysForRelevantMonths,
       showConfirm,
     } = get()
-    const [
-      { validateIncident },
-      { resolveIncidentDates },
-      { buildDisciplinaryKey },
-      { calculatePoints },
-    ] = await Promise.all([
-      import('@/domain/incidents/validateIncident'),
-      import('@/domain/incidents/resolveIncidentDates'),
-      import('@/domain/incidents/buildDisciplinaryKey'),
-      import('@/domain/analytics/computeMonthlySummary'),
-    ])
+    const {
+      validateIncident,
+      resolveIncidentDates,
+      buildDisciplinaryKey,
+      calculatePoints,
+    } = await loadIncidentRuntime()
 
     const representative = representatives.find(
       rep => rep.id === incidentData.representativeId
@@ -52,36 +54,8 @@ export const createIncidentSlice: StateCreator<
       return { ok: false, reason: 'Representante no encontrado.' }
     }
 
-    const newIncident: Incident = {
-      id: `incident-${crypto.randomUUID()}`,
-      createdAt: new Date().toISOString(),
-      ...incidentData,
-    }
-
-    if (newIncident.type === 'AUSENCIA') {
-      if (newIncident.source === 'COVERAGE' && !newIncident.slotOwnerId) {
-        throw new Error(
-          '🔒 INVARIANT VIOLATION: Coverage absence must include slotOwnerId'
-        )
-      }
-
-      if (
-        newIncident.source === 'COVERAGE' &&
-        newIncident.slotOwnerId &&
-        newIncident.representativeId === newIncident.slotOwnerId
-      ) {
-        throw new Error(
-          '🔒 INVARIANT VIOLATION: Absence cannot be assigned to slot owner when coverage existed. ' +
-            'The absence must be assigned to the covering representative.'
-        )
-      }
-
-      if (newIncident.source === 'SWAP' && !newIncident.slotOwnerId) {
-        throw new Error(
-          '🔒 INVARIANT VIOLATION: Swap absence must include slotOwnerId'
-        )
-      }
-    }
+    const newIncident: Incident = createIncidentRecord(incidentData)
+    assertIncidentInvariants(newIncident)
 
     const validation = validateIncident(
       newIncident,
@@ -98,58 +72,13 @@ export const createIncidentSlice: StateCreator<
     let confirmed = skipConfirm
 
     if (!confirmed) {
-      if (validation.warning) {
-        confirmed = await showConfirm({
-          title: 'Confirmar Acción',
-          description: validation.warning,
-          intent: 'warning',
-          confirmLabel: 'Continuar',
-        })
-      } else {
-        const isOverride = newIncident.type === 'OVERRIDE'
-        const representativeName = repName(
+      confirmed = await showConfirm(
+        buildIncidentConfirmOptions({
+          incident: newIncident,
           representatives,
-          newIncident.representativeId
-        )
-        const label = incidentLabel(newIncident.type)
-
-        confirmed = await showConfirm({
-          title: isOverride
-            ? 'Confirmar Cambio de Turno'
-            : 'Confirmar Incidencia',
-          description: React.createElement(
-            'span',
-            null,
-            'Registrar ',
-            isOverride
-              ? 'una modificación manual'
-              : React.createElement(
-                  'strong',
-                  {
-                    style: {
-                      fontWeight: 700,
-                      color: 'var(--text-main)',
-                    },
-                  },
-                  label
-                ),
-            ' a ',
-            React.createElement(
-              'strong',
-              {
-                style: {
-                  fontWeight: 700,
-                  color: 'var(--text-main)',
-                },
-              },
-              representativeName
-            ),
-            '.'
-          ),
-          intent: 'info',
-          confirmLabel: isOverride ? 'Aplicar Cambio' : 'Registrar',
+          validation,
         })
-      }
+      )
 
       if (!confirmed) {
         return { ok: false, reason: 'Acción cancelada por el usuario.' }
@@ -158,99 +87,29 @@ export const createIncidentSlice: StateCreator<
 
     const { addHistoryEvent, addAuditEvent } = get()
 
-    addHistoryEvent({
-      category: 'INCIDENT',
-      title: `${incidentLabel(newIncident.type)} registrada${
-        newIncident.source === 'COVERAGE' ? ' (Cobertura)' : ''
-      }`,
-      subject: representative.name,
-      impact:
-        newIncident.type !== 'OVERRIDE' &&
-        newIncident.type !== 'VACACIONES' &&
-        newIncident.type !== 'LICENCIA'
-          ? `-${calculatePoints(newIncident)} pts`
-          : undefined,
-      description:
-        newIncident.note ||
-        (newIncident.source === 'COVERAGE'
-          ? `Fallo de cobertura para ${newIncident.slotOwnerId}`
-          : undefined),
-    })
-    addAuditEvent({
-      type: 'INCIDENT_CREATED',
-      actor: 'SYSTEM',
-      payload: {
-        entity: { type: 'INCIDENT', id: newIncident.id },
-        incidentType: newIncident.type,
-        date: newIncident.startDate,
-        representativeId: newIncident.representativeId,
-        note: newIncident.note,
-        source: newIncident.source,
-        slotOwnerId: newIncident.slotOwnerId,
-      },
+    recordCreatedIncident({
+      incident: newIncident,
+      representative,
+      representatives,
+      calculatePoints,
+      addHistoryEvent,
+      addAuditEvent,
     })
 
     const newDisciplinaryKey = buildDisciplinaryKey(newIncident)
-    const incidentWithKey = {
-      ...newIncident,
-      disciplinaryKey: newDisciplinaryKey,
-    }
 
     let vacationConfirmation: VacationConfirmationPayload | null = null
 
     set(state => {
-      if (incidentWithKey.type === 'AUSENCIA') {
-        const removedIncidents = state.incidents.filter(
-          incident =>
-            incident.representativeId ===
-              incidentWithKey.representativeId &&
-            incident.startDate === incidentWithKey.startDate &&
-            incident.disciplinaryKey === newDisciplinaryKey
-        )
-
-        if (removedIncidents.length > 0) {
-          addHistoryEvent({
-            category: 'SYSTEM',
-            title: 'Incidencia actualizada',
-            subject: representative.name,
-            description: `Se reemplazó un evento previo (${newDisciplinaryKey}).`,
-          })
-        }
-
-        state.incidents = state.incidents.filter(
-          incident =>
-            !(
-              incident.representativeId ===
-                incidentWithKey.representativeId &&
-              incident.startDate === incidentWithKey.startDate &&
-              incident.disciplinaryKey === newDisciplinaryKey
-            )
-        )
-      }
-
-      if (
-        !state.incidents.some(existingIncident => existingIncident.id === incidentWithKey.id)
-      ) {
-        state.incidents.push(incidentWithKey)
-      }
-
-      if (newIncident.type === 'VACACIONES') {
-        const resolvedDates = resolveIncidentDates(
-          newIncident,
-          allCalendarDaysForRelevantMonths,
-          representative
-        )
-
-        if (resolvedDates.dates.length > 0) {
-          vacationConfirmation = {
-            repName: representative.name,
-            startDate: resolvedDates.start || newIncident.startDate,
-            endDate: resolvedDates.end || newIncident.startDate,
-            returnDate: resolvedDates.returnDate || newIncident.startDate,
-            workingDays: resolvedDates.dates.length,
-          }
-        }
-      }
+      vacationConfirmation = applyIncidentToState({
+        state,
+        incident: newIncident,
+        disciplinaryKey: newDisciplinaryKey,
+        representative,
+        allCalendarDaysForRelevantMonths,
+        resolveIncidentDates,
+        addHistoryEvent,
+      })
     })
 
     if (vacationConfirmation) {

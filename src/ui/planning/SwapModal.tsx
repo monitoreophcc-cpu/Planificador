@@ -1,176 +1,59 @@
-import { useMemo, useState } from 'react'
-import { useAppStore } from '@/store/useAppStore'
-import { useCoverageStore } from '@/store/useCoverageStore'
-import { useEditMode } from '@/hooks/useEditMode'
-import type { ISODate, ShiftType, SwapEvent, SwapType, WeeklyPlan } from '@/domain/types'
-import { validateSwapOperation } from '@/domain/swaps/validateSwapOperation'
-import {
-  buildDailyEffectiveContext,
-  type EffectiveSwapContext,
-} from '@/domain/swaps/buildDailyEffectiveContext'
+import type { ShiftType } from '@/domain/types'
 import { repName } from '@/application/presenters/humanize'
 import { SwapModalView } from './SwapModalView'
 import {
-  buildSwapPreviewText,
   describeExistingSwap,
   isCoverageMode,
-  resolveInitialSwapModalDate,
-  resolveInitialSwapModalMode,
-  type SwapModalMode,
 } from './swapModalHelpers'
-
-interface SwapModalProps {
-  weeklyPlan: WeeklyPlan // 🎯 Plan viene de arriba, no se carga aquí
-  initialDate?: ISODate
-  initialShift?: ShiftType
-  initialRepId?: string
-  existingSwap?: SwapEvent
-  onClose: () => void
-}
+import type { SwapModalProps } from './swapModalTypes'
+import { useSwapModalState } from './useSwapModalState'
 
 export function SwapModal({
-  weeklyPlan,
-  initialDate,
-  initialShift,
-  initialRepId,
   existingSwap,
   onClose,
+  ...props
 }: SwapModalProps) {
   const {
-    representatives,
-    addSwap,
-    planningAnchorDate,
-    incidents,
-    allCalendarDaysForRelevantMonths,
-    removeSwap,
     addHistoryEvent,
-    swaps,
-  } = useAppStore(s => ({
-    representatives: s.representatives,
-    addSwap: s.addSwap,
-    planningAnchorDate: s.planningAnchorDate,
-    incidents: s.incidents,
-    allCalendarDaysForRelevantMonths: s.allCalendarDaysForRelevantMonths,
-    removeSwap: s.removeSwap,
-    addHistoryEvent: s.addHistoryEvent,
-    swaps: s.swaps,
-  }))
-
-  // 🔄 NEW: Coverage store
-  const { createCoverage } = useCoverageStore()
-
-  const { mode } = useEditMode()
-  const [date, setDate] = useState<ISODate>(
-    resolveInitialSwapModalDate(initialDate, planningAnchorDate)
-  )
-  const [modalMode, setModalMode] = useState<SwapModalMode>(
-    resolveInitialSwapModalMode(existingSwap)
-  )
-  const [shift, setShift] = useState<ShiftType>(initialShift || 'DAY')
-
-  // 🎯 CAMBIO CRÍTICO: Delegar construcción de contexto al dominio
-  // El modal ya NO construye el contexto manualmente
-  // El dominio provee la verdad (estado efectivo incluyendo swaps existentes)
-  const validationContext = useMemo((): EffectiveSwapContext => {
-    if (!weeklyPlan) return { daily: {} }
-
-    return buildDailyEffectiveContext({
-      date,
-      weeklyPlan,
-      swaps,  // ← CRÍTICO: incluir swaps existentes para detectar doble cobertura
-      incidents,
-      allCalendarDays: allCalendarDaysForRelevantMonths,
-      representatives,
-    })
-  }, [
-    date,
-    weeklyPlan,
-    swaps,  // ← NUEVO: dependencia crítica
-    incidents,
-    allCalendarDaysForRelevantMonths,
-    representatives,
-  ])
-
-  const [type, setType] = useState<SwapType>(existingSwap?.type || 'COVER')
-  const [fromId, setFromId] = useState<string>(initialRepId || (existingSwap && 'fromRepresentativeId' in existingSwap ? existingSwap.fromRepresentativeId : '') || '')
-  const [toId, setToId] = useState<string>((existingSwap && 'toRepresentativeId' in existingSwap ? existingSwap.toRepresentativeId : (existingSwap && 'representativeId' in existingSwap ? existingSwap.representativeId : '')) || '')
-  const [note, setNote] = useState(existingSwap?.note || '')
-
-  const effectiveShift = useMemo(() => {
-    if (type === 'COVER' && fromId && validationContext.daily[fromId]) {
-      const day = validationContext.daily[fromId]
-      // Detectar turno del plan base
-      const baseShifts = Array.from(day.baseShifts)
-      if (baseShifts.length === 1) {
-        return baseShifts[0]
-      }
-    }
-    return shift
-  }, [type, fromId, shift, validationContext])
-
-  const validationError = useMemo(() => {
-    if (!type || !date) return null
-    return validateSwapOperation(type, fromId, toId, effectiveShift, validationContext)
-  }, [type, fromId, toId, date, effectiveShift, validationContext])
-
-  const canSubmit = useMemo(() => {
-    if (validationError) return false
-    if (isCoverageMode(modalMode)) return Boolean(fromId && toId && date)
-    if (type === 'DOUBLE') return Boolean(toId && date)
-    if (type === 'COVER' || type === 'SWAP') return Boolean(fromId && toId && date)
-    return false
-  }, [modalMode, type, fromId, toId, validationError, date])
-
-  const previewText = useMemo(() => {
-    return buildSwapPreviewText({
-      mode: modalMode,
-      type,
-      canSubmit,
-      fromId,
-      toId,
-      shift,
-      effectiveShift,
-      validationContext,
-      representatives,
-    })
-  }, [
-    modalMode,
-    type,
+    addSwap,
     canSubmit,
-    fromId,
-    toId,
-    shift,
+    createCoverage,
+    date,
     effectiveShift,
-    validationContext,
+    existingSwapDescription,
+    fromId,
+    mode,
+    modalMode,
+    note,
+    previewText,
+    removeSwap,
     representatives,
-  ])
-
-  const existingSwapDescription = useMemo(() => {
-    if (!existingSwap) return ''
-    return describeExistingSwap(existingSwap, representatives)
-  }, [existingSwap, representatives])
-
-  const handleModeChange = (nextMode: SwapModalMode) => {
-    setModalMode(nextMode)
-
-    if (nextMode === 'COBERTURA') {
-      setType('COVER')
-      return
-    }
-
-    setType(nextMode)
-  }
+    setDate,
+    setFromId,
+    setNote,
+    setShift,
+    setToId,
+    shift,
+    toId,
+    type,
+    validationContext,
+    validationError,
+    handleModeChange,
+  } = useSwapModalState({
+    ...props,
+    existingSwap,
+  })
 
   const handleDeleteSwap = () => {
-    if (!existingSwap) return;
-    removeSwap(existingSwap.id);
+    if (!existingSwap) return
+    removeSwap(existingSwap.id)
     addHistoryEvent({
       category: 'PLANNING',
       title: 'Cambio de turno eliminado',
       description: existingSwapDescription,
-    });
-    onClose();
-  };
+    })
+    onClose()
+  }
 
   const handleSubmit = () => {
     if (!canSubmit || (!fromId && type !== 'DOUBLE')) return

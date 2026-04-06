@@ -1,0 +1,63 @@
+import type { CSSProperties } from 'react'
+
+export const representativeFormStyles = {
+  form: {
+    background: '#f9fafb',
+    padding: '20px',
+    borderRadius: '8px',
+    border: '1px solid var(--border-subtle)',
+    marginBottom: '24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  } satisfies CSSProperties,
+  sectionTitle: {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 500,
+    marginBottom: '6px',
+    color: 'var(--text-main)',
+  } satisfies CSSProperties,
+  input: {
+    width: '100%',
+    padding: '8px 10px',
+    border: '1px solid var(--border-strong)',
+    borderRadius: '6px',
+    fontSize: '14px',
+    boxSizing: 'border-box',
+  } satisfies CSSProperties,
+  select: {
+    width: '100%',
+    padding: '8px 10px',
+    border: '1px solid var(--border-strong)',
+    borderRadius: '6px',
+    fontSize: '14px',
+    boxSizing: 'border-box',
+    background: 'var(--bg-panel)',
+  } satisfies CSSProperties,
+  helperText: {
+    fontSize: '12px',
+    color: 'var(--text-muted)',
+    marginBottom: '8px',
+    marginTop: 0,
+  } satisfies CSSProperties,
+  footer: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    marginTop: '8px',
+  } satisfies CSSProperties,
+  submitButton: {
+    padding: '8px 16px',
+    background: '#111827',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  } satisfies CSSProperties,
+} as const
