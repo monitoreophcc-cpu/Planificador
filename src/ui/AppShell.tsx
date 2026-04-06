@@ -1,40 +1,60 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useAppStore } from '@/store/useAppStore'
-import { PlanningSection } from './planning/PlanningSection'
-import { DailyLogView } from './logs/DailyLogView'
-import { StatsView } from './stats/StatsView'
-import { SettingsView } from './settings/SettingsView'
-import { ConfirmDialog } from './components/ConfirmDialog'
-import { UndoToast } from './components/UndoToast'
-import { VacationConfirmation } from './components/VacationConfirmation'
-import { PersonDetailModal } from './monthly/PersonDetailModal'
-import { AnimatePresence } from 'framer-motion'
-import { useMonthlySummary } from '@/hooks/useMonthlySummary'
-import { MixedShiftConfirmModal } from './planning/MixedShiftConfirmModal'
+import dynamic from 'next/dynamic'
+import { useAppUiStore } from '@/store/useAppUiStore'
+
+function ViewLoading() {
+  return (
+    <div style={{ padding: '24px', color: 'var(--text-muted)' }}>
+      Cargando vista...
+    </div>
+  )
+}
+
+const DailyLogView = dynamic(
+  () => import('./logs/DailyLogView').then(mod => mod.DailyLogView),
+  { loading: () => <ViewLoading /> }
+)
+const PlanningSection = dynamic(
+  () => import('./planning/PlanningSection').then(mod => mod.PlanningSection),
+  { loading: () => <ViewLoading /> }
+)
+const StatsView = dynamic(
+  () => import('./stats/StatsView').then(mod => mod.StatsView),
+  { loading: () => <ViewLoading /> }
+)
+const SettingsView = dynamic(
+  () => import('./settings/SettingsView').then(mod => mod.SettingsView),
+  { loading: () => <ViewLoading /> }
+)
+const ConfirmDialog = dynamic(
+  () => import('./components/ConfirmDialog').then(mod => mod.ConfirmDialog)
+)
+const VacationConfirmation = dynamic(
+  () => import('./components/VacationConfirmation').then(mod => mod.VacationConfirmation)
+)
+const LazyPersonDetailModal = dynamic(
+  () => import('./monthly/LazyPersonDetailModal').then(mod => mod.LazyPersonDetailModal)
+)
+const MixedShiftConfirmModal = dynamic(
+  () => import('./planning/MixedShiftConfirmModal').then(mod => mod.MixedShiftConfirmModal)
+)
 
 
 function AppShellInner() {
   const {
-    isLoading,
     confirmState,
     handleConfirm,
-    representatives,
-    incidents,
     detailModalState,
     closeDetailModal,
     mixedShiftConfirmModalState,
     handleMixedShiftConfirm,
     vacationConfirmationState,
     closeVacationConfirmation,
-  } = useAppStore(s => ({
-    isLoading: s.isLoading,
+  } = useAppUiStore(s => ({
     confirmState: s.confirmState,
     handleConfirm: s.handleConfirm,
-    representatives: s.representatives,
-    incidents: s.incidents,
     detailModalState: s.detailModalState,
     closeDetailModal: s.closeDetailModal,
     mixedShiftConfirmModalState: s.mixedShiftConfirmModalState,
@@ -43,25 +63,11 @@ function AppShellInner() {
     closeVacationConfirmation: s.closeVacationConfirmation,
   }))
 
-  // ✅ AUTO-BACKUP LOGIC
-  useEffect(() => {
-    // Wait for app to be stable
-    if (!isLoading) {
-      import('@/persistence/backup').then(({ shouldRunAutoBackup, saveBackupToLocalStorage }) => {
-        if (shouldRunAutoBackup()) {
-          console.log('Running auto-backup...')
-          const fullState = useAppStore.getState()
-          saveBackupToLocalStorage(fullState, 'auto')
-        }
-      })
-    }
-  }, [isLoading])
-
   const [activeView, setActiveView] = useState<'PLANNING' | 'DAILY_LOG' | 'STATS' | 'SETTINGS'>('DAILY_LOG')
 
   // 🧭 Navigation Listener
-  const navigationRequest = useAppStore(s => s.navigationRequest)
-  const clearNavigationRequest = useAppStore(s => s.clearNavigationRequest)
+  const navigationRequest = useAppUiStore(s => s.navigationRequest)
+  const clearNavigationRequest = useAppUiStore(s => s.clearNavigationRequest)
 
   useEffect(() => {
     if (navigationRequest) {
@@ -69,9 +75,6 @@ function AppShellInner() {
       clearNavigationRequest()
     }
   }, [navigationRequest, clearNavigationRequest])
-
-  // Pre-fetch the summary for the modal
-  const monthlySummary = useMonthlySummary(detailModalState.month)
 
   const viewTabStyle = (isActive: boolean): React.CSSProperties => ({
     padding: '0 var(--space-md)',
@@ -89,14 +92,6 @@ function AppShellInner() {
     alignItems: 'center',
     transition: 'all 0.2s ease-in-out',
   })
-
-  if (isLoading) {
-    return (
-      <div style={{ padding: '40px', fontFamily: 'sans-serif', color: '#555' }}>
-        Cargando estado de la aplicación...
-      </div>
-    )
-  }
 
   return (
     <div
@@ -217,8 +212,6 @@ function AppShellInner() {
         />
       )}
 
-      <UndoToast />
-
       {mixedShiftConfirmModalState?.isOpen && (
         <MixedShiftConfirmModal
           activeShift={mixedShiftConfirmModalState.activeShift}
@@ -227,15 +220,13 @@ function AppShellInner() {
         />
       )}
 
-      <AnimatePresence>
-        {detailModalState.isOpen && detailModalState.personId && monthlySummary && (
-          <PersonDetailModal
-            summary={monthlySummary}
-            personId={detailModalState.personId}
-            onClose={closeDetailModal}
-          />
-        )}
-      </AnimatePresence>
+      {detailModalState.isOpen && detailModalState.personId && (
+        <LazyPersonDetailModal
+          month={detailModalState.month}
+          personId={detailModalState.personId}
+          onClose={closeDetailModal}
+        />
+      )}
     </div>
   )
 }

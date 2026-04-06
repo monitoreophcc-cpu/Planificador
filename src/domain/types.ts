@@ -18,7 +18,7 @@ import type {
 import { ResolvedCoverage } from './planning/resolveCoverage'
 import { AvailabilityStatus } from './availability/getAvailabilityStatus'
 import { AuditEvent } from './audit/types'
-import { HistoryEvent } from '@/store/useAppStore'
+import type { HistoryEvent } from './history/types'
 import { SwapEvent, SwapType } from './planning/swap'
 import { ShiftAssignment } from './planning/shiftAssignment'
 
@@ -45,6 +45,7 @@ export type { CalendarState }
 export type { ResolvedCoverage }
 export type { AvailabilityStatus }
 export type { AuditEvent }
+export type { HistoryEvent } from './history/types'
 export type { SwapEvent, SwapType }
 export type { ShiftAssignment }
 export type { WeeklyPattern, DailyDuty } from './planning/effectiveSchedulePeriod'

@@ -108,7 +108,7 @@ export function ManagerScheduleManagement({ embedded = false }: ManagerScheduleM
     // preventing confusion from previous sessions.
     React.useEffect(() => {
         setPlanningAnchorDate(format(new Date(), 'yyyy-MM-dd'))
-    }, []) // Empty dependency array = run once on mount
+    }, [setPlanningAnchorDate]) // Run on mount with stable setter
 
     const handleCreateManager = () => {
         if (!newManagerName.trim()) return

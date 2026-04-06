@@ -1,5 +1,4 @@
 import { ISODate, DayInfo, DayKind, CalendarState } from './types'
-import { getDay } from 'date-fns'
 
 function getDayKind(dayOfWeek: number): DayKind {
   // En un call center, todos los días son potencialmente laborables.
@@ -9,7 +8,7 @@ function getDayKind(dayOfWeek: number): DayKind {
 
 function deriveBaseDayInfo(date: ISODate): DayInfo {
   const [year, month, day] = date.split('-').map(Number)
-  const dayOfWeek = getDay(new Date(year, month - 1, day))
+  const dayOfWeek = new Date(year, month - 1, day).getDay()
 
   return {
     date,

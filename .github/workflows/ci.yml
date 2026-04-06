@@ -26,5 +26,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Type checking
+        run: npm run typecheck
+
+      - name: Linting
+        run: npm run lint
+
       - name: Run tests
         run: npm test
+
+      - name: Build
+        run: npm run build

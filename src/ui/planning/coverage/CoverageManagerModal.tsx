@@ -168,7 +168,7 @@ export function CoverageManagerModal({ isOpen, onClose, date }: CoverageManagerM
                                         </span>
                                         {coverage.note && (
                                             <span style={{ fontStyle: 'italic', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                "{coverage.note}"
+                                                &quot;{coverage.note}&quot;
                                             </span>
                                         )}
                                     </div>

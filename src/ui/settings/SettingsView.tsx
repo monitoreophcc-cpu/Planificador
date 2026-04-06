@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useAppStore, HistoryEvent } from '@/store/useAppStore'
+import { useAppStore } from '@/store/useAppStore'
+import type { HistoryEvent } from '@/domain/types'
 import { useEditMode } from '@/hooks/useEditMode'
 import { QuickGuide } from './QuickGuide'
 import { HolidayManagement } from './HolidayManagement'

@@ -1,5 +1,6 @@
 import { persistence } from '@/application/persistence'
 import type { PlanningBaseState } from '@/domain/types'
+import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
 
 export async function loadState(): Promise<PlanningBaseState | null> {
   const state = await persistence.loadState()
@@ -9,7 +10,7 @@ export async function loadState(): Promise<PlanningBaseState | null> {
   // Ensure all top-level arrays exist to prevent crashes on older states.
   state.incidents ??= []
   state.historyEvents ??= []
-  state.auditLog ??= []
+  state.auditLog = normalizeAuditLog(state.auditLog)
   state.swaps ??= []
   state.specialSchedules ??= []
   state.coverageRules ??= []

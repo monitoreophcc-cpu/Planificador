@@ -1,3 +1,5 @@
+global.IS_REACT_ACT_ENVIRONMENT = true
+
 // Polyfill for structuredClone in test environment
 if (typeof global.structuredClone === 'undefined') {
   global.structuredClone = (obj) => {

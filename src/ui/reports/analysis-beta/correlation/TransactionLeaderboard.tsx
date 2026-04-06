@@ -80,7 +80,7 @@ export function TransactionLeaderboard({ transactions }: Props) {
                         Ranking de Ventas (Provisional)
                     </h2>
                     <p className="text-muted-foreground">
-                        Basado en la columna "registro" del archivo de transacciones.
+                        Basado en la columna &quot;registro&quot; del archivo de transacciones.
                     </p>
                 </div>
 

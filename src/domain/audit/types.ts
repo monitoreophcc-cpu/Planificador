@@ -42,3 +42,11 @@ export interface AuditEvent {
   type?: AuditEventType
   repId?: string
 }
+
+export type AuditEventInput = Omit<
+  AuditEvent,
+  'id' | 'timestamp' | 'action' | 'target'
+> & {
+  action?: string
+  target?: AuditEvent['target']
+}

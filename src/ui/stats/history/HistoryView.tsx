@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { useAppStore, HistoryEvent } from '@/store/useAppStore'
+import { useAppStore } from '@/store/useAppStore'
+import type { HistoryEvent } from '@/domain/types'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 

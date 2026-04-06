@@ -1,13 +1,35 @@
 'use client'
 
 import React, { useState } from 'react'
-import { StatsTabs, type StatsTab } from './StatsTabs'
-import { MonthlySummaryView } from './monthly/MonthlySummaryView'
-import { PointsReportView } from './reports/PointsReportView'
-import { OperationalReportView } from './reports/OperationalReportView'
-import { CallCenterAnalysisView } from './reports/CallCenterAnalysisView'
+import dynamic from 'next/dynamic'
+import { type StatsTab } from './StatsTabs'
 
 export type ExtendedStatsTab = StatsTab | 'points' | 'executive' | 'analysis'
+
+function StatsPanelLoading() {
+  return (
+    <div style={{ padding: '24px', color: 'var(--text-muted)' }}>
+      Cargando reporte...
+    </div>
+  )
+}
+
+const MonthlySummaryView = dynamic(
+  () => import('./monthly/MonthlySummaryView').then(mod => mod.MonthlySummaryView),
+  { loading: () => <StatsPanelLoading /> }
+)
+const PointsReportView = dynamic(
+  () => import('./reports/PointsReportView').then(mod => mod.PointsReportView),
+  { loading: () => <StatsPanelLoading /> }
+)
+const OperationalReportView = dynamic(
+  () => import('./reports/OperationalReportView').then(mod => mod.OperationalReportView),
+  { loading: () => <StatsPanelLoading /> }
+)
+const CallCenterAnalysisView = dynamic(
+  () => import('./reports/CallCenterAnalysisView').then(mod => mod.CallCenterAnalysisView),
+  { loading: () => <StatsPanelLoading /> }
+)
 
 export function StatsView() {
   const [activeTab, setActiveTab] = useState<ExtendedStatsTab>('monthly')

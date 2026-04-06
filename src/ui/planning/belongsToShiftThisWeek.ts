@@ -33,11 +33,11 @@ export function belongsToShiftThisWeek(
             specialSchedules,
         })
 
-        // OFF never belongs to a working shift view (unless we want to show OFFs, 
-        // but usually planner shows available capacity. Actually, if they are OFF, 
-        // they usually don't appear in the "Working" list unless filtered differently.
-        // The user requirement says: "OFF never belongs" (implied by "OFF never belongs" in test).
-        if (effective.type === 'OFF') return false
+        // Native mix profiles can make a rep visible in both planners even when
+        // their base schedule is OFF for that day. Explicit OFF schedules still win.
+        if (effective.type === 'OFF') {
+            return !effective.source && allowsDualVisibility(rep, day.date)
+        }
 
         // MIXTO belongs to both
         if (effective.type === 'MIXTO') return true

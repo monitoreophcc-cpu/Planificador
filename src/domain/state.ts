@@ -6,9 +6,9 @@ import type {
   SwapEvent,
   SpecialSchedule,
 } from './types'
-import { Representative, RepresentativeRole } from './representatives/types'
-import { HistoryEvent } from '@/store/useAppStore'
-import { AuditEvent } from './audit/types'
+import type { Representative } from './representatives/types'
+import type { HistoryEvent } from './history/types'
+import type { AuditEvent } from './audit/types'
 
 const CURRENT_VERSION = 7 // New CoverageRule structure
 

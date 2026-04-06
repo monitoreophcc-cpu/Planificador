@@ -188,7 +188,7 @@ export function SwapModal({
       )
     }
     return null
-  }, [type, fromId, toId, canSubmit, shift, effectiveShift, validationContext, representatives])
+  }, [type, fromId, toId, canSubmit, activeTab, shift, effectiveShift, validationContext, representatives])
 
   const getSwapDescription = () => {
     if (!existingSwap) return ''

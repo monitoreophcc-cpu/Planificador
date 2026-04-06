@@ -269,7 +269,6 @@ export function DailyLogView() {
     isAdministrativeIncident,
     representatives,
     activeWeeklyPlan,
-    incidentType,
     incidents,
     logDate,
     activeShift,
@@ -330,7 +329,7 @@ export function DailyLogView() {
       nightPresent: nightStats.present,
       nightPlanned: nightStats.planned
     }
-  }, [activeWeeklyPlan, incidents, logDate, allCalendarDaysForRelevantMonths, representatives, specialSchedules])
+  }, [activeWeeklyPlan, isLoading, incidents, logDate, allCalendarDaysForRelevantMonths, representatives, specialSchedules])
 
   const conflictCheck = useMemo(() => {
     if (!selectedRep) return { hasConflict: false, messages: [] }

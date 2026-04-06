@@ -17,7 +17,7 @@ import { Coverage } from '@/domain/planning/coverage'
 import { ISODate, RepresentativeId } from '@/domain/types'
 import { ShiftType } from '@/domain/calendar/types'
 import { nanoid } from 'nanoid'
-import { useAuditStore } from './useAuditStore'
+import { useAppStore } from './useAppStore'
 
 const COVERAGE_STORE_VERSION = 1
 
@@ -78,7 +78,7 @@ export const useCoverageStore = create<CoverageState>()(
                 }))
 
                 // 🔍 AUDIT: Coverage Created
-                useAuditStore.getState().appendEvent({
+                useAppStore.getState().addAuditEvent({
                     type: 'COVERAGE_CREATED',
                     actor: 'SYSTEM',
                     payload: {
@@ -104,7 +104,7 @@ export const useCoverageStore = create<CoverageState>()(
                 }))
 
                 // 🔍 AUDIT: Coverage Cancelled
-                useAuditStore.getState().appendEvent({
+                useAppStore.getState().addAuditEvent({
                     type: 'COVERAGE_CANCELLED',
                     actor: 'SYSTEM',
                     payload: {

@@ -394,7 +394,7 @@ export default function OperationalAnalysisView() {
                 console.error('Error auto-calculating custom period:', error)
             }
         }
-    }, [comparisonMode, basePeriod.kind])
+    }, [comparisonMode, basePeriod])
 
     const [analysisParams, setAnalysisParams] = useState<{
         base: AnalysisPeriod
@@ -574,7 +574,7 @@ export default function OperationalAnalysisView() {
                 >
                     <p style={{ margin: 0, fontSize: '14px' }}>
                         Selecciona un período base y un modo de comparación, luego haz clic en
-                        <strong> "Ejecutar análisis"</strong> para ver los resultados.
+                        <strong> &quot;Ejecutar análisis&quot;</strong> para ver los resultados.
                     </p>
                 </div>
             ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAgentPerformanceStore } from '@/store/useAgentPerformanceStore';
 import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
 import { Copy, Trash2 } from 'lucide-react';
@@ -15,8 +15,13 @@ export function AgentPerformanceTable() {
         currentMonth,
         processedDates // NEW: Needed for overlap check
     } = useAgentPerformanceStore();
+    const processedDatesRef = useRef(processedDates);
 
     const agentRecords = getAgentPerformance();
+
+    useEffect(() => {
+        processedDatesRef.current = processedDates;
+    }, [processedDates]);
 
     // Procesar transacciones cuando se cargan
     useEffect(() => {
@@ -27,7 +32,7 @@ export function AgentPerformanceTable() {
             const incomingDates = new Set(data.transactions.map(tx => tx.fecha).filter(Boolean));
 
             // 2. Check for ANY overlap with existing stored data
-            const hasOverlap = processedDates.some(pd => incomingDates.has(pd.date));
+            const hasOverlap = processedDatesRef.current.some(pd => incomingDates.has(pd.date));
 
             // 3. Decision: 
             // - If OVERLAP (e.g. reloading Jan 27, or loading Jan 1-31 after Jan 1-30): RESET first to avoid duplicates.
@@ -55,7 +60,7 @@ export function AgentPerformanceTable() {
                 processTransactions(transactions, date);
             });
         }
-    }, [data.transactions, processTransactions]); // Remove processedDates from dep array to avoid loops, or rely on internal store stability
+    }, [data.transactions, processTransactions, resetMonth]);
 
     const copyTableToClipboard = () => {
         const headers = ['Agente', 'Transacciones', 'Ventas Netas ($)', 'Ticket Promedio ($)'];

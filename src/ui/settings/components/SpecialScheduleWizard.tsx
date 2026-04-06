@@ -5,9 +5,9 @@
  * "What you see is what you get."
  */
 
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
-import { SpecialSchedule, DailyScheduleState, Representative } from '@/domain/types'
+import { SpecialSchedule, DailyScheduleState } from '@/domain/types'
 import { resolveWeeklyPatternSnapshot } from '@/application/scheduling/resolveWeeklyPatternSnapshot'
 import { canUseMixto } from '@/application/scheduling/scheduleCapabilities'
 import { Calendar, Check, X, Info, Moon, Sun, Ban, Shuffle, LayoutTemplate, RotateCcw, AlertTriangle } from 'lucide-react'
@@ -28,12 +28,7 @@ export function SpecialScheduleWizard({
 }) {
     const { representatives, addSpecialSchedule, updateSpecialSchedule } = useAppStore()
     const representative = representatives.find(r => r.id === repId)
-
-    // Guards
-    if (!representative) return null
-
-    const isMixedProfile = canUseMixto(representative)
-    const baseShift = representative.baseShift || 'DAY'
+    const isMixedProfile = representative ? canUseMixto(representative) : false
 
     // 🟢 UI State: Includes 'BASE' as a "soft" state that resolves to hard state on save
     type UiDayState = DailyScheduleState | 'BASE_REF'
@@ -79,6 +74,8 @@ export function SpecialScheduleWizard({
     }
 
     const handleSave = () => {
+        if (!representative) return
+
         // 🟢 RESOLUTION AT SAVE (Snapshotting)
         // Delegated to pure domain helper
         const finalPattern = resolveWeeklyPatternSnapshot(representative, dayStates)
@@ -146,6 +143,8 @@ export function SpecialScheduleWizard({
     if (isMixedProfile) {
         explicitOptions.push({ label: 'Turno Mixto', value: 'MIXTO' })
     }
+
+    if (!representative) return null
 
     return (
         <div className={styles.container}>

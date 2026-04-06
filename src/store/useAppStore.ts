@@ -13,96 +13,34 @@ import {
   Representative,
   SwapEvent,
   ShiftAssignment,
-  RepresentativeRole,
   SpecialSchedule,
-  WeeklyPattern,
-  DailyDuty,
 } from '@/domain/types'
-import { buildDisciplinaryKey } from '@/domain/incidents/buildDisciplinaryKey'
 import { Manager } from '@/domain/management/types'
-import { createInitialState, createBaseSchedule } from '@/domain/state'
-import { loadState, saveState } from '@/persistence/storage'
-import {
-  getYear,
-  getMonth,
-  addDays,
-  addMonths,
-  parseISO,
-  format,
-  startOfWeek,
-} from 'date-fns'
+import type { HistoryEvent } from '@/domain/history/types'
+import { createInitialState } from '@/domain/state'
 
 // ... existing code ...
 
 
 import { generateMonthDays } from '@/domain/calendar/state'
-import { validateIncident } from '@/domain/incidents/validateIncident'
-import { resolveIncidentDates } from '@/domain/incidents/resolveIncidentDates'
-import React, { ReactNode } from 'react'
-import { calculatePoints } from '@/domain/analytics/computeMonthlySummary'
-import { AuditEvent } from '@/domain/audit/types'
+import React from 'react'
+import { AuditEventInput } from '@/domain/audit/types'
 
-import * as humanize from '@/application/presenters/humanize'
+import {
+  incidentLabel,
+  repName,
+  swapDescription,
+} from '@/application/presenters/humanizeStore'
 import { BackupPayload } from '@/application/backup/types'
+import { recordAuditEvent } from '@/domain/audit/auditRecorder'
+import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
 import { ManagementScheduleSlice, createManagementScheduleSlice } from './managementScheduleSlice'
-import { useAuditStore } from './useAuditStore'
-
-// --- UI Slice Types ---
-type ConfirmIntent = 'danger' | 'warning' | 'info'
-interface ConfirmOptions {
-  title: string
-  description?: ReactNode
-  intent?: ConfirmIntent
-  confirmLabel?: string
-  cancelLabel?: string
-}
-type PromiseResolve<T> = (value: T) => void
-
-interface ConfirmState {
-  options: ConfirmOptions
-  resolve: PromiseResolve<boolean>
-}
-interface DetailModalState {
-  isOpen: boolean
-  personId: string | null
-  month: string | null // YYYY-MM
-}
-interface MixedShiftConfirmModalState {
-  isOpen: boolean
-  representativeId: string | null
-  date: ISODate | null
-  activeShift: 'DAY' | 'NIGHT'
-  resolve: PromiseResolve<ShiftAssignment | null>
-}
-
-interface VacationConfirmationState {
-  isOpen: boolean
-  repName: string
-  startDate: ISODate
-  endDate: ISODate
-  returnDate: ISODate
-  workingDays: number
-}
-
-// --- Undo Slice Types ---
-export interface UndoAction {
-  id: string
-  label: string
-  undo: () => void
-  timeoutId?: number
-}
-
-// --- History/Audit Types ---
-export interface HistoryEvent {
-  id: string
-  timestamp: string // ISO
-  title: string
-  category: 'INCIDENT' | 'RULE' | 'CALENDAR' | 'PLANNING' | 'SYSTEM' | 'SETTINGS'
-  subject?: string // e.g., "Ana García"
-  impact?: string // e.g., "-3 Puntos", "Turno Modificado"
-  description?: string // e.g., "Se eliminó el turno"
-  metadata?: Record<string, any>
-}
+import {
+  useAppUiStore,
+  type ConfirmOptions,
+  type UndoAction,
+  type VacationConfirmationPayload,
+} from './useAppUiStore'
 
 export const DOMAIN_VERSION = 7
 
@@ -111,11 +49,6 @@ export type AppState = PlanningBaseState & ManagementScheduleSlice & {
   isLoading: boolean
   planningAnchorDate: ISODate
   allCalendarDaysForRelevantMonths: DayInfo[]
-  confirmState: ConfirmState | null
-  detailModalState: DetailModalState
-  mixedShiftConfirmModalState: MixedShiftConfirmModalState | null
-  vacationConfirmationState: VacationConfirmationState | null
-  undoStack: UndoAction[]
 
   // Actions
   initialize: () => Promise<void>
@@ -150,7 +83,6 @@ export type AppState = PlanningBaseState & ManagementScheduleSlice & {
   dailyLogDate: ISODate
   setDailyLogDate: (date: ISODate) => void
 
-  navigationRequest: { view: 'PLANNING' | 'DAILY_LOG' | 'STATS' | 'SETTINGS' } | null
   requestNavigation: (view: 'PLANNING' | 'DAILY_LOG' | 'STATS' | 'SETTINGS') => void
   clearNavigationRequest: () => void
 
@@ -173,7 +105,7 @@ export type AppState = PlanningBaseState & ManagementScheduleSlice & {
   addHistoryEvent: (data: Omit<HistoryEvent, 'id' | 'timestamp'>) => void
 
   // Audit Actions
-  addAuditEvent: (event: Omit<AuditEvent, 'id' | 'timestamp'>) => void
+  addAuditEvent: (event: AuditEventInput) => void
 
   // Undo Actions
   pushUndo: (
@@ -229,6 +161,36 @@ function normalizeLegacySpecialSchedule(ss: any): SpecialSchedule | null {
   } as SpecialSchedule
 }
 
+function parseIsoDateAtUtcNoon(date: ISODate): Date {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
+}
+
+function formatIsoDateUtc(date: Date): ISODate {
+  return date.toISOString().slice(0, 10)
+}
+
+function startOfWeekMondayUtc(date: Date): Date {
+  const monday = new Date(date)
+  const day = monday.getUTCDay()
+  const diff = day === 0 ? -6 : 1 - day
+  monday.setUTCDate(monday.getUTCDate() + diff)
+  return monday
+}
+
+function addMonthsUtc(date: Date, months: number): Date {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth() + months,
+      date.getUTCDate(),
+      12,
+      0,
+      0
+    )
+  )
+}
+
 export const useAppStore = create<AppState>()(
   immer((set, get, api) => ({
     ...createInitialState(),
@@ -268,20 +230,11 @@ export const useAppStore = create<AppState>()(
     isLoading: true,
     planningAnchorDate: new Date().toISOString().split('T')[0],
     allCalendarDaysForRelevantMonths: [],
-    confirmState: null,
-    detailModalState: {
-      isOpen: false,
-      personId: null,
-      month: null,
-    },
-    vacationConfirmationState: null,
-    mixedShiftConfirmModalState: null,
-    undoStack: [],
 
     dailyLogDate: new Date().toISOString().split('T')[0],
-    navigationRequest: null,
 
     async initialize() {
+      const { loadState, saveState } = await import('@/persistence/storage')
       const stored = await loadState();
       // If nothing is in storage, create and save initial state.
       if (!stored) {
@@ -320,14 +273,14 @@ export const useAppStore = create<AppState>()(
           s.isLoading = false;
         });
       }
+      useAppUiStore.getState().resetTransientState()
       get()._generateCalendarDays();
     },
 
     setPlanningAnchorDate: date => {
       set(state => {
-        const monday = format(
-          startOfWeek(parseISO(date), { weekStartsOn: 1 }),
-          'yyyy-MM-dd'
+        const monday = formatIsoDateUtc(
+          startOfWeekMondayUtc(parseIsoDateAtUtcNoon(date))
         )
         state.planningAnchorDate = monday
       })
@@ -338,12 +291,12 @@ export const useAppStore = create<AppState>()(
       set(state => {
         if (!state.calendar) return
 
-        const anchor = new Date(state.planningAnchorDate + 'T12:00:00Z')
+        const anchor = parseIsoDateAtUtcNoon(state.planningAnchorDate)
         const allDays = new Map<string, DayInfo>()
         for (let i = -6; i <= 18; i++) {
-          const dateToGenerate = addMonths(anchor, i)
-          const year = getYear(dateToGenerate)
-          const month = getMonth(dateToGenerate) + 1
+          const dateToGenerate = addMonthsUtc(anchor, i)
+          const year = dateToGenerate.getUTCFullYear()
+          const month = dateToGenerate.getUTCMonth() + 1
           const monthDays = generateMonthDays(year, month, state.calendar)
           monthDays.forEach(day => {
             if (!allDays.has(day.date)) {
@@ -450,6 +403,7 @@ export const useAppStore = create<AppState>()(
           }
           Object.assign(state, freshState, { isLoading: false })
         })
+        useAppUiStore.getState().resetTransientState()
         get()._generateCalendarDays()
       }
     },
@@ -461,6 +415,17 @@ export const useAppStore = create<AppState>()(
         allCalendarDaysForRelevantMonths,
         showConfirm,
       } = get()
+      const [
+        { validateIncident },
+        { resolveIncidentDates },
+        { buildDisciplinaryKey },
+        { calculatePoints },
+      ] = await Promise.all([
+        import('@/domain/incidents/validateIncident'),
+        import('@/domain/incidents/resolveIncidentDates'),
+        import('@/domain/incidents/buildDisciplinaryKey'),
+        import('@/domain/analytics/computeMonthlySummary'),
+      ])
       const rep = representatives.find(
         r => r.id === incidentData.representativeId
       )
@@ -537,16 +502,19 @@ export const useAppStore = create<AppState>()(
           });
         } else {
           const isOverride = newIncident.type === 'OVERRIDE'
-          const repName = humanize.repName(representatives, newIncident.representativeId)
-          const incidentLabel = humanize.incidentLabel(newIncident.type)
+          const representativeName = repName(
+            representatives,
+            newIncident.representativeId
+          )
+          const label = incidentLabel(newIncident.type)
 
           confirmed = await showConfirm({
             title: isOverride ? 'Confirmar Cambio de Turno' : 'Confirmar Incidencia',
             description: React.createElement('span', null,
               'Registrar ',
-              isOverride ? 'una modificación manual' : React.createElement('strong', { style: { fontWeight: 700, color: 'var(--text-main)' } }, incidentLabel),
+              isOverride ? 'una modificación manual' : React.createElement('strong', { style: { fontWeight: 700, color: 'var(--text-main)' } }, label),
               ' a ',
-              React.createElement('strong', { style: { fontWeight: 700, color: 'var(--text-main)' } }, repName),
+              React.createElement('strong', { style: { fontWeight: 700, color: 'var(--text-main)' } }, representativeName),
               '.'
             ),
             intent: isOverride ? 'info' : 'info',
@@ -564,7 +532,7 @@ export const useAppStore = create<AppState>()(
 
       addHistoryEvent({
         category: 'INCIDENT',
-        title: `${humanize.incidentLabel(newIncident.type)} registrada${newIncident.source === 'COVERAGE' ? ' (Cobertura)' : ''}`,
+        title: `${incidentLabel(newIncident.type)} registrada${newIncident.source === 'COVERAGE' ? ' (Cobertura)' : ''}`,
         subject: rep.name,
         impact: newIncident.type !== 'OVERRIDE' && newIncident.type !== 'VACACIONES' && newIncident.type !== 'LICENCIA' ? `-${calculatePoints(newIncident)} pts` : undefined,
         description: newIncident.note || (newIncident.source === 'COVERAGE' ? `Fallo de cobertura para ${newIncident.slotOwnerId}` : undefined),
@@ -593,6 +561,8 @@ export const useAppStore = create<AppState>()(
         ...newIncident,
         disciplinaryKey: newDisciplinaryKey
       }
+
+      let vacationConfirmation: VacationConfirmationPayload | null = null
 
       set(state => {
         if (incidentWithKey.type === 'AUSENCIA') {
@@ -637,8 +607,7 @@ export const useAppStore = create<AppState>()(
             rep
           )
           if (resolvedDates.dates.length > 0) {
-            state.vacationConfirmationState = {
-              isOpen: true,
+            vacationConfirmation = {
               repName: rep.name,
               startDate: resolvedDates.start || newIncident.startDate,
               endDate: resolvedDates.end || newIncident.startDate,
@@ -648,6 +617,10 @@ export const useAppStore = create<AppState>()(
           }
         }
       })
+
+      if (vacationConfirmation) {
+        useAppUiStore.getState().openVacationConfirmation(vacationConfirmation)
+      }
 
       return { ok: true, newId: newIncident.id }
     },
@@ -662,14 +635,14 @@ export const useAppStore = create<AppState>()(
       if (!incidentToRemove) return
 
       if (!silent) {
-        const repNameText = humanize.repName(
+        const repNameText = repName(
           representatives,
           incidentToRemove.representativeId
         )
 
         addHistoryEvent({
           category: 'INCIDENT',
-          title: `Incidencia eliminada: ${humanize.incidentLabel(
+          title: `Incidencia eliminada: ${incidentLabel(
             incidentToRemove.type
           )}`,
           subject: repNameText,
@@ -694,37 +667,37 @@ export const useAppStore = create<AppState>()(
       })
     },
     removeIncidents: ids => {
-      const { incidents, representatives, pushUndo, addHistoryEvent } = get()
+      const { incidents, representatives, pushUndo, addHistoryEvent, addAuditEvent } = get()
       const incidentsToRemove = incidents.filter(i => ids.includes(i.id))
       if (incidentsToRemove.length === 0) return
 
       const repId = incidentsToRemove[0].representativeId
-      const repNameText = humanize.repName(representatives, repId)
+      const repNameText = repName(representatives, repId)
 
       addHistoryEvent({
         category: 'INCIDENT',
         title: `${incidentsToRemove.length} incidencia(s) eliminada(s)`,
         subject: repNameText,
-        description: `Tipo: ${humanize.incidentLabel(
+        description: `Tipo: ${incidentLabel(
           incidentsToRemove[0].type
         )}`,
         metadata: { incidents: incidentsToRemove },
       })
 
-      set(state => {
-        incidentsToRemove.forEach(incident => {
-          if (incident.type === 'OVERRIDE') return
-          // Legacy logger removed. Replaced with direct appendEvent.
-          useAuditStore.getState().appendEvent({
-            type: 'INCIDENT_REMOVED',
-            actor: 'SYSTEM',
-            payload: {
-              entity: { type: 'INCIDENT', id: incident.id },
-              incidentType: incident.type,
-              reason: 'Bulk deletion'
-            }
-          })
+      incidentsToRemove.forEach(incident => {
+        if (incident.type === 'OVERRIDE') return
+        addAuditEvent({
+          type: 'INCIDENT_REMOVED',
+          actor: 'SYSTEM',
+          payload: {
+            entity: { type: 'INCIDENT', id: incident.id },
+            incidentType: incident.type,
+            reason: 'Bulk deletion'
+          }
         })
+      })
+
+      set(state => {
         state.incidents = state.incidents.filter(i => !ids.includes(i.id))
       })
 
@@ -768,12 +741,12 @@ export const useAppStore = create<AppState>()(
       addHistoryEvent({
         category: 'PLANNING',
         title: 'Cobertura registrada',
-        description: humanize.swapDescription(swap, representatives),
+        description: swapDescription(swap, representatives),
         metadata: { swap },
       })
 
       pushUndo({
-        label: `Cobertura cancelada: ${humanize.swapDescription(swap, representatives).substring(0, 50)}...`,
+        label: `Cobertura cancelada: ${swapDescription(swap, representatives).substring(0, 50)}...`,
         undo: () => {
           set(state => {
             state.swaps = state.swaps.filter(s => s.id !== swap.id);
@@ -781,7 +754,7 @@ export const useAppStore = create<AppState>()(
           addHistoryEvent({
             category: 'SYSTEM',
             title: 'Cambio de turno deshecho',
-            description: `Se revirtió: ${humanize.swapDescription(swap, representatives)}`,
+            description: `Se revirtió: ${swapDescription(swap, representatives)}`,
           });
         }
       });
@@ -795,7 +768,7 @@ export const useAppStore = create<AppState>()(
 
     deactivateRepresentative: async repId => {
       const { showConfirm, representatives, normalizeOrderIndexes } = get()
-      const repNameText = humanize.repName(representatives, repId)
+      const repNameText = repName(representatives, repId)
       const rep = representatives.find(r => r.id === repId)
 
       const confirmed = await showConfirm({
@@ -819,51 +792,17 @@ export const useAppStore = create<AppState>()(
         }
       }
     },
-    showConfirm: (options: ConfirmOptions) => {
-      return new Promise(resolve => {
-        set(state => {
-          state.confirmState = { options, resolve }
-        })
-      })
-    },
-    handleConfirm: (value: boolean) => {
-      set(state => {
-        if (state.confirmState) {
-          state.confirmState.resolve(value)
-          state.confirmState = null
-        }
-      })
-    },
+    showConfirm: options => useAppUiStore.getState().showConfirm(options),
+    handleConfirm: value => useAppUiStore.getState().handleConfirm(value),
     setDailyLogDate: (date) => {
       set(state => { state.dailyLogDate = date })
     },
-    requestNavigation: (view) => {
-      set(state => { state.navigationRequest = { view } })
-    },
-    clearNavigationRequest: () => {
-      set(state => { state.navigationRequest = null })
-    },
-    showMixedShiftConfirmModal: (representativeId, date, activeShift) => {
-      return new Promise(resolve => {
-        set(state => {
-          state.mixedShiftConfirmModalState = {
-            isOpen: true,
-            representativeId,
-            date,
-            activeShift,
-            resolve,
-          }
-        })
-      })
-    },
-    handleMixedShiftConfirm: (assignment: ShiftAssignment | null) => {
-      set(state => {
-        if (state.mixedShiftConfirmModalState) {
-          state.mixedShiftConfirmModalState.resolve(assignment)
-          state.mixedShiftConfirmModalState = null
-        }
-      })
-    },
+    requestNavigation: view => useAppUiStore.getState().requestNavigation(view),
+    clearNavigationRequest: () => useAppUiStore.getState().clearNavigationRequest(),
+    showMixedShiftConfirmModal: (representativeId, date, activeShift) =>
+      useAppUiStore.getState().showMixedShiftConfirmModal(representativeId, date, activeShift),
+    handleMixedShiftConfirm: assignment =>
+      useAppUiStore.getState().handleMixedShiftConfirm(assignment),
     addRepresentative: data => {
       set(state => {
         state.representatives.push({
@@ -1075,33 +1014,9 @@ export const useAppStore = create<AppState>()(
     // ===============================================
     // Manager Actions
     // ===============================================
-    addManager: data => {
-      set(state => {
-        state.managers.push({
-          id: crypto.randomUUID(),
-          ...data,
-        })
-      })
-    },
-
-    removeManager: id => {
-      set(state => {
-        state.managers = state.managers.filter((m: Manager) => m.id !== id)
-        // Also clean up schedules? User said "No validaciones cruzadas", but cleaning up is good.
-        // But maybe we want to keep history?
-        // User said: "Si mañana hay historial → se versiona".
-        // Use safest approach: keep schedules for now (audit), or delete?
-        // Remove manager from representatives array
-        state.representatives = state.representatives.filter(r => r.id !== id)
-      })
-    },
-
-    openDetailModal: (personId, month) => {
-      set({ detailModalState: { isOpen: true, personId, month } })
-    },
-    closeDetailModal: () => {
-      set({ detailModalState: { isOpen: false, personId: null, month: null } })
-    },
+    openDetailModal: (personId, month) =>
+      useAppUiStore.getState().openDetailModal(personId, month),
+    closeDetailModal: () => useAppUiStore.getState().closeDetailModal(),
     addHistoryEvent: (data: Omit<HistoryEvent, 'id' | 'timestamp'>) => {
       set(state => {
         const newEvent: HistoryEvent = {
@@ -1112,48 +1027,17 @@ export const useAppStore = create<AppState>()(
         state.historyEvents.unshift(newEvent)
       })
     },
-    addAuditEvent: (event: Omit<AuditEvent, 'id' | 'timestamp'>) => {
-      // 2. 🟢 NEW: Write to Append-Only Audit Store (Forensic)
-      useAuditStore.getState().appendEvent({
-        type: event.type,
-        actor: event.actor,
-        repId: event.repId,
-        payload: event.payload
-      })
-    },
-    pushUndo: (action, timeoutMs = 6000) => {
-      const { commitUndo } = get()
+    addAuditEvent: (event: AuditEventInput) => {
       set(state => {
-        // Clear any existing stack to enforce single buffer
-        state.undoStack.forEach(item => clearTimeout(item.timeoutId))
-        state.undoStack = []
-
-        const id = `undo-${crypto.randomUUID()}`
-
-        const timeoutId = window.setTimeout(() => {
-          commitUndo(id)
-        }, timeoutMs)
-
-        state.undoStack.push({ ...action, id, timeoutId: timeoutId as any })
+        recordAuditEvent(state, event)
       })
     },
-    commitUndo: (id: string) => {
-      set(state => {
-        state.undoStack = state.undoStack.filter(a => a.id !== id)
-      })
-    },
-    executeUndo: (id: string) => {
-      const { undoStack, commitUndo } = get()
-      const action = undoStack.find(a => a.id === id)
-      if (action) {
-        clearTimeout(action.timeoutId)
-        action.undo()
-        commitUndo(id)
-      }
-    },
-    closeVacationConfirmation: () => {
-      set({ vacationConfirmationState: null })
-    },
+    pushUndo: (action, timeoutMs = 6000) =>
+      useAppUiStore.getState().pushUndo(action, timeoutMs),
+    commitUndo: id => useAppUiStore.getState().commitUndo(id),
+    executeUndo: id => useAppUiStore.getState().executeUndo(id),
+    closeVacationConfirmation: () =>
+      useAppUiStore.getState().closeVacationConfirmation(),
     exportState: () => {
       const {
         representatives,
@@ -1194,7 +1078,7 @@ export const useAppStore = create<AppState>()(
         coverageRules: data.coverageRules ?? [],
         swaps: data.swaps ?? [],
         historyEvents: data.historyEvents ?? [],
-        auditLog: data.auditLog ?? [],
+        auditLog: normalizeAuditLog(data.auditLog),
         specialSchedules: data.specialSchedules ?? [],
         managers: data.managers ?? [],
         managementSchedules: data.managementSchedules ?? {},
@@ -1205,13 +1089,10 @@ export const useAppStore = create<AppState>()(
         Object.assign(state, safeState, {
           isLoading: false,
           planningAnchorDate: new Date().toISOString().split('T')[0],
-          confirmState: null,
-          mixedShiftConfirmModalState: null,
-          vacationConfirmationState: null,
-          undoStack: [],
         })
       })
 
+      useAppUiStore.getState().resetTransientState()
       get()._generateCalendarDays()
 
       return { success: true, message: 'Estado importado correctamente.' }

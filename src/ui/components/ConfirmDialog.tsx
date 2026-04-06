@@ -2,7 +2,6 @@
 
 import React, { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { useAppStore } from '@/store/useAppStore'
 
 type ConfirmIntent = 'danger' | 'warning' | 'info'
 
