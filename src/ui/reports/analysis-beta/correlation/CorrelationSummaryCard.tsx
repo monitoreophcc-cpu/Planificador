@@ -49,7 +49,7 @@ export default function CorrelationSummaryCard({
                 )}
 
                 <p className="text-[11px] mt-3 leading-relaxed opacity-80 italic">
-                    "{narrative}"
+                    &quot;{narrative}&quot;
                 </p>
             </CardContent>
         </Card>

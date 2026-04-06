@@ -6,7 +6,7 @@ import type {
   AbandonedCall,
   Transaction,
   TimeSlotKpi,
-} from '@/domain/operational/dashboard.types';
+} from '@/domain/call-center-analysis/dashboard.types';
 import {
   calculateGlobalKpis,
   calculateKPIsByShift,

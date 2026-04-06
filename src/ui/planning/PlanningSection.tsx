@@ -404,7 +404,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
       data[day.date] = result[activeShift]
     })
     return data
-  }, [weeklyPlan, swaps, coverageRules, weekDays, activeShift, incidents, specialSchedules])
+  }, [weeklyPlan, swaps, coverageRules, weekDays, activeShift, incidents, allCalendarDaysForRelevantMonths, representatives, specialSchedules])
 
   const hasAnyCoverageRule = useMemo(() => {
     return Object.values(coverageData).some(d => d.required > 0)

@@ -12,10 +12,12 @@ import { WeeklyPredictionCard } from './WeeklyPredictionCard'
 import { WeeklyPrediction } from '@/domain/call-center-analysis/prediction/v3/types'
 import './WeeklyPredictionCard.css'
 
-export default {
+const weeklyPredictionCardMeta = {
     title: 'Prediction/WeeklyPredictionCard',
     component: WeeklyPredictionCard,
 }
+
+export default weeklyPredictionCardMeta
 
 // ============================================
 // STORY 1: High Confidence, Stable

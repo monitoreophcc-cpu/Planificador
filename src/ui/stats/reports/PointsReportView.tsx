@@ -324,7 +324,7 @@ export function PointsReportView() {
         }}>
           <ClipboardCheck size={18} />
           <span>
-            Matriz de puntos para "{copiedTitle}" copiada.
+            Matriz de puntos para &quot;{copiedTitle}&quot; copiada.
           </span>
         </div>
       )}

@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest'
 import { belongsToShiftThisWeek } from '@/ui/planning/belongsToShiftThisWeek'
 import {
     Representative,
@@ -140,12 +139,16 @@ describe('🧨 HOSTILE: Planner MIXTO Visibility', () => {
     })
 
     it('❌ FAILS if planner uses baseShift instead of effective state', () => {
-        // Este test verifica que si no hay reglas, SÍ se usa el baseShift.
-        // O mejor dicho: que el Adapter resuelve BASE y luego belongsToShiftThisWeek checkea BASE shift.
+        // Este test blinda el caso fuera del mixProfile:
+        // sin reglas especiales y en un día que NO califica para WEEKEND,
+        // un base NIGHT no debe aparecer en el planner DAY.
+        const weekdayDays: DayInfo[] = [
+            { date: '2026-01-05' } as any, // Monday
+        ]
 
         const visible = belongsToShiftThisWeek(
             emptyWeeklyPresence,
-            weekDays,
+            weekdayDays,
             'DAY',
             nightRep,
             [] // sin reglas especiales

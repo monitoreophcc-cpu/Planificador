@@ -44,7 +44,7 @@ export function getEffectiveDailyCoverage(
             // The plan includes all reps, but we only want to count active ones.
             // We need to look up the rep definition.
             const repDef = representatives.find(r => r.id === agent.representativeId)
-            if (!repDef || repDef.isActive === false) return
+            if (repDef?.isActive === false) return
 
             const day = agent.days[date]
             if (!day) return

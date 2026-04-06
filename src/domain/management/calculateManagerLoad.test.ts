@@ -1,5 +1,3 @@
-
-import { describe, it, expect } from 'vitest'
 import { calculateManagerLoad } from './calculateManagerLoad'
 import { Manager, ManagerWeeklyPlan } from './types'
 import { Incident, Representative } from '@/domain/types'

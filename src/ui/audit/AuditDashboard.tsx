@@ -1,12 +1,12 @@
 'use client'
 
 import React, { useMemo, useState, useEffect } from 'react'
-import { useAuditStore } from '@/store/useAuditStore'
 import { useWeeklySnapshotStore } from '@/store/useWeeklySnapshotStore'
 import { AuditTimeline } from './AuditTimeline'
 import { useAppStore } from '@/store/useAppStore'
 import { useCoverageStore } from '@/store/useCoverageStore'
 import { createWeeklySnapshot } from '@/application/audit/createWeeklySnapshot'
+import { mapAuditEventsToTimeline } from '@/application/audit/getAuditTimeline'
 import { signSnapshotChain } from '@/application/audit/signSnapshotChain'
 import { verifySnapshotChain } from '@/application/audit/verifySnapshotChain'
 import { buildWeeklySchedule } from '@/domain/planning/buildWeeklySchedule'
@@ -70,20 +70,21 @@ function SnapshotCard({ snapshot, allSnapshots }: { snapshot: SignedWeeklySnapsh
 }
 
 export function AuditDashboard() {
-    const events = useAuditStore(s => s.events)
     const { snapshots, addSnapshot, getLatestSnapshot } = useWeeklySnapshotStore(s => ({
         snapshots: s.snapshots,
         addSnapshot: s.addSnapshot,
         getLatestSnapshot: s.getLatestSnapshot
     }))
 
-    const { representatives, incidents, specialSchedules, allCalendarDaysForRelevantMonths, planningAnchorDate, swaps } = useAppStore(s => ({
+    const { representatives, incidents, specialSchedules, allCalendarDaysForRelevantMonths, planningAnchorDate, swaps, auditLog, addAuditEvent } = useAppStore(s => ({
         representatives: s.representatives,
         incidents: s.incidents,
         specialSchedules: s.specialSchedules,
         allCalendarDaysForRelevantMonths: s.allCalendarDaysForRelevantMonths,
         planningAnchorDate: s.planningAnchorDate,
-        swaps: s.swaps
+        swaps: s.swaps,
+        auditLog: s.auditLog,
+        addAuditEvent: s.addAuditEvent
     }))
 
     const coverages = useCoverageStore(s => s.coverages)
@@ -155,9 +156,11 @@ export function AuditDashboard() {
 
             if (success) {
                 // Log Audit Event for the Snapshot Creation itself
-                useAuditStore.getState().appendEvent({
+                addAuditEvent({
                     type: 'SNAPSHOT_CREATED',
                     actor: 'USER',
+                    action: 'SNAPSHOT_CREATED',
+                    target: { entity: 'SNAPSHOT', entityId: snapshot.id },
                     payload: {
                         week: weekStart,
                         signature: signature,
@@ -178,20 +181,8 @@ export function AuditDashboard() {
 
     // Adapter for Timeline
     const timelineItems = useMemo(() => {
-        // We already have a specific adapter mapAuditEventsToTimeline, stick to raw for now or use that?
-        // Using simple mapping for now to avoid circular ref or complexity
-        return events
-            .slice()
-            .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
-            .map(e => ({
-                id: e.id,
-                timestamp: e.timestamp,
-                type: e.type,
-                actor: e.actor,
-                summary: e.type, // Simplification
-                payload: e.payload
-            }))
-    }, [events])
+        return mapAuditEventsToTimeline(auditLog)
+    }, [auditLog])
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>

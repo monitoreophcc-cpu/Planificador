@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Upload, FileCheck, AlertTriangle } from 'lucide-react';
 import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
@@ -46,14 +46,6 @@ export default function FileLoadButtons() {
     const abandonedInputRef = useRef<HTMLInputElement>(null);
     const transactionsInputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-Analyze when files change
-    React.useEffect(() => {
-        const hasAnyFile = files.answered || files.abandoned || files.transactions;
-        if (hasAnyFile) {
-            processFiles();
-        }
-    }, [files]);
-
     const handleFileChange = (type: keyof typeof files, ref: React.RefObject<HTMLInputElement>) => (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -76,7 +68,7 @@ export default function FileLoadButtons() {
         setFiles(prev => ({ ...prev, [type]: file }));
     };
 
-    const processFiles = async () => {
+    const processFiles = useCallback(async () => {
         // Note: Partial processing is allowed now.
 
         try {
@@ -204,7 +196,15 @@ export default function FileLoadButtons() {
             toast({ title: 'Error al procesar', description: e.message, variant: 'destructive' });
             setStatus('IDLE');
         }
-    };
+    }, [files, startAnalysis, toast]);
+
+    // Auto-Analyze when files change
+    React.useEffect(() => {
+        const hasAnyFile = files.answered || files.abandoned || files.transactions;
+        if (hasAnyFile) {
+            void processFiles();
+        }
+    }, [files, processFiles]);
 
     return (
         <div className="flex flex-wrap gap-2 items-center">

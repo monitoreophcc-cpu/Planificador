@@ -14,17 +14,14 @@
 
 import type { Draft } from 'immer'
 import type { PlanningBaseState } from '../types'
-import type { AuditEvent } from './types'
+import type { AuditEventInput } from './types'
+import { buildAuditEvent } from './normalizeAuditEvent'
 
 export function recordAuditEvent(
   state: Draft<PlanningBaseState>,
-  event: Omit<AuditEvent, 'id' | 'timestamp'>
+  event: AuditEventInput
 ): void {
-  const auditEvent: AuditEvent = {
-    id: `audit-${crypto.randomUUID()}`,
-    timestamp: new Date().toISOString(),
-    ...event,
-  }
+  const auditEvent = buildAuditEvent(event)
 
   // Prepend to keep newest-first ordering, which is efficient for logs.
   state.auditLog.unshift(auditEvent)

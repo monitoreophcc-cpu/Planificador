@@ -91,8 +91,6 @@ describe('Domain Rules: Audit Recorder', () => {
     expect(Object.keys(finalState.auditLog[0]).sort()).toEqual([
       'action',
       'actor',
-      'change',
-      'context',
       'id',
       'target',
       'timestamp',

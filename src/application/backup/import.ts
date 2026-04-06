@@ -1,5 +1,6 @@
 import { BackupPayload } from './types'
 import { DOMAIN_VERSION } from '@/store/useAppStore'
+import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
 
 export function parseBackup(text: string): BackupPayload {
   let parsed: unknown
@@ -31,6 +32,8 @@ export function parseBackup(text: string): BackupPayload {
   if (!Array.isArray(payload.incidents)) {
     throw new Error('Respaldo corrupto: incidencias inválidas.')
   }
+
+  payload.auditLog = normalizeAuditLog(payload.auditLog)
 
   return payload
 }

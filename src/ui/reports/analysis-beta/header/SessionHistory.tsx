@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/ui/reports/analysis-beta/ui/sheet';
 import { AnalysisPersistence, SessionSummary } from '@/infra/persistence/analysis-session.db';
@@ -16,7 +16,7 @@ export default function SessionHistory() {
     const { restoreSession } = useOperationalDashboardStore();
     const { toast } = useToast();
 
-    const loadList = async () => {
+    const loadList = useCallback(async () => {
         try {
             const list = await AnalysisPersistence.getSessions();
             setSessions(list);
@@ -24,13 +24,13 @@ export default function SessionHistory() {
             console.error(e);
             toast({ title: 'Error cargando historial', variant: 'destructive' });
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
         if (isOpen) {
-            loadList();
+            void loadList();
         }
-    }, [isOpen]);
+    }, [isOpen, loadList]);
 
     const handleRestore = async (id: string) => {
         try {
@@ -59,7 +59,7 @@ export default function SessionHistory() {
         e.stopPropagation();
         try {
             await AnalysisPersistence.deleteSession(id);
-            loadList(); // Refresh
+            void loadList(); // Refresh
             toast({ title: 'Sesión eliminada' });
         } catch (e) {
             toast({ title: 'Error al eliminar', variant: 'destructive' });

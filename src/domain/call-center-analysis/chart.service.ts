@@ -1,4 +1,4 @@
-import type { Transaction } from '@/domain/operational/dashboard.types';
+import type { Transaction } from '@/domain/call-center-analysis/dashboard.types';
 
 const PLATFORMS_ORDER = [
   'Call Center',
