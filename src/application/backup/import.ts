@@ -34,6 +34,7 @@ export function parseBackup(text: string): BackupPayload {
   }
 
   payload.auditLog = normalizeAuditLog(payload.auditLog)
+  payload.coverages = Array.isArray(payload.coverages) ? payload.coverages : []
 
   return payload
 }

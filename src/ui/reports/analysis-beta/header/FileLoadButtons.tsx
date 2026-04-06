@@ -3,7 +3,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Upload, FileCheck, AlertTriangle } from 'lucide-react';
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import {
     parseCsvFile,
     parseXlsxFile,
@@ -17,10 +17,11 @@ import { KPIService } from '@/domain/call-center-analysis/kpi.service';
 import { ActualOperationalLoadBuilder } from '@/domain/call-center-analysis/builder/ActualOperationalLoadBuilder';
 import { AnsweredCall, AbandonedCall, Transaction } from '@/domain/call-center-analysis/dashboard.types';
 import { PredictionService } from '@/domain/call-center-analysis/prediction/PredictionService';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/ui/reports/analysis-beta/hooks/use-toast';
 import { DateRange } from '@/domain/reporting/types';
-import { AnalysisPersistence } from '@/infra/persistence/analysis-session.db';
-import { AnalysisSession } from '@/store/useOperationalDashboardStore';
+import { AnalysisPersistence } from '@/ui/reports/analysis-beta/persistence/analysis-session.db';
+import { AnalysisSession } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
+import { useReportingDataStore } from '@/store/useReportingDataStore';
 import { parseISO, differenceInDays } from 'date-fns';
 import SessionHistory from './SessionHistory';
 
@@ -152,6 +153,7 @@ export default function FileLoadButtons() {
 
             // 7. Update Store
             useOperationalDashboardStore.getState().restoreSession(session);
+            useReportingDataStore.getState().setSalesAttribution(salesAttribution);
             await AnalysisPersistence.saveSession(session);
 
             const detectedHeaders = rawTransactions.length > 0 ? Object.keys(rawTransactions[0]).slice(0, 5).join(', ') : 'Ninguna fila encontrada';

@@ -37,9 +37,17 @@ export default function Page() {
         setIsReady(true)
 
         void import('@/persistence/backup')
-          .then(({ shouldRunAutoBackup, saveBackupToLocalStorage }) => {
+          .then(async ({ shouldRunAutoBackup, saveBackupToLocalStorage }) => {
             if (!isActive || !shouldRunAutoBackup()) return
-            saveBackupToLocalStorage(useAppStore.getState(), 'auto')
+            const { useCoverageStore } = await import('@/store/useCoverageStore')
+            const { buildBackupPayload } = await import('@/application/backup/buildBackupPayload')
+            saveBackupToLocalStorage(
+              buildBackupPayload(
+                stateToPersist(useAppStore.getState()),
+                useCoverageStore.getState().coverages
+              ),
+              'auto'
+            )
           })
           .catch(error => {
             console.error('[Backup] No se pudo ejecutar el auto-backup.', error)

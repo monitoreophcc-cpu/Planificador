@@ -1,6 +1,6 @@
 import { useAppStore } from "@/store/useAppStore";
 import { DateRange } from "@/domain/reporting/types";
-import { ExpectedCoverageSnapshot } from "@/domain/call-center-analysis/correlation/correlation.types";
+import { ExpectedCoverageSnapshot } from "@/domain/reporting/correlation/correlation.types";
 import { getPlannedAgentsForDay } from "@/application/ui-adapters/getPlannedAgentsForDay";
 import { eachDayOfInterval, parseISO, format } from "date-fns";
 

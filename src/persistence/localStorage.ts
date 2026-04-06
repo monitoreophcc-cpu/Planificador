@@ -1,19 +1,15 @@
 /**
- * localStorage helpers for UI flags and preferences.
- * These are separate from IndexedDB persistence to keep UI state lightweight.
- * SSR-safe: all functions handle cases where localStorage is unavailable.
+ * localStorage helpers for lightweight UI flags and preferences.
+ * These are intentionally separate from IndexedDB state persistence.
  */
 
 const THEME_KEY = 'control-puntos:theme'
 const TUTORIAL_KEY = 'control-puntos:tutorial-seen'
 const FLAG_PREFIX = 'control-puntos:flag:'
 
-// Check if we're in a browser environment with localStorage support
-const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+const isBrowser =
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
-/**
- * Get the current theme mode
- */
 export function getThemeMode(): 'light' | 'dark' | null {
   if (!isBrowser) return null
 
@@ -29,9 +25,6 @@ export function getThemeMode(): 'light' | 'dark' | null {
   }
 }
 
-/**
- * Set the theme mode
- */
 export function setThemeMode(mode: 'light' | 'dark'): void {
   if (!isBrowser) return
 
@@ -42,9 +35,6 @@ export function setThemeMode(mode: 'light' | 'dark'): void {
   }
 }
 
-/**
- * Check if user has seen the tutorial
- */
 export function getHasSeenTutorial(): boolean {
   if (!isBrowser) return false
 
@@ -56,9 +46,6 @@ export function getHasSeenTutorial(): boolean {
   }
 }
 
-/**
- * Mark tutorial as seen
- */
 export function setHasSeenTutorial(seen: boolean): void {
   if (!isBrowser) return
 
@@ -69,9 +56,6 @@ export function setHasSeenTutorial(seen: boolean): void {
   }
 }
 
-/**
- * Get a generic boolean flag
- */
 export function getFlag(key: string): boolean {
   if (!isBrowser) return false
 
@@ -83,9 +67,6 @@ export function getFlag(key: string): boolean {
   }
 }
 
-/**
- * Set a generic boolean flag
- */
 export function setFlag(key: string, value: boolean): void {
   if (!isBrowser) return
 
@@ -96,18 +77,13 @@ export function setFlag(key: string, value: boolean): void {
   }
 }
 
-/**
- * Clear all UI flags (does not touch IndexedDB data)
- */
 export function clearUIFlags(): void {
   if (!isBrowser) return
 
   try {
-    // Remove known keys
     localStorage.removeItem(THEME_KEY)
     localStorage.removeItem(TUTORIAL_KEY)
 
-    // Remove all flag keys
     const keys = Object.keys(localStorage)
     for (const key of keys) {
       if (key.startsWith(FLAG_PREFIX)) {

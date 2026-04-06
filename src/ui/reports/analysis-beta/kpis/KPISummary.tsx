@@ -1,6 +1,6 @@
 'use client';
 
-import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
+import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
 import KPICard from "./KPICard";
 import { formatPercent } from "@/domain/call-center-analysis/utils/format";
 

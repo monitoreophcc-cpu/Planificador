@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { EmptyState } from '@/ui/reports/analysis-beta/ui/EmptyState';
-import { useAgentPerformanceStore } from '@/store/useAgentPerformanceStore';
-import { useOperationalDashboardStore, OperationalStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore, OperationalStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import { BarChart3, Upload } from 'lucide-react';
 import KPISummary from '@/ui/reports/analysis-beta/kpis/KPISummary';
 import FileLoadButtons from '@/ui/reports/analysis-beta/header/FileLoadButtons';
@@ -41,7 +40,6 @@ export function CallCenterAnalysisView() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
             <div className="bg-white border-b border-gray-200 px-6 py-4">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-4">
@@ -60,7 +58,6 @@ export function CallCenterAnalysisView() {
                 </div>
             </div>
 
-            {/* Content */}
             <div className="max-w-7xl mx-auto px-6 py-6">
                 <Tabs defaultValue="dashboard" className="w-full">
                     <TabsList className="grid w-full grid-cols-3 mb-6">
@@ -69,7 +66,6 @@ export function CallCenterAnalysisView() {
                         <TabsTrigger value="transacciones">Transacciones</TabsTrigger>
                     </TabsList>
 
-                    {/* Dashboard Tab */}
                     <TabsContent value="dashboard">
                         {!hasData ? (
                             <EmptyState
@@ -87,7 +83,6 @@ export function CallCenterAnalysisView() {
                         )}
                     </TabsContent>
 
-                    {/* Estadísticas Tab */}
                     <TabsContent value="estadisticas">
                         {!hasData ? (
                             <EmptyState
@@ -97,7 +92,6 @@ export function CallCenterAnalysisView() {
                             />
                         ) : (
                             <div className="space-y-8">
-                                {/* Call Center Metrics */}
                                 <div>
                                     <h2 className="text-2xl font-bold mb-6 text-gray-800">
                                         📞 Call Center
@@ -116,7 +110,6 @@ export function CallCenterAnalysisView() {
                                     </div>
                                 </div>
 
-                                {/* Digital Platforms */}
                                 <div>
                                     <h2 className="text-2xl font-bold mb-6 text-gray-800">
                                         💻 Plataformas Digitales
@@ -130,7 +123,6 @@ export function CallCenterAnalysisView() {
                                     </div>
                                 </div>
 
-                                {/* Branches */}
                                 <div>
                                     <h2 className="text-2xl font-bold mb-6 text-gray-800">
                                         🏢 Sucursales
@@ -141,16 +133,13 @@ export function CallCenterAnalysisView() {
                         )}
                     </TabsContent>
 
-                    {/* Transacciones Tab */}
                     <TabsContent value="transacciones">
                         <div className="space-y-8">
-                            {/* Tabla de Rendimiento por Agente - Siempre visible */}
                             <AgentPerformanceTable />
                         </div>
                     </TabsContent>
                 </Tabs>
 
-                {/* Audit View */}
                 <div className="mt-8">
                     <AuditView />
                 </div>

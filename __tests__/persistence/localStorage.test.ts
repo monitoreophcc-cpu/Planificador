@@ -6,7 +6,7 @@ import {
   getFlag,
   setFlag,
   clearUIFlags,
-} from '../../persistence/localStorage'
+} from '../../src/persistence/localStorage'
 
 describe('persistence/localStorage', () => {
   beforeEach(() => {

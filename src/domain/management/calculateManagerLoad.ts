@@ -5,7 +5,7 @@ import { resolveEffectiveManagerDay } from '@/application/ui-adapters/resolveEff
 import { getDutyHours } from './workload'
 import { parseISO } from 'date-fns'
 
-interface ManagerLoadResult {
+export interface ManagerLoadResult {
     id: string
     name: string
     load: number

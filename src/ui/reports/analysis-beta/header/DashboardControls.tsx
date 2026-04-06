@@ -1,6 +1,6 @@
 'use client';
 
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import { Switch } from '@/ui/reports/analysis-beta/ui/switch';
 import { Label } from '@/ui/reports/analysis-beta/ui/label';
 

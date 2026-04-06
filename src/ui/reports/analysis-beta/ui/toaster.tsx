@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/ui/reports/analysis-beta/hooks/use-toast"
 import {
   Toast,
   ToastClose,

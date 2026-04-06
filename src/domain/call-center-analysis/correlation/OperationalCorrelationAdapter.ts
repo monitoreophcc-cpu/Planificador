@@ -4,7 +4,7 @@ import {
     CorrelationFlag,
     ExpectedCoverageSnapshot,
     OperationalCorrelationResult,
-} from './correlation.types';
+} from '@/domain/reporting/correlation/correlation.types';
 import { ShiftThresholds } from '@/domain/reporting/thresholds/thresholds.types';
 import { evaluateLoadFlags, deriveLoadState } from '@/domain/reporting/trends/load-state.service';
 import { evaluateTrend } from '@/domain/reporting/trends/trend-evaluator.service';

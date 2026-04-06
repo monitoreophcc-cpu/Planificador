@@ -6,8 +6,8 @@ import {
   getMonthlyPointsSummary,
   PayrollRow,
 } from '@/application/stats/getMonthlyPointsSummary'
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore'
-import { formatCurrency } from '@/domain/call-center-analysis/utils/format'
+import { formatCurrency } from '@/lib/formatters'
+import { useReportingDataStore } from '@/store/useReportingDataStore'
 import { format, subMonths, addMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Clipboard, ClipboardCheck, Download, ListOrdered } from 'lucide-react'
@@ -213,6 +213,7 @@ export function PointsReportView() {
     representatives: state.representatives,
     incidents: state.incidents,
   }))
+  const salesAttribution = useReportingDataStore(state => state.salesAttribution)
   const [copiedTitle, setCopiedTitle] = useState<string | false>(false)
   const [reorderModal, setReorderModal] = useState<{ isOpen: boolean; shift: ShiftType }>({
     isOpen: false,
@@ -226,8 +227,8 @@ export function PointsReportView() {
   )
 
   const summary = useMemo(
-    () => getMonthlyPointsSummary(representatives, incidents, monthISO, useOperationalDashboardStore.getState().data.salesAttribution),
-    [representatives, incidents, monthISO]
+    () => getMonthlyPointsSummary(representatives, incidents, monthISO, salesAttribution),
+    [representatives, incidents, monthISO, salesAttribution]
   )
 
   const handleCopy = (text: string, title: string) => {

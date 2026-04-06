@@ -1,58 +1,73 @@
-/**
- * ⚠️ HARDENED VIEW - PLANNING SECTION
- *
- * This is the main container for the weekly planning grid and its associated
- * controls and panels. Its primary responsibilities are:
- * - Managing the active view state (e.g., 'DAY' or 'NIGHT' shift).
- * - Orchestrating user interactions (navigation, modal triggers, overrides).
- * - Consuming domain hooks (`useWeeklyPlan`, `useCoverage`) and passing the
- *   derived state down to presentational components.
- * - Enforcing the contract of "existence" vs. "state" by correctly filtering
- *   the representatives list for the view.
- */
 'use client'
 
-import React, { useMemo, useState, useEffect } from 'react'
-import { PlanView } from './PlanView'
-import { ManagerScheduleManagement } from '../settings/ManagerScheduleManagement'
-import {
+import { useMemo, useState, type MouseEvent } from 'react'
+import type {
   DayInfo,
-  CoverageRule,
-  ShiftType,
-  ISODate,
-  IncidentInput,
-  ResolvedCoverage,
-  Representative,
-  ShiftAssignment,
-  WeeklyPresence,
   Incident,
+  IncidentInput,
+  ISODate,
+  ShiftAssignment,
+  ShiftType,
   SwapEvent,
-} from '../../domain/types'
+} from '@/domain/types'
+import type { EffectiveCoverageResult } from '@/application/ui-adapters/getEffectiveDailyCoverage'
 import { CalendarDayModal } from './CalendarDayModal'
-import { SwapModal } from './SwapModal'
-import { CoverageRulesPanel } from '../coverage/CoverageRulesPanel'
-import { CoverageDetailModal } from '@/components/coverage/CoverageDetailModal' // ✅ NEW
-import { motion, AnimatePresence } from 'framer-motion'
-import { useAppStore } from '@/store/useAppStore'
-import { useCoverageStore } from '@/store/useCoverageStore' // ✅ NEW
-import { useWeeklyPlan } from '../../hooks/useWeeklyPlan'
-
-import { useWeekNavigator } from '@/hooks/useWeekNavigator'
-import { useEditMode } from '@/hooks/useEditMode'
-import { resolveCoverage } from '@/domain/planning/resolveCoverage'
-import { CoverageChart } from '../coverage/CoverageChart'
-import { getEffectiveAssignmentsForPlanner } from '@/application/ui-adapters/getEffectiveAssignmentsForPlanner'
-import {
-  getEffectiveDailyCoverage,
-  EffectiveCoverageResult,
-} from '@/application/ui-adapters/getEffectiveDailyCoverage'
-import * as humanize from '@/application/presenters/humanize'
-import { format, parseISO } from 'date-fns'
-import { HelpPanel } from '../components/HelpPanel'
-import { resolveIncidentDates } from '@/domain/incidents/resolveIncidentDates'
 import { PromptDialog } from '../components/PromptDialog'
-
+import { ManagerScheduleManagement } from '../settings/ManagerScheduleManagement'
+import { useAppStore } from '@/store/useAppStore'
+import { useEditMode } from '@/hooks/useEditMode'
+import { useWeekNavigator } from '@/hooks/useWeekNavigator'
+import { resolveIncidentDates } from '@/domain/incidents/resolveIncidentDates'
+import { getEffectiveAssignmentsForPlanner } from '@/application/ui-adapters/getEffectiveAssignmentsForPlanner'
+import { getEffectiveDailyCoverage } from '@/application/ui-adapters/getEffectiveDailyCoverage'
+import { useWeeklyPlan } from '@/hooks/useWeeklyPlan'
 import { belongsToShiftThisWeek } from './belongsToShiftThisWeek'
+import { PlanningOperationalPanel } from './PlanningOperationalPanel'
+import { PlanningSectionHeader } from './PlanningSectionHeader'
+import {
+  PlanningSectionViewTabs,
+  type PlanningSectionViewMode,
+} from './PlanningSectionViewTabs'
+import { SwapModal } from './SwapModal'
+
+type PromptConfig = {
+  open: boolean
+  title: string
+  description: string
+  placeholder?: string
+  optional?: boolean
+  resolve: (value: string | undefined) => void
+}
+
+type SwapModalState = {
+  isOpen: boolean
+  repId: string | null
+  date: ISODate | null
+  shift: ShiftType | null
+  existingSwap: SwapEvent | null
+}
+
+function createClosedSwapModalState(): SwapModalState {
+  return {
+    isOpen: false,
+    repId: null,
+    date: null,
+    shift: null,
+    existingSwap: null,
+  }
+}
+
+function isRepresentativeInvolvedInSwap(
+  swap: SwapEvent,
+  representativeId: string
+) {
+  return (
+    ('representativeId' in swap && swap.representativeId === representativeId) ||
+    ('fromRepresentativeId' in swap &&
+      swap.fromRepresentativeId === representativeId) ||
+    ('toRepresentativeId' in swap && swap.toRepresentativeId === representativeId)
+  )
+}
 
 export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings: () => void }) {
   const {
@@ -94,7 +109,6 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
 
   const { mode } = useEditMode()
 
-  // --- TIME SOVEREIGN ---
   const {
     weekDays,
     label: weekLabel,
@@ -103,41 +117,22 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     handleNextWeek,
     handleGoToday,
   } = useWeekNavigator(planningAnchorDate, setPlanningAnchorDate)
-  // --- END TIME SOVEREIGN ---
 
-  const { weeklyPlan } = useWeeklyPlan(weekDays) // Consumes weekDays
+  const { weeklyPlan } = useWeeklyPlan(weekDays)
 
   const [activeShift, setActiveShift] = useState<ShiftType>('DAY')
-  const [viewMode, setViewMode] = useState<'OPERATIONAL' | 'MANAGERIAL'>('OPERATIONAL')
+  const [viewMode, setViewMode] =
+    useState<PlanningSectionViewMode>('OPERATIONAL')
   const [editingDay, setEditingDay] = useState<DayInfo | null>(null)
-  // Coverage rule editing is now handled in Settings > Demand
-  const [swapModalState, setSwapModalState] = useState<{
-    isOpen: boolean
-    repId: string | null
-    date: ISODate | null
-    shift: ShiftType | null
-    existingSwap: SwapEvent | null
-  }>({ isOpen: false, repId: null, date: null, shift: null, existingSwap: null })
-
-  // ✅ NEW: Coverage detail modal state
-  const [coverageDetailState, setCoverageDetailState] = useState<{
-    isOpen: boolean
-    coverageId: string | null
-  }>({ isOpen: false, coverageId: null })
+  const [swapModalState, setSwapModalState] = useState<SwapModalState>(
+    createClosedSwapModalState()
+  )
 
   const { showConfirm } = useAppStore(s => ({
     showConfirm: s.showConfirm,
   }))
 
-  // 📝 PROMPT DIALOG STATE
-  const [promptConfig, setPromptConfig] = useState<{
-    open: boolean
-    title: string
-    description: string
-    placeholder?: string
-    optional?: boolean
-    resolve: (value: string | undefined) => void
-  } | null>(null)
+  const [promptConfig, setPromptConfig] = useState<PromptConfig | null>(null)
 
   const showConfirmWithInput = (options: {
     title: string
@@ -157,6 +152,20 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     })
   }
 
+  const handleOpenSwapManager = () => {
+    setSwapModalState({
+      isOpen: true,
+      repId: null,
+      date: planningAnchorDate,
+      shift: activeShift,
+      existingSwap: null,
+    })
+  }
+
+  const handleCloseSwapModal = () => {
+    setSwapModalState(createClosedSwapModalState())
+  }
+
   const togglePlanOverride = async (
     representativeId: string,
     date: ISODate
@@ -165,16 +174,12 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     const rep = representatives.find(r => r.id === representativeId)
     if (!rep) return
 
-    // 🔒 VALIDATION: Block overrides during vacation/license periods
-    // Check if there's an active VACACIONES or LICENCIA incident for this representative
     const blockingIncident = incidents.find(i => {
       if (i.representativeId !== representativeId) return false
       if (!['VACACIONES', 'LICENCIA'].includes(i.type)) return false
 
       const resolved = resolveIncidentDates(i, allCalendarDaysForRelevantMonths, rep)
 
-      // Check if date is within the vacation range (including return date)
-      // We block from start until the day BEFORE return (returnDate is first working day)
       if (resolved.start && resolved.returnDate) {
         return date >= resolved.start && date < resolved.returnDate
       }
@@ -182,10 +187,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
       return false
     })
 
-    if (blockingIncident) {
-      // Silently ignore the click - the cell should appear disabled
-      return
-    }
+    if (blockingIncident) return
 
     const agentPlan = weeklyPlan.agents.find(
       a => a.representativeId === representativeId
@@ -200,33 +202,25 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     ) as (Incident & { previousAssignment?: ShiftAssignment }) | undefined
 
     if (existingOverride) {
-      // This is removing an existing override.
-      // The `undo` action will restore it by re-adding the original `existingOverride` object.
       useAppStore.setState(state => {
         state.incidents = state.incidents.filter(i => i.id !== existingOverride.id)
 
         state.swaps = state.swaps.filter(swap => {
-          if (swap.date !== date) return true;
-          return !(
-            ('representativeId' in swap && swap.representativeId === representativeId) ||
-            ('fromRepresentativeId' in swap && swap.fromRepresentativeId === representativeId) ||
-            ('toRepresentativeId' in swap && swap.toRepresentativeId === representativeId)
-          );
-        });
-
+          if (swap.date !== date) return true
+          return !isRepresentativeInvolvedInSwap(swap, representativeId)
+        })
       })
       pushUndo({
         label: `Reaplicar cambio de turno de ${rep.name}`,
         undo: () => {
           useAppStore.setState(state => {
-            state.incidents.push(existingOverride);
+            state.incidents.push(existingOverride)
           })
         },
       })
       return
     }
 
-    // Creating a new override
     const previousAssignment = dayPresence?.assignment ?? { type: 'NONE' }
     let finalAssignment: ShiftAssignment | null
 
@@ -246,7 +240,6 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         : { type: 'SINGLE', shift: activeShift }
     }
 
-    // ⚡️ SPEED: Override is instant now, explanation via right-click
     const incidentInput: IncidentInput = {
       representativeId,
       startDate: date,
@@ -254,28 +247,23 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
       duration: 1,
       assignment: finalAssignment,
       previousAssignment,
-      note: undefined, // No note initially
+      note: undefined,
     }
 
-    // Since we're not confirming, we add the incident directly.
-    const result = await addIncident(incidentInput, true); // pass true to skip confirmation
+    const result = await addIncident(incidentInput, true)
 
     if (result.ok) {
       pushUndo({
         label: `Deshacer cambio de turno de ${rep.name}`,
         undo: () => {
           useAppStore.setState(state => {
-            state.incidents = state.incidents.filter(i => i.id !== result.newId);
+            state.incidents = state.incidents.filter(i => i.id !== result.newId)
 
             state.swaps = state.swaps.filter(swap => {
-              if (swap.date !== date) return true;
-              const repInvolved =
-                ('representativeId' in swap && swap.representativeId === representativeId) ||
-                ('fromRepresentativeId' in swap && swap.fromRepresentativeId === representativeId) ||
-                ('toRepresentativeId' in swap && swap.toRepresentativeId === representativeId);
-              return !repInvolved;
-            });
-          });
+              if (swap.date !== date) return true
+              return !isRepresentativeInvolvedInSwap(swap, representativeId)
+            })
+          })
         },
       })
     }
@@ -284,67 +272,51 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
   const handleCellContextMenu = async (
     repId: string,
     date: ISODate,
-    e: React.MouseEvent
+    e: MouseEvent
   ) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    // Find existing incident (override) to edit its note
     const existingIncident = incidents.find(
       i =>
         i.representativeId === repId &&
         i.startDate === date &&
         i.type === 'OVERRIDE'
-    );
-
-    const currentNote = existingIncident?.note || '';
+    )
 
     const result = await showConfirmWithInput({
-      title: 'Comentario de Planificación',
-      description: 'Agrega o edita una nota para este día:',
-      placeholder: 'Ej: Permiso especial, cita médica, etc.',
+      title: 'Comentario de Planificacion',
+      description: 'Agrega o edita una nota para este dia:',
+      placeholder: 'Ej: Permiso especial, cita medica, etc.',
       optional: true,
-      // Provide current value if mechanism supported it, but prompt is simple.
-      // We will handle the "add/update" logic below.
-    });
+    })
 
-    if (result === undefined) return; // Specially handled by prompt cancel
+    if (result === undefined) return
 
-    const newNote = result.trim() || undefined;
+    const newNote = result.trim() || undefined
 
     if (existingIncident) {
-      // ✅ Update existing incident using the action
-      useAppStore.getState().updateIncident(existingIncident.id, { note: newNote });
+      useAppStore.getState().updateIncident(existingIncident.id, { note: newNote })
     } else {
-      // If no override exists, we might want to attach a note to the day?
-      // For now, let's create a 'NOTE' type incident or just an OVERRIDE that preserves assignment?
-      // Simplest approach: Create an override that effectively changes nothing in assignment but adds the note.
-      // However, that might be complex.
-      // Given user requirements "sustituir esa acción por la de poner comentarios... al hacer override no aparece mensaje",
-      // The primary use case is documenting an override.
-      // If user right clicks a NORMAL day, they probably want to leave a note.
-      // Let's create an OVERRIDE that REPLICATES current assignment but adds note.
-
-      const rep = representatives.find(r => r.id === repId);
-      if (!weeklyPlan || !rep) return;
-      const agentPlan = weeklyPlan.agents.find(a => a.representativeId === repId);
-      const dayPresence = agentPlan?.days[date];
-      const currentAssignment = dayPresence?.assignment ?? { type: 'NONE' };
+      if (!weeklyPlan) return
+      const agentPlan = weeklyPlan.agents.find(a => a.representativeId === repId)
+      const dayPresence = agentPlan?.days[date]
+      const currentAssignment = dayPresence?.assignment ?? { type: 'NONE' }
 
       const incidentInput: IncidentInput = {
         representativeId: repId,
         startDate: date,
         type: 'OVERRIDE',
         duration: 1,
-        assignment: currentAssignment, // Preserve current state
+        assignment: currentAssignment,
         previousAssignment: currentAssignment,
         note: newNote,
       }
 
-      if (newNote) { // Only create if there is a note
-        addIncident(incidentInput, true);
+      if (newNote) {
+        addIncident(incidentInput, true)
       }
     }
-  };
+  }
 
   const assignmentsMap = useMemo(() => {
     if (!weeklyPlan) return {}
@@ -387,7 +359,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
   }, [weeklyPlan, weekDays, activeShift, activeRepresentatives, specialSchedules])
 
   const coverageData = useMemo(() => {
-    if (!weeklyPlan) return {}
+    if (!weeklyPlan) return {} as Record<ISODate, EffectiveCoverageResult>
     const data: Record<ISODate, EffectiveCoverageResult> = {}
 
     weekDays.forEach(day => {
@@ -406,25 +378,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     return data
   }, [weeklyPlan, swaps, coverageRules, weekDays, activeShift, incidents, allCalendarDaysForRelevantMonths, representatives, specialSchedules])
 
-  const hasAnyCoverageRule = useMemo(() => {
-    return Object.values(coverageData).some(d => d.required > 0)
-  }, [coverageData])
-
-  const shiftTabStyle = (isActive: boolean) => ({
-    padding: 'var(--space-sm) var(--space-md)',
-    cursor: 'pointer',
-    border: 'none',
-    borderBottom: isActive
-      ? '2px solid var(--text-main)'
-      : '2px solid transparent',
-    color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-    fontWeight: isActive ? 'var(--font-weight-semibold)' : 'var(--font-weight-medium)',
-    background: 'transparent',
-    fontSize: 'var(--font-size-md)',
-    marginRight: '10px',
-  })
-
-  if (isLoading || !weekDays || weekDays.length === 0) {
+  if (isLoading || weekDays.length === 0) {
     return (
       <div style={{ padding: 'var(--space-xl)', fontFamily: 'sans-serif', color: 'var(--text-muted)' }}>
         Cargando planificación...
@@ -434,246 +388,44 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
 
   return (
     <div style={{ background: 'var(--bg-app)', minHeight: '100vh', padding: 'var(--space-lg)' }}>
-      <div
-        style={{
-          marginBottom: 'var(--space-lg)',
-          padding: 'var(--space-md) var(--space-lg)',
-          background: 'var(--bg-surface)',
-          borderRadius: 'var(--radius-card)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          border: `1px solid ${mode === 'ADMIN_OVERRIDE' ? '#f59e0b' : 'var(--border-subtle)'
-            }`,
-          height: '74px',
-          boxSizing: 'border-box',
-          transition: 'border-color 0.3s ease',
-          boxShadow: 'var(--shadow-sm)',
+      <PlanningSectionHeader
+        activeShift={activeShift}
+        highlightAdminOverride={mode === 'ADMIN_OVERRIDE'}
+        isCurrentWeek={isCurrentWeek}
+        weekLabel={weekLabel}
+        onGoToday={handleGoToday}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+      />
+
+      <PlanningSectionViewTabs
+        activeShift={activeShift}
+        viewMode={viewMode}
+        onSelectDay={() => {
+          setActiveShift('DAY')
+          setViewMode('OPERATIONAL')
         }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-            <h2 style={{ margin: 0, fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--font-size-lg)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', color: 'var(--text-main)' }}>
-              Planificación
-              <span style={{
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                padding: '2px 8px',
-                borderRadius: '99px',
-                background: 'var(--accent-soft)',
-                color: 'var(--accent)',
-                border: '1px solid var(--accent)'
-              }}>
-                {activeShift === 'DAY' ? '🌞 Turno Día' : '🌙 Turno Noche'}
-              </span>
-            </h2>
-            <HelpPanel
-              title="¿Cómo usar el planner?"
-              points={[
-                'Click en una celda para cambiar el turno del agente',
-                'Click derecho para gestionar swaps y coberturas',
-                'El gráfico lateral muestra la cobertura requerida vs actual',
-              ]}
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-
-            {!isCurrentWeek && (
-              <button
-                onClick={handleGoToday}
-                style={{
-                  padding: '6px 12px',
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--text-main)',
-                  cursor: 'pointer',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              >
-                Hoy
-              </button>
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', background: 'var(--bg-surface)', padding: '6px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-sm)' }}>
-              <button
-                onClick={handlePrevWeek}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  padding: '6px 10px',
-                  borderRadius: 'var(--radius-sm)'
-                }}
-              >
-                &lt;
-              </button>
-              <div
-                style={{
-                  fontSize: 'var(--font-size-lg)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--text-main)',
-                  width: '220px',
-                  textAlign: 'center',
-                }}
-              >
-                {weekLabel}
-              </div>
-              <button
-                onClick={handleNextWeek}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  padding: '6px 10px',
-                  borderRadius: 'var(--radius-sm)'
-                }}
-              >
-                &gt;
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 'var(--space-lg)' }}>
-        <div
-          style={{
-            borderBottom: '1px solid var(--border-subtle)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div>
-            <button
-              style={shiftTabStyle(activeShift === 'DAY' && viewMode === 'OPERATIONAL')}
-              onClick={() => { setActiveShift('DAY'); setViewMode('OPERATIONAL') }}
-            >
-              Turno Día
-            </button>
-            <button
-              style={shiftTabStyle(activeShift === 'NIGHT' && viewMode === 'OPERATIONAL')}
-              onClick={() => { setActiveShift('NIGHT'); setViewMode('OPERATIONAL') }}
-            >
-              Turno Noche
-            </button>
-            <button
-              style={shiftTabStyle(viewMode === 'MANAGERIAL')}
-              onClick={() => setViewMode('MANAGERIAL')}
-            >
-              Horario Gerencial
-            </button>
-          </div>
-          {viewMode === 'OPERATIONAL' && (
-            <button
-              onClick={() =>
-                setSwapModalState({
-                  isOpen: true,
-                  repId: null,
-                  date: planningAnchorDate,
-                  shift: activeShift,
-                  existingSwap: null,
-                })
-              }
-              style={{
-                padding: 'var(--space-sm) var(--space-md)',
-                backgroundColor: 'var(--accent)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontWeight: 'var(--font-weight-semibold)',
-                fontSize: 'var(--font-size-base)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-sm)',
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
-              Gestionar Cambios
-            </button>
-          )}
-        </div>
-      </div>
+        onSelectNight={() => {
+          setActiveShift('NIGHT')
+          setViewMode('OPERATIONAL')
+        }}
+        onSelectManagerial={() => setViewMode('MANAGERIAL')}
+        onOpenSwapManager={handleOpenSwapManager}
+      />
 
       {viewMode === 'OPERATIONAL' ? (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={weeklyPlan ? weeklyPlan.weekStart + activeShift : activeShift}
-            initial={{
-              opacity: 0,
-            }}
-            animate={{ opacity: 1 }}
-            exit={{
-              opacity: 0,
-            }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-            {weeklyPlan ? (
-              <div
-                style={{
-                  display: 'flex',
-                  overflowX: 'hidden', // Containment
-                  gap: 'var(--space-xl)',
-                  alignItems: 'start',
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <PlanView
-                    weeklyPlan={weeklyPlan}
-                    weekDays={weekDays}
-                    agents={agentsToRender}
-                    activeShift={activeShift}
-                    assignmentsMap={assignmentsMap}
-                    onCellClick={(repId, date) => togglePlanOverride(repId, date)}
-                    onCellContextMenu={handleCellContextMenu}
-                    onEditDay={setEditingDay}
-                  />
-                </div>
-
-                <aside style={{ position: 'sticky', top: '20px', width: '340px', flexShrink: 0 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 'var(--space-lg)',
-                    }}
-                  >
-                    {hasAnyCoverageRule ? (
-                      <CoverageChart data={coverageData} />
-                    ) : (
-                      /* Empty state handled now by Matrix in Settings */
-                      <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-strong)', textAlign: 'center', color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}>
-                        Sin reglas de cobertura activas.
-                      </div>
-                    )}
-
-                    <CoverageRulesPanel
-                      onNavigateToSettings={onNavigateToSettings}
-                    />
-                  </div>
-                </aside>
-              </div>
-            ) : (
-              <div>Cargando plan...</div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+        <PlanningOperationalPanel
+          activeShift={activeShift}
+          assignmentsMap={assignmentsMap}
+          coverageData={coverageData}
+          agents={agentsToRender}
+          weekDays={weekDays}
+          weeklyPlan={weeklyPlan}
+          onCellClick={togglePlanOverride}
+          onCellContextMenu={handleCellContextMenu}
+          onEditDay={setEditingDay}
+          onNavigateToSettings={onNavigateToSettings}
+        />
       ) : (
         <ManagerScheduleManagement embedded />
       )}
@@ -703,32 +455,10 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
           initialShift={swapModalState.shift || activeShift}
           initialRepId={swapModalState.repId || undefined}
           existingSwap={swapModalState.existingSwap || undefined}
-          onClose={() =>
-            setSwapModalState({
-              isOpen: false,
-              repId: null,
-              date: null,
-              shift: null,
-              existingSwap: null,
-            })
-          }
+          onClose={handleCloseSwapModal}
         />
       )}
 
-      {/* ✅ NEW: Coverage Detail Modal */}
-      {coverageDetailState.isOpen && coverageDetailState.coverageId && (
-        <CoverageDetailModal
-          mode="VIEW"
-          coverageId={coverageDetailState.coverageId}
-          onClose={() => setCoverageDetailState({ isOpen: false, coverageId: null })}
-          onCancel={() => {
-            // Refresh after cancellation
-            setCoverageDetailState({ isOpen: false, coverageId: null })
-          }}
-        />
-      )}
-
-      {/* GLOBAL PROMPT DIALOG */}
       {promptConfig && (
         <PromptDialog
           open={promptConfig.open}

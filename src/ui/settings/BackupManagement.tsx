@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
+import { useCoverageStore } from '@/store/useCoverageStore'
+import { buildBackupPayload } from '@/application/backup/buildBackupPayload'
 import {
     exportBackup,
     importBackup,
@@ -14,7 +16,9 @@ import {
 import { Download, Upload, Trash2, Save, AlertCircle } from 'lucide-react'
 
 export function BackupManagement() {
-    const { representatives, incidents, calendar, coverageRules, swaps, specialSchedules, historyEvents, auditLog, managers, managementSchedules, version, importState } = useAppStore()
+    const exportState = useAppStore(state => state.exportState)
+    const importState = useAppStore(state => state.importState)
+    const coverages = useCoverageStore(state => state.coverages)
     const [backups, setBackups] = useState<Array<{ key: string; timestamp: string; size: number }>>([])
     const [autoBackup, setAutoBackup] = useState<{ timestamp: string; size: number } | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -34,20 +38,7 @@ export function BackupManagement() {
 
     const handleExport = () => {
         try {
-            const state = {
-                representatives,
-                incidents,
-                calendar,
-                coverageRules,
-                swaps,
-                specialSchedules,
-                historyEvents,
-                auditLog,
-                managers,
-                managementSchedules,
-                version,
-            }
-            exportBackup(state)
+            exportBackup(buildBackupPayload(exportState(), coverages))
             setSuccess('Backup exportado exitosamente')
             setTimeout(() => setSuccess(null), 3000)
         } catch (err) {
@@ -63,16 +54,16 @@ export function BackupManagement() {
             const state = await importBackup(file)
 
             if (confirm('¿Estás seguro de que deseas restaurar este backup? Esto reemplazará todos los datos actuales.')) {
-                // Restore state - add required metadata
-                const payload = {
-                    ...state,
-                    managers: state.managers || [],
-                    managementSchedules: state.managementSchedules || {},
-                    exportedAt: new Date().toISOString(),
-                    appVersion: 1,
-                }
-                await importState(payload)
-                setSuccess('Backup restaurado exitosamente')
+                const payload = buildBackupPayload(
+                    {
+                        ...state,
+                        managers: state.managers || [],
+                        managementSchedules: state.managementSchedules || {},
+                    },
+                    state.coverages || []
+                )
+                const result = await importState(payload)
+                setSuccess(result.message)
                 setTimeout(() => setSuccess(null), 3000)
             }
         } catch (err) {
@@ -85,20 +76,7 @@ export function BackupManagement() {
 
     const handleSaveBackup = () => {
         try {
-            const state = {
-                representatives,
-                incidents,
-                calendar,
-                coverageRules,
-                swaps,
-                specialSchedules,
-                historyEvents,
-                auditLog,
-                managers,
-                managementSchedules,
-                version,
-            }
-            saveBackupToLocalStorage(state)
+            saveBackupToLocalStorage(buildBackupPayload(exportState(), coverages))
             refreshBackupList()
             setSuccess('Backup guardado en el navegador')
             setTimeout(() => setSuccess(null), 3000)
@@ -107,7 +85,7 @@ export function BackupManagement() {
         }
     }
 
-    const handleRestoreBackup = (key: string) => {
+    const handleRestoreBackup = async (key: string) => {
         if (!confirm('¿Estás seguro de que deseas restaurar este backup?')) return
 
         try {
@@ -117,16 +95,16 @@ export function BackupManagement() {
                 return
             }
 
-            // Add required metadata
-            const payload = {
-                ...state,
-                managers: state.managers || [],
-                managementSchedules: state.managementSchedules || {},
-                exportedAt: new Date().toISOString(),
-                appVersion: 1,
-            }
-            importState(payload)
-            setSuccess('Backup restaurado exitosamente')
+            const payload = buildBackupPayload(
+                {
+                    ...state,
+                    managers: state.managers || [],
+                    managementSchedules: state.managementSchedules || {},
+                },
+                state.coverages || []
+            )
+            const result = await importState(payload)
+            setSuccess(result.message)
             setTimeout(() => setSuccess(null), 3000)
         } catch (err) {
             setError('Error al restaurar backup: ' + (err as Error).message)

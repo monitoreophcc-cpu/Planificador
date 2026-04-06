@@ -1,4 +1,4 @@
-import { useOperationalDashboardStore } from "@/store/useOperationalDashboardStore";
+import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
 import { usePlannerContext } from "@/application/ui-adapters/reporting/usePlannerContext";
 import { OperationalCorrelationAdapter } from "@/domain/call-center-analysis/correlation/OperationalCorrelationAdapter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";

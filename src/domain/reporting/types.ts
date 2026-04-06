@@ -9,3 +9,12 @@ export interface AnalysisContext {
     dateRange: DateRange;
     granularity: 'DAY' | 'WEEK' | 'MONTH';
 }
+
+export interface SalesAttributionAgentSummary {
+    agentName: string;
+    totalValue: number;
+}
+
+export interface SalesAttributionSummary {
+    byAgent: SalesAttributionAgentSummary[];
+}

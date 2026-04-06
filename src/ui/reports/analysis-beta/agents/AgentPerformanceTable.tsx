@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useAgentPerformanceStore } from '@/store/useAgentPerformanceStore';
-import { useOperationalDashboardStore } from '@/store/useOperationalDashboardStore';
+import { useAgentPerformanceStore } from '@/ui/reports/analysis-beta/store/useAgentPerformanceStore';
+import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
 import { Copy, Trash2 } from 'lucide-react';
 
 export function AgentPerformanceTable() {

@@ -1,4 +1,4 @@
-import { OperationalCorrelationResult } from "@/domain/call-center-analysis/correlation/correlation.types";
+import { OperationalCorrelationResult } from "@/domain/reporting/correlation/correlation.types";
 import { deriveSemanticStatus } from "@/domain/reporting/semantics/correlation.semantics";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { format, parseISO } from "date-fns";

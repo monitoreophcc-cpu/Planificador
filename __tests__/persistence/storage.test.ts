@@ -5,7 +5,7 @@ import {
   clearStorage,
   openDatabase,
   STATE_OBJECT_STORE_NAME,
-} from '../../persistence/storage'
+} from '../../src/persistence/storage'
 import { createInitialState } from '../../src/domain/state'
 import type { PlanningBaseState } from '../../src/domain/types'
 import { IDBPDatabase } from 'idb'
