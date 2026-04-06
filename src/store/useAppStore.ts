@@ -11,7 +11,6 @@ import {
 } from '@/domain/types'
 import { createInitialState } from '@/domain/state'
 import { BackupPayload } from '@/application/backup/types'
-import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
 import { ManagementScheduleSlice, createManagementScheduleSlice } from './managementScheduleSlice'
 import { EventLogSlice, createEventLogSlice } from './eventLogSlice'
 import {
@@ -38,8 +37,12 @@ import {
   type ConfirmOptions,
   type UndoAction,
 } from './useAppUiStore'
-
-export const DOMAIN_VERSION = 7
+import { DOMAIN_VERSION } from './appStoreConstants'
+import {
+  exportPlanningState,
+  importAppState,
+  initializeAppState,
+} from './appStorePersistence'
 
 // --- Main App State ---
 export type AppState = PlanningBaseState &
@@ -103,49 +106,7 @@ export const useAppStore = create<AppState>()(
 
     dailyLogDate: new Date().toISOString().split('T')[0],
 
-    async initialize() {
-      const { loadState, saveState } = await import('@/persistence/storage')
-      const stored = await loadState();
-      // If nothing is in storage, create and save initial state.
-      if (!stored) {
-        const initialState = createInitialState();
-        set(s => {
-          Object.assign(s, initialState);
-          s.isLoading = false;
-        });
-        await saveState(initialState);
-      } else {
-        // Otherwise, load the stored state.
-        set(s => {
-          Object.assign(s, stored);
-
-          // 🔧 Migración: asignar orderIndex si no existe
-          s.representatives.forEach((rep, index) => {
-            if (rep.orderIndex === undefined) {
-              rep.orderIndex = index
-            }
-          })
-
-          // 🧹 MIGRACIÓN SUAVE: Normalizar legacy sin weeklyPattern
-          // En lugar de borrar, reconstruimos el patrón para no perder datos históricos
-          if (s.specialSchedules && s.specialSchedules.length > 0) {
-            const initialCount = s.specialSchedules.length
-
-            s.specialSchedules = s.specialSchedules
-              .map(normalizeLegacySpecialSchedule)
-              .filter((ss): ss is SpecialSchedule => !!ss)
-
-            if (s.specialSchedules.length < initialCount) {
-              console.warn(`🧹 Migración: Se descartaron ${initialCount - s.specialSchedules.length} reglas irrecuperables.`)
-            }
-          }
-
-          s.isLoading = false;
-        });
-      }
-      useAppUiStore.getState().resetTransientState()
-      get()._generateCalendarDays();
-    },
+    initialize: () => initializeAppState(set, get),
 
     resetState: async keepFormalIncidents => {
       const { showConfirm } = get()
@@ -195,110 +156,13 @@ export const useAppStore = create<AppState>()(
     closeVacationConfirmation: () =>
       useAppUiStore.getState().closeVacationConfirmation(),
     exportState: () => {
-      const {
-        representatives,
-        incidents,
-        calendar,
-        coverageRules,
-        swaps,
-        specialSchedules,
-        historyEvents,
-        auditLog,
-        managers,
-        managementSchedules,
-        version,
-      } = get()
-
-      return {
-        representatives,
-        incidents,
-        calendar,
-        coverageRules,
-        swaps,
-        specialSchedules,
-        historyEvents,
-        auditLog,
-        managers,
-        managementSchedules,
-        version,
-      }
+      return exportPlanningState(get())
     },
-    importState: async (data: BackupPayload) => {
-      const safeState: PlanningBaseState = {
-        ...createInitialState(),
-        representatives: Array.isArray(data.representatives)
-          ? data.representatives
-          : [],
-        incidents: Array.isArray(data.incidents) ? data.incidents : [],
-        calendar: data.calendar ?? createInitialState().calendar,
-        coverageRules: data.coverageRules ?? [],
-        swaps: data.swaps ?? [],
-        historyEvents: data.historyEvents ?? [],
-        auditLog: normalizeAuditLog(data.auditLog),
-        specialSchedules: data.specialSchedules ?? [],
-        managers: data.managers ?? [],
-        managementSchedules: data.managementSchedules ?? {},
-        version: DOMAIN_VERSION,
-      }
-
-      set(state => {
-        Object.assign(state, safeState, {
-          isLoading: false,
-          planningAnchorDate: new Date().toISOString().split('T')[0],
-        })
-      })
-
-      useAppUiStore.getState().resetTransientState()
-      get()._generateCalendarDays()
-
-      try {
-        const { useCoverageStore } = await import('./useCoverageStore')
-        useCoverageStore
-          .getState()
-          .replaceCoverages(Array.isArray(data.coverages) ? data.coverages : [])
-      } catch (error) {
-        console.error(
-          '[Backup] El estado base fue restaurado, pero no se pudieron restaurar las coberturas.',
-          error
-        )
-        return {
-          success: true,
-          message:
-            'Estado importado correctamente. Las coberturas no pudieron restaurarse.',
-        }
-      }
-
-      return { success: true, message: 'Estado importado correctamente.' }
-    },
+    importState: data => importAppState(set, get, data),
   }))
 )
 
 // This function is defined here because it needs access to `get` from the store creation context.
 export const stateToPersist = (state: AppState): PlanningBaseState => {
-  const {
-    representatives,
-    incidents,
-    calendar,
-    coverageRules,
-    swaps,
-    specialSchedules,
-    historyEvents,
-    auditLog,
-    managers,
-    managementSchedules,
-    version,
-  } = state
-  return {
-    representatives,
-    incidents,
-    calendar,
-    coverageRules,
-    swaps,
-    specialSchedules,
-    historyEvents,
-    auditLog,
-    managers,
-    managementSchedules,
-    version,
-  }
+  return exportPlanningState(state)
 }

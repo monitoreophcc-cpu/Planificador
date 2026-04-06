@@ -1,5 +1,5 @@
 import { BackupPayload } from './types'
-import { DOMAIN_VERSION } from '@/store/useAppStore'
+import { DOMAIN_VERSION } from '@/store/appStoreConstants'
 import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
 
 export function parseBackup(text: string): BackupPayload {

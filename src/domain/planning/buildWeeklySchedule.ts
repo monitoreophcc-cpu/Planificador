@@ -18,13 +18,15 @@ import {
   SpecialSchedule,
   ShiftAssignment
 } from '../types'
-import { resolveIncidentDates } from '../incidents/resolveIncidentDates'
-import { isWithinInterval, parseISO } from 'date-fns'
 import { getEffectiveSchedule } from '@/application/scheduling/specialScheduleAdapter'
 import { DayPlan, DayReality, DayResolution } from './dayResolution'
 import { computeDayMetrics } from './computeDayMetrics'
 import { dayResolutionToDailyPresence } from './dayResolutionAdapter'
 import { CoverageLookup, Coverage, findCoverageForDay } from './coverage'
+import {
+  buildDailyIncidentMap,
+  buildSpecialSchedulesMap,
+} from './buildWeeklyScheduleMaps'
 
 /**
  * The core deterministic function that resolves the status for a single representative on a single day.
@@ -168,51 +170,9 @@ export function buildWeeklySchedule(
   }
 
   const weekStart = weekDays[0].date
-
-  // 1. Pre-process Incidents (Range Expansion)
-  // We need to map [Date] -> [Incidents[]] for O(1) lookup per agent/day
-  // Key: "repId:date" -> Incident[]
-  const dailyIncidentMap = new Map<string, Incident[]>()
-
-  // A. Range Incidents (Vacation/License)
-  incidents
-    .filter(i => i.type === 'VACACIONES' || i.type === 'LICENCIA')
-    .forEach(i => {
-      const resolved = resolveIncidentDates(i, allCalendarDays)
-      resolved.dates.forEach(date => {
-        const key = `${i.representativeId}:${date}`
-        if (!dailyIncidentMap.has(key)) dailyIncidentMap.set(key, [])
-        dailyIncidentMap.get(key)!.push(i)
-      })
-    })
-
-  // B. Single Day Incidents (Override/Absence/Swap)
-  // Although typically 1 day, we use the resolver to safely handle any duration.
-  incidents
-    .filter(i => i.type === 'OVERRIDE' || i.type === 'AUSENCIA' || i.type === 'SWAP')
-    .forEach(i => {
-      const resolved = resolveIncidentDates(i, allCalendarDays)
-      resolved.dates.forEach(date => {
-        const key = `${i.representativeId}:${date}`
-        if (!dailyIncidentMap.has(key)) dailyIncidentMap.set(key, [])
-        dailyIncidentMap.get(key)!.push(i)
-      })
-    })
-
-
-  // 2. Separate Global vs Individual Special Schedules
-  const globalSchedules = specialSchedules.filter(ss => ss.scope === 'GLOBAL')
-
-  // 3. Map Individual Schedules by ID
-  const individualSchedulesMap = new Map<string, SpecialSchedule[]>()
-  specialSchedules.forEach(ss => {
-    if (ss.scope === 'INDIVIDUAL' && ss.targetId) {
-      if (!individualSchedulesMap.has(ss.targetId)) {
-        individualSchedulesMap.set(ss.targetId, [])
-      }
-      individualSchedulesMap.get(ss.targetId)!.push(ss)
-    }
-  })
+  const dailyIncidentMap = buildDailyIncidentMap(incidents, allCalendarDays)
+  const { globalSchedules, individualSchedulesMap } =
+    buildSpecialSchedulesMap(specialSchedules)
 
   return {
     weekStart,
