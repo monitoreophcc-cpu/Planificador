@@ -43,13 +43,6 @@ import {
   initializeAppState,
 } from './appStorePersistence'
 import { useCloudSyncStore, type CloudSyncStatus } from './useCloudSyncStore'
-import {
-  extractWeeklyPlansFromHistoryEvents,
-  ensureCloudSyncWatcher,
-  loadCloudSnapshotIfNeeded,
-  mergeCloudPlanningHistory,
-  runCloudSync,
-} from './appStoreCloudSync'
 import { createAppStoreUiBridge } from './appStoreUiBridge'
 
 // --- Main App State ---
@@ -98,6 +91,8 @@ export type AppState = PlanningBaseState &
 
 export const useAppStore = create<AppState>()(
   immer((set, get, api) => {
+    const loadCloudSyncModule = () => import('./appStoreCloudSync')
+
     const setCloudStatus = (status: CloudSyncStatus) => {
       set(state => {
         state.cloudSyncStatus = status
@@ -130,12 +125,23 @@ export const useAppStore = create<AppState>()(
       cloudSyncStatus: 'synced',
       dailyLogDate: new Date().toISOString().split('T')[0],
 
-      triggerCloudSync: async () => runCloudSync(get, setCloudStatus),
+      triggerCloudSync: async () => {
+        const { runCloudSync } = await loadCloudSyncModule()
+        await runCloudSync(get, setCloudStatus)
+      },
 
       initialize: async () => {
         await initializeAppState(set, get)
+        let cloudSyncModule: Awaited<ReturnType<typeof loadCloudSyncModule>> | null =
+          null
 
         try {
+          cloudSyncModule = await loadCloudSyncModule()
+          const {
+            extractWeeklyPlansFromHistoryEvents,
+            loadCloudSnapshotIfNeeded,
+            mergeCloudPlanningHistory,
+          } = cloudSyncModule
           const cloudState = await loadCloudSnapshotIfNeeded(get())
 
           if (cloudState) {
@@ -168,12 +174,14 @@ export const useAppStore = create<AppState>()(
           )
         }
 
-        ensureCloudSyncWatcher(
-          listener => api.subscribe(listener),
-          get,
-          get().triggerCloudSync,
-          setCloudStatus
-        )
+        if (cloudSyncModule) {
+          cloudSyncModule.ensureCloudSyncWatcher(
+            listener => api.subscribe(listener),
+            get,
+            get().triggerCloudSync,
+            setCloudStatus
+          )
+        }
       },
 
       resetState: async keepFormalIncidents => {

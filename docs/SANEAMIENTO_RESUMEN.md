@@ -7,12 +7,12 @@ Rama de trabajo: `codex-saneamiento-fase-0`
 
 Este archivo resume el estado actual del saneamiento y sirve como referencia rápida.
 
-Los documentos `SANEAMIENTO_FASE0.md` a `SANEAMIENTO_FASE4.md` se conservan como bitácora histórica por fase.  
+Los documentos `SANEAMIENTO_FASE0.md` a `SANEAMIENTO_FASE6.md` se conservan como bitácora histórica por fase.  
 Este resumen es la lectura operativa actual.
 
 ## Estado general
 
-El saneamiento principal del repositorio quedó completado hasta Fase 4.
+El saneamiento principal del repositorio quedó completado hasta Fase 6.
 
 Estado verificado hoy:
 
@@ -23,8 +23,9 @@ Estado verificado hoy:
 
 Build medido:
 
-- `/` = `21.4 kB`
-- `First Load JS` = `171 kB`
+- `/` = `6.38 kB`
+- `First Load JS` = `95.2 kB`
+- `/login` = `683 B`
 
 ## Resumen por fase
 
@@ -92,6 +93,33 @@ Estado:
 
 - cerrada
 
+### Fase 5 - Compuertas de calidad
+
+Resultado:
+
+- el build quedó sin bypasses
+- la CI ejecuta `typecheck`, `lint`, `test` y `build`
+- el repositorio ya no oculta degradación técnica
+
+Estado:
+
+- cerrada del lado del repositorio
+- pendiente de confirmación remota en GitHub para branch protection y required checks
+
+### Fase 6 - Deuda restante sin incendio
+
+Resultado:
+
+- persistencia legacy consolidada
+- autosave y bootstrap endurecidos
+- residuos eliminados
+- documentación completada
+- performance recuperada en `/` y `/login`
+
+Estado:
+
+- cerrada en términos prácticos
+
 ## Estado actual del sistema
 
 ### Core
@@ -138,10 +166,11 @@ No forman parte del cierre del saneamiento principal:
 - reactivación de la Beta
 - endurecimiento profundo de `call-center-analysis`
 - mejoras futuras sobre Supabase, RLS o verificación operativa remota
+- branch protection remota en GitHub si todavía no está aplicada
 
 ## Propuesta de siguiente etapa
 
-Si se abre una Fase 5, debería tener un foco único y explícito.
+Si se abre una siguiente etapa, debería tener un foco único y explícito.
 
 Las opciones más razonables son:
 
