@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect } from 'react'
 import { useSession } from '@/hooks/useSession'
 import { useCloudSyncStore } from '@/store/useCloudSyncStore'
@@ -64,11 +65,12 @@ export function SessionUserBar() {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {avatarUrl ? (
-          <img
+          <Image
             src={avatarUrl}
             alt={fullName ?? user.email ?? 'Usuario'}
             width={28}
             height={28}
+            unoptimized
             style={{ borderRadius: '50%' }}
           />
         ) : null}

@@ -5,22 +5,20 @@ import type {
   DayInfo,
   ShiftType,
 } from '@/domain/types'
-import { CalendarDayModal } from './CalendarDayModal'
-import { PromptDialog } from '../components/PromptDialog'
 import { ManagerScheduleManagement } from '../settings/ManagerScheduleManagement'
 import { useAppStore } from '@/store/useAppStore'
 import { useEditMode } from '@/hooks/useEditMode'
 import { useWeekNavigator } from '@/hooks/useWeekNavigator'
 import { useWeeklyPlan } from '@/hooks/useWeeklyPlan'
-import { PlanningOperationalPanel } from './PlanningOperationalPanel'
 import { PlanningSectionHeader } from './PlanningSectionHeader'
 import {
   PlanningSectionViewTabs,
   type PlanningSectionViewMode,
 } from './PlanningSectionViewTabs'
-import { SwapModal } from './SwapModal'
 import { usePlanningSectionDerivedData } from './usePlanningSectionDerivedData'
 import { usePlanningSectionActions } from './usePlanningSectionActions'
+import { PlanningSectionContent } from './PlanningSectionContent'
+import { PlanningSectionModals } from './PlanningSectionModals'
 
 export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings: () => void }) {
   const {
@@ -144,63 +142,41 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         onOpenSwapManager={handleOpenSwapManager}
       />
 
-      {viewMode === 'OPERATIONAL' ? (
-        <PlanningOperationalPanel
-          activeShift={activeShift}
-          assignmentsMap={assignmentsMap}
-          coverageData={coverageData}
-          agents={agentsToRender}
-          weekDays={weekDays}
-          weeklyPlan={weeklyPlan}
-          onCellClick={togglePlanOverride}
-          onCellContextMenu={handleCellContextMenu}
-          onEditDay={setEditingDay}
-          onNavigateToSettings={onNavigateToSettings}
-        />
-      ) : (
-        <ManagerScheduleManagement embedded />
-      )}
+      <PlanningSectionContent
+        activeShift={activeShift}
+        assignmentsMap={assignmentsMap}
+        coverageData={coverageData}
+        agentsToRender={agentsToRender}
+        onEditDay={setEditingDay}
+        onNavigateToSettings={onNavigateToSettings}
+        onTogglePlanOverride={togglePlanOverride}
+        onCellContextMenu={handleCellContextMenu}
+        viewMode={viewMode}
+        weekDays={weekDays}
+        weeklyPlan={weeklyPlan}
+      />
 
-      {editingDay && (
-        <CalendarDayModal
-          day={editingDay}
-          onClose={() => setEditingDay(null)}
-          onSave={addOrUpdateSpecialDay}
-          onClear={async date => {
-            const confirmed = await showConfirm({
-              title: '¿Quitar Excepción?',
-              description: `Esto restaurará el comportamiento por defecto del día ${date}.`,
-              intent: 'warning',
-            })
-            if (confirmed) {
-              removeSpecialDay(date)
-            }
-          }}
-        />
-      )}
-
-      {swapModalState.isOpen && weeklyPlan && (
-        <SwapModal
-          weeklyPlan={weeklyPlan}
-          initialDate={swapModalState.date || planningAnchorDate}
-          initialShift={swapModalState.shift || activeShift}
-          initialRepId={swapModalState.repId || undefined}
-          existingSwap={swapModalState.existingSwap || undefined}
-          onClose={handleCloseSwapModal}
-        />
-      )}
-
-      {promptConfig && (
-        <PromptDialog
-          open={promptConfig.open}
-          title={promptConfig.title}
-          description={promptConfig.description}
-          placeholder={promptConfig.placeholder}
-          optional={promptConfig.optional}
-          onConfirm={(val) => promptConfig.resolve(val)}
-          onCancel={() => promptConfig.resolve(undefined)}
-        />
-      )}
+      <PlanningSectionModals
+        activeShift={activeShift}
+        addOrUpdateSpecialDay={addOrUpdateSpecialDay}
+        editingDay={editingDay}
+        onClearDay={async date => {
+          const confirmed = await showConfirm({
+            title: '¿Quitar Excepción?',
+            description: `Esto restaurará el comportamiento por defecto del día ${date}.`,
+            intent: 'warning',
+          })
+          if (confirmed) {
+            removeSpecialDay(date)
+          }
+        }}
+        onCloseEditDay={() => setEditingDay(null)}
+        onCloseSwapModal={handleCloseSwapModal}
+        planningAnchorDate={planningAnchorDate}
+        promptConfig={promptConfig}
+        swapModalState={swapModalState}
+        weeklyPlan={weeklyPlan}
+      />
     </div>
   )
 }

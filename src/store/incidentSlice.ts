@@ -1,6 +1,5 @@
 import type { StateCreator } from 'zustand'
 import type { Incident, IncidentInput } from '@/domain/types'
-import { incidentLabel, repName } from '@/application/presenters/humanizeStore'
 import type { VacationConfirmationPayload } from './useAppUiStore'
 import { useAppUiStore } from './useAppUiStore'
 import type { AppState } from './useAppStore'
@@ -12,6 +11,11 @@ import {
   loadIncidentRuntime,
   recordCreatedIncident,
 } from './incidentSliceHelpers'
+import {
+  removeBulkIncidents,
+  removeSingleIncident,
+  updateIncidentRecord,
+} from './incidentRemoval'
 
 export interface IncidentSlice {
   addIncident: (
@@ -119,111 +123,10 @@ export const createIncidentSlice: StateCreator<
     return { ok: true, newId: newIncident.id }
   },
 
-  removeIncident: (id, silent = false) => {
-    const { incidents, representatives, addHistoryEvent, addAuditEvent } = get()
-    const incidentToRemove = incidents.find(incident => incident.id === id)
+  removeIncident: (id, silent = false) =>
+    removeSingleIncident(get, set, id, silent),
 
-    if (!incidentToRemove) return
+  removeIncidents: ids => removeBulkIncidents(get, set, ids),
 
-    if (!silent) {
-      const representativeName = repName(
-        representatives,
-        incidentToRemove.representativeId
-      )
-
-      addHistoryEvent({
-        category: 'INCIDENT',
-        title: `Incidencia eliminada: ${incidentLabel(incidentToRemove.type)}`,
-        subject: representativeName,
-        metadata: { incident: incidentToRemove },
-      })
-      addAuditEvent({
-        type: 'INCIDENT_REMOVED',
-        actor: 'SYSTEM',
-        payload: {
-          entity: { type: 'INCIDENT', id: incidentToRemove.id },
-          incidentType: incidentToRemove.type,
-          date: incidentToRemove.startDate,
-          representativeId: incidentToRemove.representativeId,
-          reason: 'Manual deletion',
-        },
-      })
-    }
-
-    set(state => {
-      state.incidents = state.incidents.filter(incident => incident.id !== id)
-    })
-  },
-
-  removeIncidents: ids => {
-    const {
-      incidents,
-      representatives,
-      pushUndo,
-      addHistoryEvent,
-      addAuditEvent,
-    } = get()
-    const incidentsToRemove = incidents.filter(incident =>
-      ids.includes(incident.id)
-    )
-
-    if (incidentsToRemove.length === 0) return
-
-    const repId = incidentsToRemove[0].representativeId
-    const representativeName = repName(representatives, repId)
-
-    addHistoryEvent({
-      category: 'INCIDENT',
-      title: `${incidentsToRemove.length} incidencia(s) eliminada(s)`,
-      subject: representativeName,
-      description: `Tipo: ${incidentLabel(incidentsToRemove[0].type)}`,
-      metadata: { incidents: incidentsToRemove },
-    })
-
-    incidentsToRemove.forEach(incident => {
-      if (incident.type === 'OVERRIDE') return
-
-      addAuditEvent({
-        type: 'INCIDENT_REMOVED',
-        actor: 'SYSTEM',
-        payload: {
-          entity: { type: 'INCIDENT', id: incident.id },
-          incidentType: incident.type,
-          reason: 'Bulk deletion',
-        },
-      })
-    })
-
-    set(state => {
-      state.incidents = state.incidents.filter(
-        incident => !ids.includes(incident.id)
-      )
-    })
-
-    pushUndo({
-      label: `Restauradas ${incidentsToRemove.length} incidencias de ${representativeName}`,
-      undo: () => {
-        addHistoryEvent({
-          category: 'SYSTEM',
-          title: 'Incidencias restauradas por "Deshacer"',
-          subject: representativeName,
-          metadata: { incidents: incidentsToRemove },
-        })
-
-        set(state => {
-          state.incidents.push(...incidentsToRemove)
-        })
-      },
-    })
-  },
-
-  updateIncident: (id, updates) => {
-    set(state => {
-      const index = state.incidents.findIndex(incident => incident.id === id)
-
-      if (index !== -1) {
-        state.incidents[index] = { ...state.incidents[index], ...updates }
-      }
-    })
-  },
+  updateIncident: (id, updates) => updateIncidentRecord(set, id, updates),
 })
