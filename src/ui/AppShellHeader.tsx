@@ -1,5 +1,8 @@
 'use client'
 
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useSession } from '@/hooks/useSession'
+import { useAppStore } from '@/store/useAppStore'
 import type { AppShellView } from './appShellTypes'
 
 type AppShellHeaderProps = {
@@ -18,13 +21,59 @@ export function AppShellHeader({
   activeView,
   onViewChange,
 }: AppShellHeaderProps) {
+  const { user, loading, signOut } = useSession()
+  const cloudSyncStatus = useAppStore(state => state.cloudSyncStatus)
+  const [isOnline, setIsOnline] = useState(
+    typeof window === 'undefined' ? true : window.navigator.onLine
+  )
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  const userName = useMemo(() => {
+    if (typeof user?.user_metadata?.full_name === 'string') {
+      return user.user_metadata.full_name
+    }
+
+    return user?.email ?? 'Usuario'
+  }, [user])
+
+  const userAvatar = useMemo(() => {
+    return typeof user?.user_metadata?.avatar_url === 'string'
+      ? user.user_metadata.avatar_url
+      : null
+  }, [user])
+
+  const syncLabel = useMemo(() => {
+    if (!isOnline || cloudSyncStatus === 'offline' || cloudSyncStatus === 'error') {
+      return '🔴 Sin conexión'
+    }
+
+    if (cloudSyncStatus === 'syncing') {
+      return '🟡 Sincronizando...'
+    }
+
+    return '🟢 Sincronizado'
+  }, [cloudSyncStatus, isOnline])
+
   return (
     <header
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: '64px',
+        gap: 'var(--space-lg)',
+        minHeight: '64px',
         padding: '0 var(--space-xl)',
         background: 'var(--bg-surface)',
         borderBottom: '1px solid var(--border-subtle)',
@@ -32,6 +81,7 @@ export function AppShellHeader({
         position: 'sticky',
         top: 0,
         zIndex: 100,
+        flexWrap: 'wrap',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
@@ -59,7 +109,7 @@ export function AppShellHeader({
         </span>
       </div>
 
-      <nav style={{ display: 'flex', height: '100%', gap: 'var(--space-sm)' }}>
+      <nav style={{ display: 'flex', height: '100%', gap: 'var(--space-sm)', flex: 1 }}>
         {APP_SHELL_VIEWS.map(view => (
           <button
             key={view.id}
@@ -70,11 +120,128 @@ export function AppShellHeader({
           </button>
         ))}
       </nav>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-md)',
+          marginLeft: 'auto',
+          padding: 'var(--space-sm) 0',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
+            padding: 'var(--space-sm) var(--space-md)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-subtle)',
+            background: 'var(--bg-subtle)',
+            color: 'var(--text-muted)',
+            fontSize: 'var(--font-size-sm)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {syncLabel}
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '999px',
+              overflow: 'hidden',
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--bg-subtle)',
+              display: 'grid',
+              placeItems: 'center',
+              color: 'var(--text-main)',
+              fontWeight: 600,
+              flexShrink: 0,
+            }}
+          >
+            {userAvatar ? (
+              <div
+                role="img"
+                aria-label={userName}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundImage: `url("${userAvatar}")`,
+                  backgroundPosition: 'center',
+                  backgroundSize: 'cover',
+                }}
+              />
+            ) : (
+              <span>{userName.slice(0, 1).toUpperCase()}</span>
+            )}
+          </div>
+
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                color: 'var(--text-main)',
+                fontSize: 'var(--font-size-sm)',
+                fontWeight: 600,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 180,
+              }}
+            >
+              {loading ? 'Cargando sesión...' : userName}
+            </div>
+            {user?.email && (
+              <div
+                style={{
+                  color: 'var(--text-muted)',
+                  fontSize: 'var(--font-size-xs)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: 180,
+                }}
+              >
+                {user.email}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          disabled={loading}
+          style={{
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-surface)',
+            color: 'var(--text-main)',
+            padding: '10px 14px',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Cerrar sesión
+        </button>
+      </div>
     </header>
   )
 }
 
-function getViewTabStyle(isActive: boolean): React.CSSProperties {
+function getViewTabStyle(isActive: boolean): CSSProperties {
   return {
     padding: '0 var(--space-md)',
     cursor: 'pointer',

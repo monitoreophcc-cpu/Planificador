@@ -27,9 +27,10 @@ export async function updateSession(
     }
   )
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data, error } = await supabase.auth.getClaims()
 
-  return { response, hasSession: Boolean(session) }
+  return {
+    response,
+    hasSession: !error && Boolean(data?.claims?.sub),
+  }
 }
