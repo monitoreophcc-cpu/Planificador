@@ -2,7 +2,13 @@
 
 import { create } from 'zustand'
 
-export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'error'
+export type CloudSyncStatus =
+  | 'checking'
+  | 'synced'
+  | 'syncing'
+  | 'offline'
+  | 'error'
+  | 'unauthenticated'
 
 type CloudSyncState = {
   status: CloudSyncStatus
@@ -10,6 +16,6 @@ type CloudSyncState = {
 }
 
 export const useCloudSyncStore = create<CloudSyncState>(set => ({
-  status: 'synced',
+  status: 'checking',
   setStatus: status => set({ status }),
 }))

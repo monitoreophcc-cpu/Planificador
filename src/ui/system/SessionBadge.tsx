@@ -3,11 +3,14 @@
 import { useSession } from '@/hooks/useSession'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { useAppStore } from '@/store/useAppStore'
+import type { CloudSyncStatus } from '@/store/useCloudSyncStore'
 
-function syncText(status: 'synced' | 'syncing' | 'offline' | 'error', online: boolean): string {
+function syncText(status: CloudSyncStatus, online: boolean): string {
   if (!online || status === 'offline') return '🔴 Sin conexión'
+  if (status === 'error') return '🔴 Error de sync'
+  if (status === 'unauthenticated') return '⚪ Inicia sesión'
+  if (status === 'checking') return '⚪ Verificando...'
   if (status === 'syncing') return '🟡 Sincronizando...'
-  if (status === 'error') return '🔴 Sin conexión'
   return '🟢 Sincronizado'
 }
 

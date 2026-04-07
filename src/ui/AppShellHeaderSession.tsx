@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo } from 'react'
 import { useSession } from '@/hooks/useSession'
 import { useAppShellSyncMeta } from './useAppShellSyncMeta'
@@ -21,6 +22,71 @@ export function AppShellHeaderSession() {
       ? user.user_metadata.avatar_url
       : null
   }, [user])
+
+  if (!loading && !user) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-sm)',
+          marginLeft: 'auto',
+          padding: 'var(--space-sm) 0',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-sm)',
+            padding: '10px 12px',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-subtle)',
+            background:
+              'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-subtle) 100%)',
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '999px',
+              background: syncMeta.tone,
+              boxShadow: `0 0 0 4px ${syncMeta.surface}`,
+              flexShrink: 0,
+            }}
+          />
+          <span
+            style={{
+              color: 'var(--text-main)',
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 600,
+            }}
+          >
+            Sesion no disponible
+          </span>
+        </div>
+
+        <Link
+          href="/login"
+          style={{
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-surface)',
+            color: 'var(--text-main)',
+            padding: '10px 12px',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 600,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Entrar
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div

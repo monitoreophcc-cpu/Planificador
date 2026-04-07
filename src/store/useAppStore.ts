@@ -122,7 +122,7 @@ export const useAppStore = create<AppState>()(
       ...createSpecialScheduleSlice(setWithCloudSync, get, api),
       ...createSwapSlice(setWithCloudSync, get, api),
       isLoading: true,
-      cloudSyncStatus: 'synced',
+      cloudSyncStatus: 'checking',
       dailyLogDate: new Date().toISOString().split('T')[0],
 
       triggerCloudSync: async () => {

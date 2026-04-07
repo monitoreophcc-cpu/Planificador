@@ -44,12 +44,16 @@ export function SessionUserBar() {
   const fullName = user.user_metadata.full_name as string | undefined
   const avatarUrl = user.user_metadata.avatar_url as string | undefined
   const syncLabel =
-    syncStatus === 'syncing'
+    syncStatus === 'checking'
+      ? '⚪ Verificando...'
+      : syncStatus === 'syncing'
       ? '🟡 Sincronizando...'
+      : syncStatus === 'unauthenticated'
+        ? '⚪ Inicia sesión'
       : syncStatus === 'offline'
         ? '🔴 Sin conexión'
         : syncStatus === 'error'
-          ? '🔴 Sin conexión'
+          ? '🔴 Error de sync'
           : '🟢 Sincronizado'
 
   return (
