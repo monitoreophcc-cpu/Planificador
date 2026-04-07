@@ -5,13 +5,10 @@ import { immer } from 'zustand/middleware/immer'
 import {
   PlanningBaseState,
   ISODate,
-  WeeklyPlan,
-  Incident,
   ShiftAssignment,
 } from '@/domain/types'
 import { createInitialState } from '@/domain/state'
 import type { BackupPayload } from '@/application/backup/types'
-import type { HistoryEvent } from '@/domain/history/types'
 import {
   ManagementScheduleSlice,
   createManagementScheduleSlice,
@@ -45,61 +42,15 @@ import {
   importAppState,
   initializeAppState,
 } from './appStorePersistence'
-import { createClient } from '@/lib/supabase/client'
+import { useCloudSyncStore, type CloudSyncStatus } from './useCloudSyncStore'
 import {
   extractWeeklyPlansFromHistoryEvents,
-  loadFromSupabase,
-  syncAll,
-} from '@/persistence/supabase-sync'
-import { useCloudSyncStore, type CloudSyncStatus } from './useCloudSyncStore'
-
-let hasCloudSyncWatcher = false
-
-function buildCloudPlanHistoryEvents(weeklyPlans: WeeklyPlan[]): HistoryEvent[] {
-  return [...weeklyPlans]
-    .sort((left, right) => left.weekStart.localeCompare(right.weekStart))
-    .map(plan => ({
-      id: `hist-cloud-plan-${plan.weekStart}`,
-      timestamp: `${plan.weekStart}T12:00:00.000Z`,
-      category: 'PLANNING' as const,
-      title: 'Plan semanal sincronizado',
-      description: 'Importado desde Supabase',
-      metadata: {
-        weeklyPlan: plan,
-        source: 'SUPABASE',
-      },
-    }))
-}
-
-function mergeCloudPlanningHistory(
-  historyEvents: HistoryEvent[],
-  weeklyPlans: WeeklyPlan[]
-): HistoryEvent[] {
-  const nonPlanningHistory = historyEvents.filter(
-    event => event.category !== 'PLANNING'
-  )
-
-  return [...nonPlanningHistory, ...buildCloudPlanHistoryEvents(weeklyPlans)]
-}
-
-function computeCloudSignature(state: Pick<AppState, 'representatives' | 'incidents' | 'swaps' | 'coverageRules' | 'historyEvents'>): string {
-  return JSON.stringify({
-    representatives: state.representatives,
-    incidents: state.incidents,
-    swaps: state.swaps,
-    coverageRules: state.coverageRules,
-    weeklyPlans: extractWeeklyPlansFromHistoryEvents(state.historyEvents),
-  })
-}
-
-function hasLocalCloudData(state: Pick<AppState, 'representatives' | 'incidents' | 'swaps' | 'coverageRules' | 'historyEvents'>): boolean {
-  return (
-    state.representatives.length > 0 ||
-    state.incidents.length > 0 ||
-    state.swaps.length > 0 ||
-    extractWeeklyPlansFromHistoryEvents(state.historyEvents).length > 0
-  )
-}
+  ensureCloudSyncWatcher,
+  loadCloudSnapshotIfNeeded,
+  mergeCloudPlanningHistory,
+  runCloudSync,
+} from './appStoreCloudSync'
+import { createAppStoreUiBridge } from './appStoreUiBridge'
 
 // --- Main App State ---
 export type AppState = PlanningBaseState &
@@ -179,52 +130,15 @@ export const useAppStore = create<AppState>()(
       cloudSyncStatus: 'synced',
       dailyLogDate: new Date().toISOString().split('T')[0],
 
-      triggerCloudSync: async () => {
-        if (typeof window !== 'undefined' && !window.navigator.onLine) {
-          setCloudStatus('offline')
-          return
-        }
-
-        try {
-          const supabase = createClient()
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
-
-          if (!session?.user.id) {
-            setCloudStatus('synced')
-            return
-          }
-
-          setCloudStatus('syncing')
-
-          const result = await syncAll(get(), session.user.id)
-
-          if (result.success) {
-            setCloudStatus('synced')
-          } else if (result.error === 'offline_pending_sync') {
-            setCloudStatus('offline')
-          } else {
-            setCloudStatus('error')
-          }
-        } catch (error) {
-          console.error('[Cloud Sync] No se pudo sincronizar con Supabase.', error)
-          setCloudStatus('error')
-        }
-      },
+      triggerCloudSync: async () => runCloudSync(get, setCloudStatus),
 
       initialize: async () => {
         await initializeAppState(set, get)
 
         try {
-          const supabase = createClient()
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
+          const cloudState = await loadCloudSnapshotIfNeeded(get())
 
-          if (session?.user.id && !hasLocalCloudData(get())) {
-            const cloudState = await loadFromSupabase(session.user.id)
-
+          if (cloudState) {
             set(state => {
               state.representatives = cloudState.representatives
               state.incidents = cloudState.incidents
@@ -254,35 +168,12 @@ export const useAppStore = create<AppState>()(
           )
         }
 
-        if (typeof window !== 'undefined' && !hasCloudSyncWatcher) {
-          let lastSignature = computeCloudSignature(get())
-          let syncTimer: number | undefined
-
-          api.subscribe(state => {
-            if (state.isLoading) return
-
-            const nextSignature = computeCloudSignature(state)
-            if (nextSignature === lastSignature) return
-
-            lastSignature = nextSignature
-            window.clearTimeout(syncTimer)
-            syncTimer = window.setTimeout(() => {
-              void get().triggerCloudSync()
-            }, 500)
-          })
-
-          window.addEventListener('online', () => {
-            void get().triggerCloudSync()
-          })
-
-          hasCloudSyncWatcher = true
-        }
-
-        if (typeof window !== 'undefined' && window.navigator.onLine) {
-          void get().triggerCloudSync()
-        } else {
-          setCloudStatus('offline')
-        }
+        ensureCloudSyncWatcher(
+          listener => api.subscribe(listener),
+          get,
+          get().triggerCloudSync,
+          setCloudStatus
+        )
       },
 
       resetState: async keepFormalIncidents => {
@@ -313,32 +204,12 @@ export const useAppStore = create<AppState>()(
         get()._generateCalendarDays()
       },
 
-      showConfirm: options => useAppUiStore.getState().showConfirm(options),
-      handleConfirm: value => useAppUiStore.getState().handleConfirm(value),
+      ...createAppStoreUiBridge(),
       setDailyLogDate: date => {
         set(state => {
           state.dailyLogDate = date
         })
       },
-      requestNavigation: view =>
-        useAppUiStore.getState().requestNavigation(view),
-      clearNavigationRequest: () =>
-        useAppUiStore.getState().clearNavigationRequest(),
-      showMixedShiftConfirmModal: (representativeId, date, activeShift) =>
-        useAppUiStore
-          .getState()
-          .showMixedShiftConfirmModal(representativeId, date, activeShift),
-      handleMixedShiftConfirm: assignment =>
-        useAppUiStore.getState().handleMixedShiftConfirm(assignment),
-      openDetailModal: (personId, month) =>
-        useAppUiStore.getState().openDetailModal(personId, month),
-      closeDetailModal: () => useAppUiStore.getState().closeDetailModal(),
-      pushUndo: (action, timeoutMs = 6000) =>
-        useAppUiStore.getState().pushUndo(action, timeoutMs),
-      commitUndo: id => useAppUiStore.getState().commitUndo(id),
-      executeUndo: id => useAppUiStore.getState().executeUndo(id),
-      closeVacationConfirmation: () =>
-        useAppUiStore.getState().closeVacationConfirmation(),
       exportState: () => exportPlanningState(get()),
       importState: async data => {
         const result = await importAppState(set, get, data)

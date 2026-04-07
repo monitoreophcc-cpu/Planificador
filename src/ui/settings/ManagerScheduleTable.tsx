@@ -4,6 +4,7 @@ import {
   DndContext,
   type DragEndEvent,
   closestCenter,
+  useSensors,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -33,7 +34,7 @@ interface ManagerScheduleTableProps {
   onNewManagerNameChange: (value: string) => void
   removeManager: (id: string) => void
   representatives: Representative[]
-  sensors: any
+  sensors: ReturnType<typeof useSensors>
   weekDays: DayInfo[]
 }
 
