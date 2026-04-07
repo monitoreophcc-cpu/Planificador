@@ -1,0 +1,1 @@
+-- Intentionally empty. Local IndexedDB remains the primary working store.

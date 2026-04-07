@@ -54,16 +54,28 @@ export function AppShellHeader({
       : null
   }, [user])
 
-  const syncLabel = useMemo(() => {
+  const syncMeta = useMemo(() => {
     if (!isOnline || cloudSyncStatus === 'offline' || cloudSyncStatus === 'error') {
-      return '🔴 Sin conexión'
+      return {
+        label: 'Sin conexión',
+        tone: '#dc2626',
+        surface: 'rgba(220, 38, 38, 0.12)',
+      }
     }
 
     if (cloudSyncStatus === 'syncing') {
-      return '🟡 Sincronizando...'
+      return {
+        label: 'Sincronizando...',
+        tone: '#d97706',
+        surface: 'rgba(217, 119, 6, 0.12)',
+      }
     }
 
-    return '🟢 Sincronizado'
+    return {
+      label: 'Sincronizado',
+      tone: '#16a34a',
+      surface: 'rgba(22, 163, 74, 0.12)',
+    }
   }, [cloudSyncStatus, isOnline])
 
   return (
@@ -125,9 +137,11 @@ export function AppShellHeader({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 'var(--space-md)',
+          gap: 'var(--space-sm)',
           marginLeft: 'auto',
           padding: 'var(--space-sm) 0',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
         }}
       >
         <div
@@ -135,30 +149,17 @@ export function AppShellHeader({
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--space-sm)',
-            padding: 'var(--space-sm) var(--space-md)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
-            background: 'var(--bg-subtle)',
-            color: 'var(--text-muted)',
-            fontSize: 'var(--font-size-sm)',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {syncLabel}
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-sm)',
             minWidth: 0,
+            padding: '10px 12px',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-subtle)',
+            background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-subtle) 100%)',
           }}
         >
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 34,
+              height: 34,
               borderRadius: '999px',
               overflow: 'hidden',
               border: '1px solid var(--border-subtle)',
@@ -191,7 +192,7 @@ export function AppShellHeader({
             <div
               style={{
                 color: 'var(--text-main)',
-                fontSize: 'var(--font-size-sm)',
+                fontSize: '0.95rem',
                 fontWeight: 600,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -201,20 +202,52 @@ export function AppShellHeader({
             >
               {loading ? 'Cargando sesión...' : userName}
             </div>
-            {user?.email && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                marginTop: 2,
+                minWidth: 0,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '999px',
+                  background: syncMeta.tone,
+                  boxShadow: `0 0 0 4px ${syncMeta.surface}`,
+                  flexShrink: 0,
+                }}
+              />
               <div
                 style={{
-                  color: 'var(--text-muted)',
+                  color: syncMeta.tone,
                   fontSize: 'var(--font-size-xs)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  maxWidth: 180,
+                  fontWeight: 600,
                 }}
               >
-                {user.email}
+                {syncMeta.label}
               </div>
-            )}
+              {user?.email && typeof user.user_metadata?.full_name === 'string' && (
+                <div
+                  style={{
+                    color: 'var(--text-muted)',
+                    fontSize: 'var(--font-size-xs)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 160,
+                  }}
+                  title={user.email}
+                >
+                  {user.email}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -227,14 +260,14 @@ export function AppShellHeader({
             borderRadius: 'var(--radius-md)',
             background: 'var(--bg-surface)',
             color: 'var(--text-main)',
-            padding: '10px 14px',
+            padding: '10px 12px',
             fontSize: 'var(--font-size-sm)',
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
             whiteSpace: 'nowrap',
           }}
         >
-          Cerrar sesión
+          Salir
         </button>
       </div>
     </header>
