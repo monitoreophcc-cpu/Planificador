@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { OfflineBanner } from '@/ui/system/OfflineBanner'
 import { UndoToast } from '@/ui/components/UndoToast'
+import { SessionBadge } from '@/ui/system/SessionBadge'
 import { SessionUserBar } from '@/components/auth/SessionUserBar'
 
 export default function ClientLayout({
@@ -46,6 +47,7 @@ export default function ClientLayout({
             <OfflineBanner />
             <UndoToast />
             {children}
+            <SessionBadge />
         </>
     )
 }

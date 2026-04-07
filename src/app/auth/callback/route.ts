@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const code = new URL(request.url).searchParams.get('code')
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
 
