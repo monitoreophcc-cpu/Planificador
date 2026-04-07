@@ -1,36 +1,6 @@
 import { WeeklyPlan, Incident, ISODate, ShiftType, DayInfo, Representative, SpecialSchedule } from '@/domain/types'
 import { isSlotOperationallyEmpty } from '@/domain/planning/isSlotOperationallyEmpty'
-
-function isPlannedForShift(day: unknown, shift: ShiftType): boolean {
-    if (!day || typeof day !== 'object') {
-        return false
-    }
-
-    const dayRecord = day as Record<string, unknown>
-    const assignment = dayRecord.assignment
-
-    if (assignment && typeof assignment === 'object') {
-        const assignmentRecord = assignment as Record<string, unknown>
-
-        if (assignmentRecord.type === 'BOTH') {
-            return true
-        }
-
-        if (assignmentRecord.type === 'SINGLE' && assignmentRecord.shift === shift) {
-            return true
-        }
-
-        if (assignmentRecord.type === 'NONE') {
-            return false
-        }
-    }
-
-    if (dayRecord.shift === shift || dayRecord.type === shift) {
-        return true
-    }
-
-    return dayRecord.type === 'MIXTO'
-}
+import { getPlannedAgentsForDay } from './getPlannedAgentsForDay'
 
 /**
  * ⚠️ CANONICAL SOURCE OF TRUTH FOR DAILY SHIFT STATISTICS
@@ -49,16 +19,21 @@ export function getDailyShiftStats(
     incidents: Incident[],
     date: ISODate,
     shift: ShiftType,
-    _allCalendarDays: DayInfo[],
-    _representatives: Representative[],
-    _specialSchedules: SpecialSchedule[] = []
+    allCalendarDays: DayInfo[],
+    representatives: Representative[],
+    specialSchedules: SpecialSchedule[] = []
 ) {
     if (!weeklyPlan) {
         return { planned: 0, present: 0 }
     }
 
-    const plannedSlots = weeklyPlan.agents.filter(agent =>
-        isPlannedForShift(agent.days[date], shift)
+    const plannedSlots = getPlannedAgentsForDay(
+        representatives,
+        incidents,
+        date,
+        shift,
+        allCalendarDays,
+        specialSchedules
     )
 
     const presentSlots = plannedSlots.filter(agent =>
