@@ -1,33 +1,32 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
-  const [inlineError, setInlineError] = useState<string | null>(null)
-  const [authError, setAuthError] = useState(false)
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    setAuthError(params.get('error') === 'auth')
-  }, [])
 
   const handleGoogleLogin = async (): Promise<void> => {
     setLoading(true)
-    setInlineError(null)
     const supabase = createClient()
 
-    const { error } = await supabase.auth.signInWithOAuth({
+import { useSearchParams } from 'next/navigation'
+import styles from './page.module.css'
+
+export default function LoginPage() {
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
+  const [loading, setLoading] = useState(false)
+
+  const handleLogin = async (): Promise<void> => {
+    setLoading(true)
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
-
-    if (error) {
-      setInlineError('No se pudo iniciar la autenticación con Google.')
-    }
 
     setLoading(false)
   }
@@ -66,23 +65,6 @@ export default function LoginPage() {
           Sistema de gestión operativa
         </p>
 
-        {(authError || inlineError) && (
-          <div
-            style={{
-              marginBottom: 'var(--space-md)',
-              padding: 'var(--space-md)',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--bg-danger)',
-              color: 'var(--text-danger)',
-              border: '1px solid var(--border-danger)',
-              fontSize: 'var(--font-size-sm)',
-              lineHeight: 1.5,
-            }}
-          >
-            {inlineError ?? 'No se pudo completar el inicio de sesión. Inténtalo otra vez.'}
-          </div>
-        )}
-
         <button
           type="button"
           onClick={() => void handleGoogleLogin()}
@@ -103,11 +85,21 @@ export default function LoginPage() {
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M21.8 12.2c0-.8-.1-1.4-.2-2H12v3.8h5.5c-.2 1.2-1 2.3-2.1 3v2.5h3.4c2-1.8 3-4.4 3-7.3ZM12 22c2.7 0 5- .9 6.6-2.5l-3.4-2.5c-.9.6-2 .9-3.2.9-2.5 0-4.5-1.7-5.3-3.9H3.2v2.6A10 10 0 0 0 12 22Zm-5.3-8.1a6 6 0 0 1 0-3.8V7.5H3.2a10 10 0 0 0 0 8.9l3.5-2.5ZM12 6a5.4 5.4 0 0 1 3.8 1.5l2.9-2.9A9.6 9.6 0 0 0 12 2 10 10 0 0 0 3.2 7.5L6.7 10A5.8 5.8 0 0 1 12 6Z"
-            />
+            <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.9-5.4 3.9-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3 .8 3.7 1.4l2.5-2.4C16.7 3.6 14.6 2.7 12 2.7 6.9 2.7 2.8 6.9 2.8 12s4.1 9.3 9.2 9.3c5.3 0 8.8-3.7 8.8-8.9 0-.6-.1-1.1-.1-1.5H12Z"/>
           </svg>
+    <main className={styles.wrapper}>
+      <section className={styles.card}>
+        <h1 className={styles.title}>Planificador</h1>
+        <p className={styles.subtitle}>Sistema de gestión operativa</p>
+        {error ? <p className={styles.error}>No se pudo autenticar. Intenta de nuevo.</p> : null}
+
+        <button
+          type="button"
+          onClick={() => void handleLogin()}
+          className={styles.button}
+          disabled={loading}
+        >
+          <span aria-hidden="true">🔵</span>
           {loading ? 'Redirigiendo...' : 'Continuar con Google'}
         </button>
       </section>
