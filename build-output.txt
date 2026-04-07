@@ -1,0 +1,103 @@
+
+> control-de-puntos@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./src/hooks/useSession.ts
+Error: 
+  x Expected ';', got '{'
+    ,-[C:\Users\Junior\OneDrive\Documents\GitHub\Planificador\src\hooks\useSession.ts:14:1]
+ 14 | type UseSessionResult = {
+ 15 |   user: UserLike | null
+ 16 |   session: SessionLike | null
+ 17 | import { createClient } from '@/lib/supabase/client'
+    :        ^
+ 18 | import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js'
+ 19 | import { useRouter } from 'next/navigation'
+ 19 | import { useEffect, useMemo, useState } from 'react'
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/hooks/useSession.ts
+./src/ui/system/SessionBadge.tsx
+./src/app/ClientLayout.tsx
+
+./src/store/useAppStore.ts
+Error: 
+  x the name `hasCloudSyncWatcher` is defined multiple times
+    ,-[C:\Users\Junior\OneDrive\Documents\GitHub\Planificador\src\store\useAppStore.ts:52:1]
+ 52 | 
+ 53 | export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'error'
+ 54 | 
+ 55 | let hasCloudSyncWatcher = false
+    :     ^^^^^^^^^|^^^^^^^^^
+    :              `-- previous definition of `hasCloudSyncWatcher` here
+ 56 | 
+ 57 | 
+ 58 | export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'error'
+ 59 | 
+ 60 | let hasCloudSyncWatcher = false
+    :     ^^^^^^^^^|^^^^^^^^^
+    :              `-- `hasCloudSyncWatcher` redefined here
+ 61 | 
+ 62 | function buildCloudPlanHistoryEvents(weeklyPlans: WeeklyPlan[]): HistoryEvent[] {
+ 62 |   return [...weeklyPlans]
+    `----
+
+Import trace for requested module:
+./src/store/useAppStore.ts
+./src/ui/system/SessionBadge.tsx
+./src/app/ClientLayout.tsx
+
+./src/app/auth/callback/route.ts
+Error: 
+  x the name `code` is defined multiple times
+   ,-[C:\Users\Junior\OneDrive\Documents\GitHub\Planificador\src\app\auth\callback\route.ts:2:1]
+ 2 | import { createClient } from '@/lib/supabase/server'
+ 3 | 
+ 4 | export async function GET(request: NextRequest): Promise<NextResponse> {
+ 5 |   const code = new URL(request.url).searchParams.get('code')
+   :         ^^|^
+   :           `-- previous definition of `code` here
+ 6 |   const requestUrl = new URL(request.url)
+ 7 |   const code = requestUrl.searchParams.get('code')
+   :         ^^|^
+   :           `-- `code` redefined here
+ 8 | 
+ 9 |   if (!code) {
+ 9 |     return NextResponse.redirect(new URL('/login?error=auth', request.url))
+   `----
+
+Import trace for requested module:
+./src/app/auth/callback/route.ts
+
+./src/app/login/page.tsx
+Error: 
+  x 'import', and 'export' cannot be used outside of module code
+    ,-[C:\Users\Junior\OneDrive\Documents\GitHub\Planificador\src\app\login\page.tsx:10:1]
+ 10 |     setLoading(true)
+ 11 |     const supabase = createClient()
+ 12 | 
+ 13 | import { useSearchParams } from 'next/navigation'
+    : ^^^^^^
+ 14 | import styles from './page.module.css'
+ 15 | 
+ 15 | export default function LoginPage() {
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/login/page.tsx
+
+
+> Build failed because of webpack errors

@@ -2,7 +2,7 @@
 
 This environment attempted the requested setup steps:
 
-1. `codex mcp add supabase --url https://mcp.supabase.com/mcp?project_ref=iyycfnmhkugbfjomuyej`
+1. `codex mcp add supabase --url https://mcp.supabase.com/mcp?project_ref=oxtifrkcypgjiyhgyajo`
    - Result: failed because `codex` CLI is not installed (`codex: command not found`).
 2. Updated `~/.codex/config.toml` with:
 
@@ -23,7 +23,7 @@ remote_mcp_client_enabled = true
 Run:
 
 ```bash
-codex mcp add supabase --url https://mcp.supabase.com/mcp?project_ref=iyycfnmhkugbfjomuyej
+codex mcp add supabase --url https://mcp.supabase.com/mcp?project_ref=oxtifrkcypgjiyhgyajo
 codex mcp login supabase
 ```
 

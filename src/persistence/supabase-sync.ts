@@ -1,18 +1,21 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import { createClient } from '@/lib/supabase/client'
 import type {
   CoverageRule,
   Incident,
+  PlanningBaseState,
   Representative,
   SwapEvent,
   WeeklyPlan,
 } from '@/domain/types'
-import type { AppState as AppStoreState } from '@/store/useAppStore'
+import type { HistoryEvent } from '@/domain/history/types'
 import { createClient } from '@/lib/supabase/client'
 
-export type SyncResult = { success: boolean; error?: string }
+export type SyncResult = {
+  success: boolean
+  error?: string
+}
 
-type CloudSnapshot = {
+export type CloudSnapshot = {
   representatives: Representative[]
   weeklyPlans: WeeklyPlan[]
   incidents: Incident[]
@@ -20,58 +23,25 @@ type CloudSnapshot = {
   coverageRules: CoverageRule[]
 }
 
-async function logSyncAudit(
-  userId: string,
-  entity: string,
-  payload: unknown,
-  error?: string
-): Promise<void> {
-  const supabase = createClient()
-  await supabase.from('audit_log').insert({
-    user_id: userId,
-    action: 'SYNC',
-    entity,
-    payload: {
-      ok: !error,
-      error: error ?? null,
-      timestamp: new Date().toISOString(),
-      size: Array.isArray(payload) ? payload.length : 1,
-    },
-  })
-}
+type SyncTable =
+  | 'representatives'
+  | 'weekly_plans'
+  | 'incidents'
+  | 'swaps'
+  | 'coverage_rules'
 
-async function executeUpsert(
-  table:
-    | 'representatives'
-    | 'weekly_plans'
-    | 'incidents'
-    | 'swaps'
-    | 'coverage_rules',
-  rows: Record<string, unknown>[],
-  userId: string
-): Promise<SyncResult> {
-  if (rows.length === 0) {
-    return { success: true }
-  }
+type SyncableStoreState = Pick<
+  PlanningBaseState,
+  'representatives' | 'incidents' | 'swaps' | 'coverageRules' | 'historyEvents'
+>
 
-  const supabase = createClient()
-  const { error } = await supabase.from(table).upsert(rows, { onConflict: 'id' })
-
-  if (error) {
-    await logSyncAudit(userId, table, rows, error.message)
-    return { success: false, error: error.message }
-  }
-
-  await logSyncAudit(userId, table, rows)
-  return { success: true }
-
-export type SyncResult = { success: boolean; error?: string }
+type SyncRow = Record<string, unknown>
 
 type PendingOperation = {
-  id: string
-  table: 'representatives' | 'weekly_plans' | 'incidents' | 'swaps' | 'coverage_rules'
-  payload: Record<string, unknown> | Array<Record<string, unknown>>
-  pending_sync: true
+  key: string
+  userId: string
+  table: SyncTable
+  rows: SyncRow[]
 }
 
 interface SyncQueueDb extends DBSchema {
@@ -82,18 +52,28 @@ interface SyncQueueDb extends DBSchema {
 }
 
 const DB_NAME = 'cloud-sync-queue'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
-export type AppStoreState = {
-  representatives: Representative[]
-  incidents: Incident[]
-  swaps: SwapEvent[]
-  coverageRules: CoverageRule[]
-  weeklyPlan?: WeeklyPlan | null
+function createEmptySnapshot(): CloudSnapshot {
+  return {
+    representatives: [],
+    weeklyPlans: [],
+    incidents: [],
+    swaps: [],
+    coverageRules: [],
+  }
+}
+
+function isBrowserOffline(): boolean {
+  return typeof navigator !== 'undefined' && !navigator.onLine
 }
 
 function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'sync_error'
+  return error instanceof Error ? error.message : 'unexpected_sync_error'
+}
+
+function queueKey(userId: string, table: SyncTable): string {
+  return `${userId}:${table}`
 }
 
 async function getQueueDb(): Promise<IDBPDatabase<SyncQueueDb> | null> {
@@ -103,475 +83,553 @@ async function getQueueDb(): Promise<IDBPDatabase<SyncQueueDb> | null> {
 
   return openDB<SyncQueueDb>(DB_NAME, DB_VERSION, {
     upgrade(db) {
-      if (!db.objectStoreNames.contains('pending_sync')) {
-        db.createObjectStore('pending_sync', { keyPath: 'id' })
+      if (db.objectStoreNames.contains('pending_sync')) {
+        db.deleteObjectStore('pending_sync')
       }
+
+      db.createObjectStore('pending_sync', { keyPath: 'key' })
     },
   })
 }
 
 async function enqueuePending(
-  table: PendingOperation['table'],
-  payload: PendingOperation['payload']
+  userId: string,
+  table: SyncTable,
+  rows: SyncRow[]
 ): Promise<void> {
   const db = await getQueueDb()
   if (!db) return
 
   await db.put('pending_sync', {
-    id: `${table}:${crypto.randomUUID()}`,
+    key: queueKey(userId, table),
+    userId,
     table,
-    payload,
-    pending_sync: true,
+    rows,
   })
 
   db.close()
 }
 
-async function flushPendingQueue(): Promise<void> {
+async function clearPending(userId: string, table: SyncTable): Promise<void> {
   const db = await getQueueDb()
   if (!db) return
 
-  const supabase = createClient()
-  const pending = await db.getAll('pending_sync')
-
-  for (const operation of pending) {
-    const { error } = await supabase
-      .from(operation.table)
-      .upsert(operation.payload, { onConflict: 'id' })
-
-    if (!error) {
-      await db.delete('pending_sync', operation.id)
-    }
-  }
-
+  await db.delete('pending_sync', queueKey(userId, table))
   db.close()
 }
 
-async function writeAuditLog(userId: string, entity: string, payload: unknown): Promise<void> {
-  const supabase = createClient()
+async function logSyncAudit(
+  userId: string,
+  entity: string,
+  payload: unknown,
+  error?: string
+): Promise<void> {
+  try {
+    const supabase = createClient()
 
-  await supabase.from('audit_log').insert({
-    user_id: userId,
-    action: 'SYNC',
-    entity,
-    payload,
-  })
+    await supabase.from('audit_log').insert({
+      user_id: userId,
+      action: error ? 'SYNC_ERROR' : 'SYNC',
+      entity,
+      payload: {
+        ok: !error,
+        error: error ?? null,
+        timestamp: new Date().toISOString(),
+        ...(
+          typeof payload === 'object' && payload !== null
+            ? (payload as Record<string, unknown>)
+            : { value: payload }
+        ),
+      },
+    })
+  } catch (auditError) {
+    console.error('[Supabase Sync] No se pudo registrar audit_log.', auditError)
+  }
 }
 
-export async function syncRepresentatives(
+function isWeeklyPlanHistoryEvent(
+  event: HistoryEvent
+): event is HistoryEvent & { metadata: { weeklyPlan: WeeklyPlan } } {
+  if (event.category !== 'PLANNING' || !event.metadata) {
+    return false
+  }
+
+  const weeklyPlan = (event.metadata as Record<string, unknown>).weeklyPlan
+
+  return (
+    typeof weeklyPlan === 'object' &&
+    weeklyPlan !== null &&
+    typeof (weeklyPlan as WeeklyPlan).weekStart === 'string' &&
+    Array.isArray((weeklyPlan as WeeklyPlan).agents)
+  )
+}
+
+export function extractWeeklyPlansFromHistoryEvents(
+  historyEvents: HistoryEvent[]
+): WeeklyPlan[] {
+  const byWeekStart = new Map<string, WeeklyPlan>()
+
+  historyEvents
+    .filter(isWeeklyPlanHistoryEvent)
+    .forEach(event => {
+      byWeekStart.set(event.metadata.weeklyPlan.weekStart, event.metadata.weeklyPlan)
+    })
+
+  return [...byWeekStart.values()].sort((left, right) =>
+    left.weekStart.localeCompare(right.weekStart)
+  )
+}
+
+function normalizeShift(value: unknown): 'DAY' | 'NIGHT' {
+  return value === 'NIGHT' ? 'NIGHT' : 'DAY'
+}
+
+function normalizeRepresentativeRole(value: unknown): Representative['role'] {
+  if (
+    value === 'CUSTOMER_SERVICE' ||
+    value === 'SUPERVISOR' ||
+    value === 'MANAGER'
+  ) {
+    return value
+  }
+
+  return 'SALES'
+}
+
+function serializeRepresentatives(
   representatives: Representative[],
   userId: string
-): Promise<SyncResult> {
-  try {
-    const rows = representatives.map(rep => ({
-      id: rep.id,
-      user_id: userId,
-      name: rep.name,
-      base_shift: rep.baseShift,
-      base_schedule: rep.baseSchedule,
-      mix_profile: rep.mixProfile ?? null,
-      role: rep.role,
-      updated_at: new Date().toISOString(),
-    }))
+): SyncRow[] {
+  const updatedAt = new Date().toISOString()
 
-    return executeUpsert('representatives', rows, userId)
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'syncRepresentatives_failed' }
-  }
+  return representatives.map(representative => ({
+    id: representative.id,
+    user_id: userId,
+    name: representative.name,
+    base_shift: representative.baseShift,
+    base_schedule: representative.baseSchedule,
+    mix_profile: representative.mixProfile ?? null,
+    role: representative.role,
+    is_active: representative.isActive,
+    order_index: representative.orderIndex,
+    updated_at: updatedAt,
+  }))
 }
 
-export async function syncWeeklyPlan(
-  plan: WeeklyPlan,
+function serializeWeeklyPlans(
+  weeklyPlans: WeeklyPlan[],
   userId: string
-): Promise<SyncResult> {
-    if (!navigator.onLine) {
-      await enqueuePending('representatives', rows)
-      return { success: false, error: 'offline_pending_sync' }
-    }
+): SyncRow[] {
+  const updatedAt = new Date().toISOString()
 
-    const supabase = createClient()
-    const { error } = await supabase.from('representatives').upsert(rows, { onConflict: 'id' })
-
-    if (error) {
-      await enqueuePending('representatives', rows)
-      return { success: false, error: error.message }
-    }
-
-    await writeAuditLog(userId, 'representatives', { count: rows.length })
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: toErrorMessage(error) }
-  }
+  return weeklyPlans.map(plan => ({
+    id: plan.weekStart,
+    user_id: userId,
+    week_start: plan.weekStart,
+    agents: plan.agents,
+    updated_at: updatedAt,
+  }))
 }
 
-export async function syncWeeklyPlan(plan: WeeklyPlan, userId: string): Promise<SyncResult> {
-  try {
-    const row = {
-      id: plan.weekStart,
-      user_id: userId,
-      week_start: plan.weekStart,
-      agents: plan.agents,
-      updated_at: new Date().toISOString(),
-    }
+function serializeIncidents(incidents: Incident[], userId: string): SyncRow[] {
+  const updatedAt = new Date().toISOString()
 
-    return executeUpsert('weekly_plans', [row], userId)
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'syncWeeklyPlan_failed' }
-    if (!navigator.onLine) {
-      await enqueuePending('weekly_plans', row)
-      return { success: false, error: 'offline_pending_sync' }
-    }
-
-    const supabase = createClient()
-    const { error } = await supabase.from('weekly_plans').upsert(row, { onConflict: 'id' })
-
-    if (error) {
-      await enqueuePending('weekly_plans', row)
-      return { success: false, error: error.message }
-    }
-
-    await writeAuditLog(userId, 'weekly_plans', { weekStart: plan.weekStart })
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: toErrorMessage(error) }
-  }
+  return incidents.map(incident => ({
+    id: incident.id,
+    user_id: userId,
+    representative_id: incident.representativeId,
+    type: incident.type,
+    start_date: incident.startDate,
+    duration: incident.duration,
+    note: incident.note ?? null,
+    created_at: incident.createdAt,
+    custom_points: incident.customPoints ?? null,
+    assignment: incident.assignment ?? null,
+    previous_assignment: incident.previousAssignment ?? null,
+    details: incident.details ?? null,
+    source: incident.source ?? null,
+    slot_owner_id: incident.slotOwnerId ?? null,
+    metadata: incident.metadata ?? null,
+    disciplinary_key: incident.disciplinaryKey ?? null,
+    updated_at: updatedAt,
+  }))
 }
 
-export async function syncIncidents(
-  incidents: Incident[],
-  userId: string
-): Promise<SyncResult> {
-  try {
-    const rows = incidents.map(incident => ({
-      id: incident.id,
-      user_id: userId,
-      representative_id: incident.representativeId,
-      type: incident.type,
-      date: incident.startDate,
-      end_date: incident.duration > 1 ? incident.startDate : null,
-      notes: incident.note ?? null,
-      points: incident.customPoints ?? 0,
-    }))
+function serializeSwaps(swaps: SwapEvent[], userId: string): SyncRow[] {
+  const updatedAt = new Date().toISOString()
 
-    return executeUpsert('incidents', rows, userId)
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'syncIncidents_failed' }
-  }
-}
-
-export async function syncSwaps(
-  swaps: SwapEvent[],
-  userId: string
-): Promise<SyncResult> {
-  try {
-    const rows = swaps.map(swap => {
-      if (swap.type === 'SWAP') {
-        return {
-          id: swap.id,
-          user_id: userId,
-          type: swap.type,
-          date: swap.date,
-          agent_a: swap.fromRepresentativeId,
-          agent_b: swap.toRepresentativeId,
-          shift: `${swap.fromShift}->${swap.toShift}`,
-        }
-      }
-
-      if (swap.type === 'COVER') {
-        return {
-          id: swap.id,
-          user_id: userId,
-          type: swap.type,
-          date: swap.date,
-          agent_a: swap.fromRepresentativeId,
-          agent_b: swap.toRepresentativeId,
-          shift: swap.shift,
-        }
-      }
-
+  return swaps.map(swap => {
+    if (swap.type === 'SWAP') {
       return {
         id: swap.id,
         user_id: userId,
         type: swap.type,
         date: swap.date,
-        agent_a: swap.representativeId,
-        agent_b: null,
-        shift: swap.shift,
+        shift: null,
+        from_representative_id: swap.fromRepresentativeId,
+        to_representative_id: swap.toRepresentativeId,
+        representative_id: null,
+        from_shift: swap.fromShift,
+        to_shift: swap.toShift,
+        note: swap.note ?? null,
+        created_at: swap.createdAt,
+        updated_at: updatedAt,
       }
-    })
+    }
 
-    return executeUpsert('swaps', rows, userId)
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'syncSwaps_failed' }
-    const rows = incidents
-      .filter(incident =>
-        ['AUSENCIA', 'TARDANZA', 'LICENCIA', 'VACACIONES', 'ERROR', 'OTRO'].includes(
-          incident.type
-        )
-      )
-      .map(incident => ({
-        id: incident.id,
+    if (swap.type === 'COVER') {
+      return {
+        id: swap.id,
         user_id: userId,
-        representative_id: incident.representativeId,
-        type: incident.type,
-        date: incident.startDate,
-        end_date: incident.duration > 1 ? incident.startDate : null,
-        notes: incident.note ?? null,
-        points: incident.customPoints ?? 0,
-      }))
-
-    if (!navigator.onLine) {
-      await enqueuePending('incidents', rows)
-      return { success: false, error: 'offline_pending_sync' }
+        type: swap.type,
+        date: swap.date,
+        shift: swap.shift,
+        from_representative_id: swap.fromRepresentativeId,
+        to_representative_id: swap.toRepresentativeId,
+        representative_id: null,
+        from_shift: null,
+        to_shift: null,
+        note: swap.note ?? null,
+        created_at: swap.createdAt,
+        updated_at: updatedAt,
+      }
     }
 
-    const supabase = createClient()
-    const { error } = await supabase.from('incidents').upsert(rows, { onConflict: 'id' })
-
-    if (error) {
-      await enqueuePending('incidents', rows)
-      return { success: false, error: error.message }
-    }
-
-    await writeAuditLog(userId, 'incidents', { count: rows.length })
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: toErrorMessage(error) }
-  }
-}
-
-export async function syncSwaps(swaps: SwapEvent[], userId: string): Promise<SyncResult> {
-  try {
-    const rows = swaps.map(swap => ({
+    return {
       id: swap.id,
       user_id: userId,
       type: swap.type,
       date: swap.date,
-      shift: 'shift' in swap ? swap.shift : swap.fromShift,
-      agent_a: 'representativeId' in swap ? swap.representativeId : swap.fromRepresentativeId,
-      agent_b: 'toRepresentativeId' in swap ? swap.toRepresentativeId : null,
-    }))
-
-    if (!navigator.onLine) {
-      await enqueuePending('swaps', rows)
-      return { success: false, error: 'offline_pending_sync' }
+      shift: swap.shift,
+      from_representative_id: null,
+      to_representative_id: null,
+      representative_id: swap.representativeId,
+      from_shift: null,
+      to_shift: null,
+      note: swap.note ?? null,
+      created_at: swap.createdAt,
+      updated_at: updatedAt,
     }
-
-    const supabase = createClient()
-    const { error } = await supabase.from('swaps').upsert(rows, { onConflict: 'id' })
-
-    if (error) {
-      await enqueuePending('swaps', rows)
-      return { success: false, error: error.message }
-    }
-
-    await writeAuditLog(userId, 'swaps', { count: rows.length })
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: toErrorMessage(error) }
-  }
+  })
 }
 
-export async function syncCoverageRules(
-  rules: CoverageRule[],
+function serializeCoverageRules(
+  coverageRules: CoverageRule[],
   userId: string
-): Promise<SyncResult> {
-  try {
-    const rows = rules.map(rule => {
-      const scopeType = rule.scope.type
-      return {
-        id: rule.id,
-        user_id: userId,
-        scope: scopeType,
-        shift: scopeType === 'SHIFT' ? rule.scope.shift : null,
-        date: scopeType === 'DATE' ? rule.scope.date : null,
-        required: rule.required,
-      }
-    })
+): SyncRow[] {
+  const updatedAt = new Date().toISOString()
 
-    return executeUpsert('coverage_rules', rows, userId)
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'syncCoverageRules_failed' }
+  return coverageRules.map(rule => ({
+    id: rule.id,
+    user_id: userId,
+    scope: rule.scope,
+    required: rule.required,
+    label: rule.label ?? null,
+    updated_at: updatedAt,
+  }))
+}
+
+async function syncRowsSnapshot(
+  userId: string,
+  table: SyncTable,
+  rows: SyncRow[],
+  queueOnFailure = true
+): Promise<SyncResult> {
+  if (isBrowserOffline()) {
+    if (queueOnFailure) {
+      await enqueuePending(userId, table, rows)
+    }
+
+    return { success: false, error: 'offline_pending_sync' }
+  }
+
+  const supabase = createClient()
+  const localIds = new Set(rows.map(row => String(row.id)))
+
+  const { data: remoteIds, error: listError } = await supabase
+    .from(table)
+    .select('id')
+    .eq('user_id', userId)
+
+  if (listError) {
+    if (queueOnFailure) {
+      await enqueuePending(userId, table, rows)
+    }
+
+    await logSyncAudit(userId, table, { stage: 'list_ids' }, listError.message)
+    return { success: false, error: listError.message }
+  }
+
+  if (rows.length > 0) {
+    const { error: upsertError } = await supabase
+      .from(table)
+      .upsert(rows, { onConflict: 'user_id,id' })
+
+    if (upsertError) {
+      if (queueOnFailure) {
+        await enqueuePending(userId, table, rows)
+      }
+
+      await logSyncAudit(userId, table, { stage: 'upsert', rows: rows.length }, upsertError.message)
+      return { success: false, error: upsertError.message }
+    }
+  }
+
+  const idsToDelete = (remoteIds ?? [])
+    .map(row => String((row as { id: string }).id))
+    .filter(id => !localIds.has(id))
+
+  if (idsToDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from(table)
+      .delete()
+      .eq('user_id', userId)
+      .in('id', idsToDelete)
+
+    if (deleteError) {
+      if (queueOnFailure) {
+        await enqueuePending(userId, table, rows)
+      }
+
+      await logSyncAudit(
+        userId,
+        table,
+        { stage: 'delete_missing', rows: idsToDelete.length },
+        deleteError.message
+      )
+      return { success: false, error: deleteError.message }
+    }
+  }
+
+  await clearPending(userId, table)
+  await logSyncAudit(userId, table, {
+    stage: 'complete',
+    upserted: rows.length,
+    deleted: idsToDelete.length,
+  })
+
+  return { success: true }
+}
+
+async function flushPendingQueue(userId: string): Promise<void> {
+  const db = await getQueueDb()
+  if (!db) return
+
+  const pending = await db.getAll('pending_sync')
+  db.close()
+
+  const relevant = pending.filter(operation => operation.userId === userId)
+
+  for (const operation of relevant) {
+    const result = await syncRowsSnapshot(
+      operation.userId,
+      operation.table,
+      operation.rows,
+      false
+    )
+
+    if (result.success) {
+      await clearPending(operation.userId, operation.table)
+    }
   }
 }
 
 export async function loadFromSupabase(userId: string): Promise<CloudSnapshot> {
-  const supabase = createClient()
-
-  const [representativesRes, weeklyPlansRes, incidentsRes, swapsRes, coverageRes] =
-    const rows = rules.map(rule => ({
-      id: rule.id,
-      user_id: userId,
-      scope: rule.scope.type,
-      shift: rule.scope.type === 'SHIFT' ? rule.scope.shift : null,
-      date: rule.scope.type === 'DATE' ? rule.scope.date : null,
-      required: rule.required,
-    }))
-
-    if (!navigator.onLine) {
-      await enqueuePending('coverage_rules', rows)
-      return { success: false, error: 'offline_pending_sync' }
-    }
-
-    const supabase = createClient()
-    const { error } = await supabase.from('coverage_rules').upsert(rows, { onConflict: 'id' })
-
-    if (error) {
-      await enqueuePending('coverage_rules', rows)
-      return { success: false, error: error.message }
-    }
-
-    await writeAuditLog(userId, 'coverage_rules', { count: rows.length })
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: toErrorMessage(error) }
+  if (isBrowserOffline()) {
+    return createEmptySnapshot()
   }
-}
 
-export async function loadFromSupabase(userId: string): Promise<{
-  representatives: Representative[]
-  weeklyPlans: WeeklyPlan[]
-  incidents: Incident[]
-  swaps: SwapEvent[]
-  coverageRules: CoverageRule[]
-}> {
   const supabase = createClient()
 
-  const [representativesRes, weeklyPlansRes, incidentsRes, swapsRes, coverageRulesRes] =
-    await Promise.all([
-      supabase.from('representatives').select('*').eq('user_id', userId),
-      supabase.from('weekly_plans').select('*').eq('user_id', userId),
-      supabase.from('incidents').select('*').eq('user_id', userId),
-      supabase.from('swaps').select('*').eq('user_id', userId),
-      supabase.from('coverage_rules').select('*').eq('user_id', userId),
-    ])
+  const [
+    representativesRes,
+    weeklyPlansRes,
+    incidentsRes,
+    swapsRes,
+    coverageRulesRes,
+  ] = await Promise.all([
+    supabase
+      .from('representatives')
+      .select('*')
+      .eq('user_id', userId)
+      .order('order_index', { ascending: true }),
+    supabase
+      .from('weekly_plans')
+      .select('*')
+      .eq('user_id', userId)
+      .order('week_start', { ascending: true }),
+    supabase
+      .from('incidents')
+      .select('*')
+      .eq('user_id', userId)
+      .order('start_date', { ascending: true }),
+    supabase
+      .from('swaps')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: true }),
+    supabase
+      .from('coverage_rules')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: true }),
+  ])
+
+  const firstError =
+    representativesRes.error ??
+    weeklyPlansRes.error ??
+    incidentsRes.error ??
+    swapsRes.error ??
+    coverageRulesRes.error
+
+  if (firstError) {
+    throw firstError
+  }
+
+  const representativesRows = (representativesRes.data ?? []) as Array<Record<string, unknown>>
+  const weeklyPlansRows = (weeklyPlansRes.data ?? []) as Array<Record<string, unknown>>
+  const incidentsRows = (incidentsRes.data ?? []) as Array<Record<string, unknown>>
+  const swapsRows = (swapsRes.data ?? []) as Array<Record<string, unknown>>
+  const coverageRulesRows = (coverageRulesRes.data ?? []) as Array<Record<string, unknown>>
 
   return {
-    representatives: (representativesRes.data ?? []).map((row: Record<string, unknown>) => ({
+    representatives: representativesRows.map((row, index) => ({
       id: String(row.id),
       name: String(row.name),
-      baseShift: row.base_shift === 'NIGHT' ? 'NIGHT' : 'DAY',
+      baseShift: normalizeShift(row.base_shift),
       baseSchedule: (row.base_schedule ?? {}) as Representative['baseSchedule'],
       mixProfile: (row.mix_profile ?? undefined) as Representative['mixProfile'],
-      role: (row.role ?? 'SALES') as Representative['role'],
-      isActive: true,
-      orderIndex: 0,
+      role: normalizeRepresentativeRole(row.role),
+      isActive: typeof row.is_active === 'boolean' ? row.is_active : true,
+      orderIndex:
+        typeof row.order_index === 'number' ? row.order_index : index,
     })),
-    weeklyPlans: (weeklyPlansRes.data ?? []).map((row: Record<string, unknown>) => ({
+    weeklyPlans: weeklyPlansRows.map(row => ({
       weekStart: String(row.week_start),
       agents: (row.agents ?? []) as WeeklyPlan['agents'],
     })),
-    incidents: (incidentsRes.data ?? []).map((row: Record<string, unknown>) => ({
+    incidents: incidentsRows.map(row => ({
       id: String(row.id),
       representativeId: String(row.representative_id),
       type: row.type as Incident['type'],
-      startDate: String(row.date),
-      duration: 1,
-      note: row.notes ?? undefined,
-      createdAt: String(row.created_at ?? new Date().toISOString()),
-      customPoints: typeof row.points === 'number' ? row.points : undefined,
+      startDate: String(row.start_date),
+      duration: typeof row.duration === 'number' ? row.duration : 1,
+      note: typeof row.note === 'string' ? row.note : undefined,
+      createdAt:
+        typeof row.created_at === 'string'
+          ? row.created_at
+          : new Date().toISOString(),
+      customPoints:
+        typeof row.custom_points === 'number' ? row.custom_points : undefined,
+      assignment: (row.assignment ?? undefined) as Incident['assignment'],
+      previousAssignment: (row.previous_assignment ?? undefined) as Incident['previousAssignment'],
+      details: typeof row.details === 'string' ? row.details : undefined,
+      source: (row.source ?? undefined) as Incident['source'],
+      slotOwnerId:
+        typeof row.slot_owner_id === 'string' ? row.slot_owner_id : undefined,
+      metadata: (row.metadata ?? undefined) as Incident['metadata'],
+      disciplinaryKey:
+        typeof row.disciplinary_key === 'string'
+          ? row.disciplinary_key
+          : undefined,
     })),
-    swaps: (swapsRes.data ?? []).map((row: Record<string, unknown>) => ({
-      id: String(row.id),
-      type: row.type,
-      date: String(row.date),
-      representativeId: String(row.agent_a),
-      shift: row.shift === 'NIGHT' ? 'NIGHT' : 'DAY',
-      createdAt: String(row.created_at ?? new Date().toISOString()),
-    })) as SwapEvent[],
-    coverageRules: (coverageRes.data ?? []).map((row: Record<string, unknown>) => ({
-      id: String(row.id),
-      scope:
-        row.scope === 'DATE'
-          ? { type: 'DATE', date: String(row.date) }
-          : row.scope === 'SHIFT'
-            ? { type: 'SHIFT', shift: row.shift === 'NIGHT' ? 'NIGHT' : 'DAY' }
-            : { type: 'GLOBAL' },
-      required: Number(row.required ?? 0),
-  const representatives = (representativesRes.data ?? []) as Array<Record<string, any>>
-  const weeklyPlans = (weeklyPlansRes.data ?? []) as Array<Record<string, any>>
-  const incidents = (incidentsRes.data ?? []) as Array<Record<string, any>>
-  const swaps = (swapsRes.data ?? []) as Array<Record<string, any>>
-  const coverageRules = (coverageRulesRes.data ?? []) as Array<Record<string, any>>
+    swaps: swapsRows
+      .map(row => {
+        const common = {
+          id: String(row.id),
+          date: String(row.date),
+          note: typeof row.note === 'string' ? row.note : undefined,
+          createdAt:
+            typeof row.created_at === 'string'
+              ? row.created_at
+              : new Date().toISOString(),
+        }
 
-  return {
-    representatives: representatives.map(rep => ({
-      id: rep.id,
-      name: rep.name,
-      baseShift: rep.base_shift,
-      baseSchedule: rep.base_schedule,
-      mixProfile: rep.mix_profile ?? undefined,
-      role: rep.role,
-      isActive: true,
-      orderIndex: 0,
-    })),
-    weeklyPlans: weeklyPlans.map(plan => ({
-      weekStart: plan.week_start,
-      agents: plan.agents,
-    })),
-    incidents: incidents.map(incident => ({
-      id: incident.id,
-      representativeId: incident.representative_id,
-      type: incident.type,
-      startDate: incident.date,
-      duration: incident.end_date ? 2 : 1,
-      note: incident.notes ?? undefined,
-      createdAt: incident.created_at,
-      customPoints: incident.points ?? undefined,
-    })),
-    swaps: swaps.map(swap => ({
-      id: swap.id,
-      type: swap.type,
-      date: swap.date,
-      shift: swap.shift,
-      fromRepresentativeId: swap.agent_a,
-      toRepresentativeId: swap.agent_b ?? swap.agent_a,
-      createdAt: swap.created_at,
-    })) as SwapEvent[],
-    coverageRules: coverageRules.map(rule => ({
-      id: rule.id,
-      scope:
-        rule.scope === 'SHIFT'
-          ? { type: 'SHIFT', shift: rule.shift }
-          : rule.scope === 'DATE'
-            ? { type: 'DATE', date: rule.date }
-            : { type: 'GLOBAL' },
-      required: rule.required,
+        if (row.type === 'SWAP') {
+          return {
+            ...common,
+            type: 'SWAP' as const,
+            fromRepresentativeId: String(row.from_representative_id),
+            toRepresentativeId: String(row.to_representative_id),
+            fromShift: normalizeShift(row.from_shift),
+            toShift: normalizeShift(row.to_shift),
+          }
+        }
+
+        if (row.type === 'COVER') {
+          return {
+            ...common,
+            type: 'COVER' as const,
+            shift: normalizeShift(row.shift),
+            fromRepresentativeId: String(row.from_representative_id),
+            toRepresentativeId: String(row.to_representative_id),
+          }
+        }
+
+        return {
+          ...common,
+          type: 'DOUBLE' as const,
+          shift: normalizeShift(row.shift),
+          representativeId: String(row.representative_id),
+        }
+      }),
+    coverageRules: coverageRulesRows.map(row => ({
+      id: String(row.id),
+      scope: (row.scope ??
+        { type: 'GLOBAL' }) as CoverageRule['scope'],
+      required: typeof row.required === 'number' ? row.required : 0,
+      label: typeof row.label === 'string' ? row.label : undefined,
     })),
   }
 }
 
 export async function syncAll(
-  storeState: AppStoreState,
+  storeState: SyncableStoreState,
   userId: string
 ): Promise<SyncResult> {
-  if (typeof window !== 'undefined' && !window.navigator.onLine) {
-    return { success: false, error: 'offline' }
-  }
+  const weeklyPlans = extractWeeklyPlansFromHistoryEvents(storeState.historyEvents)
 
-  const repsResult = await syncRepresentatives(storeState.representatives, userId)
-  const incidentsResult = await syncIncidents(storeState.incidents, userId)
-  const swapsResult = await syncSwaps(storeState.swaps, userId)
-  const coverageResult = await syncCoverageRules(storeState.coverageRules, userId)
+  const snapshots: Array<{ table: SyncTable; rows: SyncRow[] }> = [
+    {
+      table: 'representatives',
+      rows: serializeRepresentatives(storeState.representatives, userId),
+    },
+    {
+      table: 'weekly_plans',
+      rows: serializeWeeklyPlans(weeklyPlans, userId),
+    },
+    {
+      table: 'incidents',
+      rows: serializeIncidents(storeState.incidents, userId),
+    },
+    {
+      table: 'swaps',
+      rows: serializeSwaps(storeState.swaps, userId),
+    },
+    {
+      table: 'coverage_rules',
+      rows: serializeCoverageRules(storeState.coverageRules, userId),
+    },
+  ]
 
-  const firstError =
-    repsResult.error ?? incidentsResult.error ?? swapsResult.error ?? coverageResult.error
-
-  if (firstError) {
-    return { success: false, error: firstError }
-  }
-
-  return { success: true }
   try {
-    await flushPendingQueue()
+    if (isBrowserOffline()) {
+      await Promise.all(
+        snapshots.map(snapshot =>
+          enqueuePending(userId, snapshot.table, snapshot.rows)
+        )
+      )
 
-    const results = await Promise.all([
-      syncRepresentatives(storeState.representatives, userId),
-      syncIncidents(storeState.incidents, userId),
-      syncSwaps(storeState.swaps, userId),
-      syncCoverageRules(storeState.coverageRules, userId),
-      storeState.weeklyPlan ? syncWeeklyPlan(storeState.weeklyPlan, userId) : Promise.resolve({ success: true }),
-    ])
+      return { success: false, error: 'offline_pending_sync' }
+    }
+
+    await flushPendingQueue(userId)
+
+    const results = await Promise.all(
+      snapshots.map(snapshot =>
+        syncRowsSnapshot(userId, snapshot.table, snapshot.rows)
+      )
+    )
 
     const failed = results.find(result => !result.success)
     if (failed) {
@@ -582,10 +640,4 @@ export async function syncAll(
   } catch (error) {
     return { success: false, error: toErrorMessage(error) }
   }
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    void flushPendingQueue()
-  })
 }
