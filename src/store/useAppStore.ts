@@ -5,12 +5,14 @@ import { immer } from 'zustand/middleware/immer'
 import {
   PlanningBaseState,
   ISODate,
+  WeeklyPlan,
   Incident,
   ShiftAssignment,
   SpecialSchedule,
 } from '@/domain/types'
 import { createInitialState } from '@/domain/state'
 import { BackupPayload } from '@/application/backup/types'
+import type { HistoryEvent } from '@/domain/history/types'
 import { ManagementScheduleSlice, createManagementScheduleSlice } from './managementScheduleSlice'
 import { EventLogSlice, createEventLogSlice } from './eventLogSlice'
 import {
@@ -51,6 +53,27 @@ import { useCloudSyncStore } from './useCloudSyncStore'
 export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'error'
 
 let hasCloudSyncWatcher = false
+
+
+export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'error'
+
+let hasCloudSyncWatcher = false
+
+function buildCloudPlanHistoryEvents(weeklyPlans: WeeklyPlan[]): HistoryEvent[] {
+  return [...weeklyPlans]
+    .sort((a, b) => a.weekStart.localeCompare(b.weekStart))
+    .map(plan => ({
+      id: `hist-cloud-plan-${plan.weekStart}`,
+      timestamp: `${plan.weekStart}T12:00:00.000Z`,
+      category: 'PLANNING',
+      title: 'Plan semanal sincronizado',
+      description: 'Importado desde Supabase',
+      metadata: {
+        weeklyPlan: plan,
+        source: 'SUPABASE',
+      },
+    }))
+}
 
 // --- Main App State ---
 export type AppState = PlanningBaseState &
