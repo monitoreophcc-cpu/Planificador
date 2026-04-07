@@ -2,7 +2,15 @@ import { getDailyShiftStats } from './getDailyShiftStats'
 import { ShiftType } from '@/domain/types'
 
 // Simple mock factories
-const createRep = (id: string) => ({ id, name: id, role: 'SALES', isActive: true, baseShift: 'DAY', baseSchedule: {}, orderIndex: 0 } as any)
+const createRep = (id: string, baseShift: ShiftType = 'DAY') => ({
+    id,
+    name: id,
+    role: 'SALES',
+    isActive: true,
+    baseShift,
+    baseSchedule: {},
+    orderIndex: 0
+} as any)
 const createPlan = (repId: string, date: string, shift: string) => ({
     agents: [{
         representativeId: repId,
@@ -11,8 +19,8 @@ const createPlan = (repId: string, date: string, shift: string) => ({
 } as any)
 
 describe('getDailyShiftStats (Operational Reality)', () => {
-    const LUZ = createRep('LUZ')
-    const EMELY = createRep('EMELY')
+    const LUZ = createRep('LUZ', 'DAY')
+    const EMELY = createRep('EMELY', 'NIGHT')
     const reps = [LUZ, EMELY]
     const date = '2025-01-20'
     const shift = 'DAY'
@@ -71,5 +79,23 @@ describe('getDailyShiftStats (Operational Reality)', () => {
         const stats = getDailyShiftStats(weeklyPlan, incidents, date, shift, [], reps)
         expect(stats.planned).toBe(1)
         expect(stats.present).toBe(1) // Luz is still present
+    })
+
+    it('excludes vacation or license from the planned denominator', () => {
+        const incidents: any[] = [
+            {
+                id: 'lic-luz',
+                type: 'LICENCIA',
+                representativeId: 'LUZ',
+                startDate: date,
+                duration: 1,
+                createdAt: '2025-01-20T08:00:00Z'
+            }
+        ]
+
+        const stats = getDailyShiftStats(weeklyPlan, incidents, date, shift, [], reps)
+
+        expect(stats.planned).toBe(0)
+        expect(stats.present).toBe(0)
     })
 })
