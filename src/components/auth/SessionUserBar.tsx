@@ -1,9 +1,26 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useSession } from '@/hooks/useSession'
+import { useCloudSyncStore } from '@/store/useCloudSyncStore'
 
 export function SessionUserBar() {
   const { user, loading, signOut } = useSession()
+  const syncStatus = useCloudSyncStore(state => state.status)
+  const setSyncStatus = useCloudSyncStore(state => state.setStatus)
+
+  useEffect(() => {
+    const onOnline = () => setSyncStatus('syncing')
+    const onOffline = () => setSyncStatus('offline')
+
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [setSyncStatus])
 
   if (loading) {
     return (
@@ -25,6 +42,14 @@ export function SessionUserBar() {
 
   const fullName = user.user_metadata.full_name as string | undefined
   const avatarUrl = user.user_metadata.avatar_url as string | undefined
+  const syncLabel =
+    syncStatus === 'syncing'
+      ? '🟡 Sincronizando...'
+      : syncStatus === 'offline'
+        ? '🔴 Sin conexión'
+        : syncStatus === 'error'
+          ? '🔴 Sin conexión'
+          : '🟢 Sincronizado'
 
   return (
     <div
@@ -49,6 +74,9 @@ export function SessionUserBar() {
         ) : null}
         <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-main)' }}>
           {fullName ?? user.email}
+        </span>
+        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>
+          {syncLabel}
         </span>
       </div>
       <button

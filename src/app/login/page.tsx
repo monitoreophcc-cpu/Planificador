@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import styles from './page.module.css'
@@ -7,28 +8,35 @@ import styles from './page.module.css'
 export default function LoginPage() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
+  const [loading, setLoading] = useState(false)
 
   const handleLogin = async (): Promise<void> => {
+    setLoading(true)
     const supabase = createClient()
-
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
+    setLoading(false)
   }
 
   return (
     <main className={styles.wrapper}>
       <section className={styles.card}>
-        <h1 className={styles.title}>Control Operativo</h1>
-        <p className={styles.subtitle}>
-          Inicia sesión para sincronizar tus datos entre dispositivos.
-        </p>
-        {error ? <p className={styles.error}>Error: {decodeURIComponent(error)}</p> : null}
-        <button type="button" onClick={() => void handleLogin()} className={styles.oauthButton}>
-          Continuar con Google
+        <h1 className={styles.title}>Planificador</h1>
+        <p className={styles.subtitle}>Sistema de gestión operativa</p>
+        {error ? <p className={styles.error}>No se pudo autenticar. Intenta de nuevo.</p> : null}
+
+        <button
+          type="button"
+          onClick={() => void handleLogin()}
+          className={styles.button}
+          disabled={loading}
+        >
+          <span aria-hidden="true">🔵</span>
+          {loading ? 'Redirigiendo...' : 'Continuar con Google'}
         </button>
       </section>
     </main>

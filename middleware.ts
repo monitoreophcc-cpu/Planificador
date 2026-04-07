@@ -1,45 +1,45 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
-import { createServerClient } from '@supabase/ssr'
 
-const publicRoutes = ['/login', '/auth/callback']
+const PUBLIC_PATHS = ['/login', '/auth/callback']
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some(path => pathname.startsWith(path))
+}
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const response = await updateSession(request)
-  const { pathname } = request.nextUrl
+  const pathname = request.nextUrl.pathname
 
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    return response
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: () => undefined,
+      },
+    }
+  )
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session && !isPublicPath(pathname)) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return response
-  }
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
-      setAll() {
-        // cookies are already handled in updateSession.
-      },
-    },
-  })
-
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+  if (session && pathname.startsWith('/login')) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return response
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 }

@@ -29,7 +29,7 @@
   font-size: var(--font-size-base);
 }
 
-.oauthButton {
+.button {
   border: 1px solid var(--border-subtle);
   background: var(--bg-surface);
   color: var(--text-main);
@@ -38,6 +38,15 @@
   border-radius: var(--radius-md);
   padding: 12px 16px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.button:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .error {

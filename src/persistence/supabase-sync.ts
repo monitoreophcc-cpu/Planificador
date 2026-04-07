@@ -1,37 +1,50 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Incident, Representative, SwapEvent, WeeklyPlan } from '@/domain/types'
-import { loadState, saveState } from '@/persistence/storage'
 import { createClient } from '@/lib/supabase/client'
-import { createInitialState } from '@/domain/state'
+import type {
+  CoverageRule,
+  Incident,
+  Representative,
+  SwapEvent,
+  WeeklyPlan,
+} from '@/domain/types'
 
-const SYNC_DB_NAME = 'control-puntos-sync-db'
-const SYNC_DB_VERSION = 1
+export type SyncResult = { success: boolean; error?: string }
 
-type SyncEntity = 'representatives' | 'weekly_plans' | 'incidents' | 'swaps'
-
-interface PendingSyncItem {
+type PendingOperation = {
   id: string
-  entity: SyncEntity
-  payload: unknown
+  table: 'representatives' | 'weekly_plans' | 'incidents' | 'swaps' | 'coverage_rules'
+  payload: Record<string, unknown> | Array<Record<string, unknown>>
   pending_sync: true
-  createdAt: string
 }
 
-interface HybridSyncDb extends DBSchema {
+interface SyncQueueDb extends DBSchema {
   pending_sync: {
     key: string
-    value: PendingSyncItem
+    value: PendingOperation
   }
 }
 
-function isBrowserWithIndexedDb(): boolean {
-  return typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined'
+const DB_NAME = 'cloud-sync-queue'
+const DB_VERSION = 1
+
+export type AppStoreState = {
+  representatives: Representative[]
+  incidents: Incident[]
+  swaps: SwapEvent[]
+  coverageRules: CoverageRule[]
+  weeklyPlan?: WeeklyPlan | null
 }
 
-async function openSyncDb(): Promise<IDBPDatabase<HybridSyncDb> | null> {
-  if (!isBrowserWithIndexedDb()) return null
+function toErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'sync_error'
+}
 
-  return openDB<HybridSyncDb>(SYNC_DB_NAME, SYNC_DB_VERSION, {
+async function getQueueDb(): Promise<IDBPDatabase<SyncQueueDb> | null> {
+  if (typeof window === 'undefined' || typeof window.indexedDB === 'undefined') {
+    return null
+  }
+
+  return openDB<SyncQueueDb>(DB_NAME, DB_VERSION, {
     upgrade(db) {
       if (!db.objectStoreNames.contains('pending_sync')) {
         db.createObjectStore('pending_sync', { keyPath: 'id' })
@@ -40,186 +53,132 @@ async function openSyncDb(): Promise<IDBPDatabase<HybridSyncDb> | null> {
   })
 }
 
-async function getCurrentUserId(): Promise<string | null> {
+async function enqueuePending(
+  table: PendingOperation['table'],
+  payload: PendingOperation['payload']
+): Promise<void> {
+  const db = await getQueueDb()
+  if (!db) return
+
+  await db.put('pending_sync', {
+    id: `${table}:${crypto.randomUUID()}`,
+    table,
+    payload,
+    pending_sync: true,
+  })
+
+  db.close()
+}
+
+async function flushPendingQueue(): Promise<void> {
+  const db = await getQueueDb()
+  if (!db) return
+
+  const supabase = createClient()
+  const pending = await db.getAll('pending_sync')
+
+  for (const operation of pending) {
+    const { error } = await supabase
+      .from(operation.table)
+      .upsert(operation.payload, { onConflict: 'id' })
+
+    if (!error) {
+      await db.delete('pending_sync', operation.id)
+    }
+  }
+
+  db.close()
+}
+
+async function writeAuditLog(userId: string, entity: string, payload: unknown): Promise<void> {
+  const supabase = createClient()
+
+  await supabase.from('audit_log').insert({
+    user_id: userId,
+    action: 'SYNC',
+    entity,
+    payload,
+  })
+}
+
+export async function syncRepresentatives(
+  representatives: Representative[],
+  userId: string
+): Promise<SyncResult> {
   try {
+    const rows = representatives.map(rep => ({
+      id: rep.id,
+      user_id: userId,
+      name: rep.name,
+      base_shift: rep.baseShift,
+      base_schedule: rep.baseSchedule,
+      mix_profile: rep.mixProfile ?? null,
+      role: rep.role,
+      updated_at: new Date().toISOString(),
+    }))
+
+    if (!navigator.onLine) {
+      await enqueuePending('representatives', rows)
+      return { success: false, error: 'offline_pending_sync' }
+    }
+
     const supabase = createClient()
-    const { data } = await supabase.auth.getSession()
-    return data.session?.user.id ?? null
-  } catch {
-    return null
+    const { error } = await supabase.from('representatives').upsert(rows, { onConflict: 'id' })
+
+    if (error) {
+      await enqueuePending('representatives', rows)
+      return { success: false, error: error.message }
+    }
+
+    await writeAuditLog(userId, 'representatives', { count: rows.length })
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: toErrorMessage(error) }
   }
 }
 
-export class HybridPersistence {
-  private async enqueuePending(entity: SyncEntity, payload: unknown): Promise<void> {
-    const db = await openSyncDb()
-    if (!db) return
-
-    const id = `${entity}:${crypto.randomUUID()}`
-    await db.put('pending_sync', {
-      id,
-      entity,
-      payload,
-      pending_sync: true,
-      createdAt: new Date().toISOString(),
-    })
-    db.close()
-  }
-
-  async flushPendingSync(): Promise<void> {
-    const db = await openSyncDb()
-    if (!db) return
-
-    const pendingItems = await db.getAll('pending_sync')
-    const online = typeof navigator === 'undefined' ? true : navigator.onLine
-    if (!online) {
-      db.close()
-      return
+export async function syncWeeklyPlan(plan: WeeklyPlan, userId: string): Promise<SyncResult> {
+  try {
+    const row = {
+      id: plan.weekStart,
+      user_id: userId,
+      week_start: plan.weekStart,
+      agents: plan.agents,
+      updated_at: new Date().toISOString(),
     }
 
-    for (const item of pendingItems) {
-      try {
-        if (item.entity === 'representatives') {
-          await this.syncRepresentatives(item.payload as Representative[])
-        }
-        if (item.entity === 'weekly_plans') {
-          await this.syncWeeklyPlan(item.payload as WeeklyPlan)
-        }
-        if (item.entity === 'incidents') {
-          await this.syncIncidents(item.payload as Incident[])
-        }
-        if (item.entity === 'swaps') {
-          await this.syncSwaps(item.payload as SwapEvent[])
-        }
-
-        await db.delete('pending_sync', item.id)
-      } catch {
-        // Keep entry for next reconnect.
-      }
+    if (!navigator.onLine) {
+      await enqueuePending('weekly_plans', row)
+      return { success: false, error: 'offline_pending_sync' }
     }
-
-    db.close()
-  }
-
-  async loadFromLocalOrCloud(): Promise<void> {
-    const localState = await loadState()
-    if (localState) {
-      return
-    }
-
-    const userId = await getCurrentUserId()
-    if (!userId) return
 
     const supabase = createClient()
-    const [repsRes, incidentsRes, swapsRes] = await Promise.all([
-      supabase.from('representatives').select('*').eq('user_id', userId),
-      supabase.from('incidents').select('*').eq('user_id', userId),
-      supabase.from('swaps').select('*').eq('user_id', userId),
-    ])
+    const { error } = await supabase.from('weekly_plans').upsert(row, { onConflict: 'id' })
 
-    if (repsRes.error || incidentsRes.error || swapsRes.error) {
-      throw new Error('Failed to fetch cloud data for hydration.')
+    if (error) {
+      await enqueuePending('weekly_plans', row)
+      return { success: false, error: error.message }
     }
 
-    await saveState({
-      ...createInitialState(),
-      representatives: (repsRes.data ?? []).map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        baseShift: item.base_shift,
-        baseSchedule: item.base_schedule,
-        mixProfile: item.mix_profile,
-        role: item.role ?? 'SALES',
-        isActive: true,
-        orderIndex: 0,
-      })),
-      incidents: (incidentsRes.data ?? []).map((item: any) => ({
-        id: item.id,
-        representativeId: item.representative_id,
-        type: item.type,
-        startDate: item.date,
-        duration: item.end_date ? 2 : 1,
-        note: item.notes ?? undefined,
-        createdAt: item.created_at,
-      })),
-      swaps: (swapsRes.data ?? []).map((item: any) => ({
-        id: item.id,
-        type: item.type,
-        date: item.date,
-        shift: item.shift,
-        fromRepresentativeId: item.agent_a,
-        toRepresentativeId: item.agent_b ?? item.agent_a,
-        createdAt: item.created_at,
-      })) as SwapEvent[],
-    })
+    await writeAuditLog(userId, 'weekly_plans', { weekStart: plan.weekStart })
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: toErrorMessage(error) }
   }
+}
 
-  async syncRepresentatives(representatives: Representative[]): Promise<void> {
-    const userId = await getCurrentUserId()
-    if (!userId) {
-      await this.enqueuePending('representatives', representatives)
-      return
-    }
-
-    try {
-      const supabase = createClient()
-      const rows = representatives.map(rep => ({
-        id: rep.id,
-        user_id: userId,
-        name: rep.name,
-        base_shift: rep.baseShift,
-        base_schedule: rep.baseSchedule,
-        mix_profile: rep.mixProfile ?? null,
-        role: rep.role,
-        updated_at: new Date().toISOString(),
-      }))
-
-      const { error } = await supabase.from('representatives').upsert(rows, { onConflict: 'id' })
-      if (error) throw error
-    } catch {
-      await this.enqueuePending('representatives', representatives)
-    }
-  }
-
-  async syncWeeklyPlan(weeklyPlan: WeeklyPlan): Promise<void> {
-    const userId = await getCurrentUserId()
-    if (!userId) {
-      await this.enqueuePending('weekly_plans', weeklyPlan)
-      return
-    }
-
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.from('weekly_plans').upsert({
-        id: weeklyPlan.weekStart,
-        user_id: userId,
-        week_start: weeklyPlan.weekStart,
-        agents: weeklyPlan.agents,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
-
-      if (error) throw error
-    } catch {
-      await this.enqueuePending('weekly_plans', weeklyPlan)
-    }
-  }
-
-  async syncIncidents(incidents: Incident[]): Promise<void> {
-    const userId = await getCurrentUserId()
-    if (!userId) {
-      await this.enqueuePending('incidents', incidents)
-      return
-    }
-
-    try {
-      const supabase = createClient()
-      const rows = incidents
-        .filter(incident =>
-          ['AUSENCIA', 'TARDANZA', 'LICENCIA', 'VACACIONES', 'ERROR', 'OTRO'].includes(
-            incident.type
-          )
+export async function syncIncidents(
+  incidents: Incident[],
+  userId: string
+): Promise<SyncResult> {
+  try {
+    const rows = incidents
+      .filter(incident =>
+        ['AUSENCIA', 'TARDANZA', 'LICENCIA', 'VACACIONES', 'ERROR', 'OTRO'].includes(
+          incident.type
         )
-        .map(incident => ({
+      )
+      .map(incident => ({
         id: incident.id,
         user_id: userId,
         representative_id: incident.representativeId,
@@ -230,49 +189,191 @@ export class HybridPersistence {
         points: incident.customPoints ?? 0,
       }))
 
-      const { error } = await supabase.from('incidents').upsert(rows, { onConflict: 'id' })
-      if (error) throw error
-    } catch {
-      await this.enqueuePending('incidents', incidents)
-    }
-  }
-
-  async syncSwaps(swaps: SwapEvent[]): Promise<void> {
-    const userId = await getCurrentUserId()
-    if (!userId) {
-      await this.enqueuePending('swaps', swaps)
-      return
+    if (!navigator.onLine) {
+      await enqueuePending('incidents', rows)
+      return { success: false, error: 'offline_pending_sync' }
     }
 
-    try {
-      const supabase = createClient()
-      const rows = swaps.map(swap => ({
-        id: swap.id,
-        user_id: userId,
-        type: swap.type,
-        date: swap.date,
-        shift: 'shift' in swap ? swap.shift : swap.fromShift,
-        agent_a: 'representativeId' in swap ? swap.representativeId : swap.fromRepresentativeId,
-        agent_b:
-          'toRepresentativeId' in swap
-            ? swap.toRepresentativeId
-            : 'representativeId' in swap
-              ? null
-              : null,
-      }))
+    const supabase = createClient()
+    const { error } = await supabase.from('incidents').upsert(rows, { onConflict: 'id' })
 
-      const { error } = await supabase.from('swaps').upsert(rows, { onConflict: 'id' })
-      if (error) throw error
-    } catch {
-      await this.enqueuePending('swaps', swaps)
+    if (error) {
+      await enqueuePending('incidents', rows)
+      return { success: false, error: error.message }
     }
+
+    await writeAuditLog(userId, 'incidents', { count: rows.length })
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: toErrorMessage(error) }
   }
 }
 
-export const hybridPersistence = new HybridPersistence()
+export async function syncSwaps(swaps: SwapEvent[], userId: string): Promise<SyncResult> {
+  try {
+    const rows = swaps.map(swap => ({
+      id: swap.id,
+      user_id: userId,
+      type: swap.type,
+      date: swap.date,
+      shift: 'shift' in swap ? swap.shift : swap.fromShift,
+      agent_a: 'representativeId' in swap ? swap.representativeId : swap.fromRepresentativeId,
+      agent_b: 'toRepresentativeId' in swap ? swap.toRepresentativeId : null,
+    }))
+
+    if (!navigator.onLine) {
+      await enqueuePending('swaps', rows)
+      return { success: false, error: 'offline_pending_sync' }
+    }
+
+    const supabase = createClient()
+    const { error } = await supabase.from('swaps').upsert(rows, { onConflict: 'id' })
+
+    if (error) {
+      await enqueuePending('swaps', rows)
+      return { success: false, error: error.message }
+    }
+
+    await writeAuditLog(userId, 'swaps', { count: rows.length })
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: toErrorMessage(error) }
+  }
+}
+
+export async function syncCoverageRules(
+  rules: CoverageRule[],
+  userId: string
+): Promise<SyncResult> {
+  try {
+    const rows = rules.map(rule => ({
+      id: rule.id,
+      user_id: userId,
+      scope: rule.scope.type,
+      shift: rule.scope.type === 'SHIFT' ? rule.scope.shift : null,
+      date: rule.scope.type === 'DATE' ? rule.scope.date : null,
+      required: rule.required,
+    }))
+
+    if (!navigator.onLine) {
+      await enqueuePending('coverage_rules', rows)
+      return { success: false, error: 'offline_pending_sync' }
+    }
+
+    const supabase = createClient()
+    const { error } = await supabase.from('coverage_rules').upsert(rows, { onConflict: 'id' })
+
+    if (error) {
+      await enqueuePending('coverage_rules', rows)
+      return { success: false, error: error.message }
+    }
+
+    await writeAuditLog(userId, 'coverage_rules', { count: rows.length })
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: toErrorMessage(error) }
+  }
+}
+
+export async function loadFromSupabase(userId: string): Promise<{
+  representatives: Representative[]
+  weeklyPlans: WeeklyPlan[]
+  incidents: Incident[]
+  swaps: SwapEvent[]
+  coverageRules: CoverageRule[]
+}> {
+  const supabase = createClient()
+
+  const [representativesRes, weeklyPlansRes, incidentsRes, swapsRes, coverageRulesRes] =
+    await Promise.all([
+      supabase.from('representatives').select('*').eq('user_id', userId),
+      supabase.from('weekly_plans').select('*').eq('user_id', userId),
+      supabase.from('incidents').select('*').eq('user_id', userId),
+      supabase.from('swaps').select('*').eq('user_id', userId),
+      supabase.from('coverage_rules').select('*').eq('user_id', userId),
+    ])
+
+  const representatives = (representativesRes.data ?? []) as Array<Record<string, any>>
+  const weeklyPlans = (weeklyPlansRes.data ?? []) as Array<Record<string, any>>
+  const incidents = (incidentsRes.data ?? []) as Array<Record<string, any>>
+  const swaps = (swapsRes.data ?? []) as Array<Record<string, any>>
+  const coverageRules = (coverageRulesRes.data ?? []) as Array<Record<string, any>>
+
+  return {
+    representatives: representatives.map(rep => ({
+      id: rep.id,
+      name: rep.name,
+      baseShift: rep.base_shift,
+      baseSchedule: rep.base_schedule,
+      mixProfile: rep.mix_profile ?? undefined,
+      role: rep.role,
+      isActive: true,
+      orderIndex: 0,
+    })),
+    weeklyPlans: weeklyPlans.map(plan => ({
+      weekStart: plan.week_start,
+      agents: plan.agents,
+    })),
+    incidents: incidents.map(incident => ({
+      id: incident.id,
+      representativeId: incident.representative_id,
+      type: incident.type,
+      startDate: incident.date,
+      duration: incident.end_date ? 2 : 1,
+      note: incident.notes ?? undefined,
+      createdAt: incident.created_at,
+      customPoints: incident.points ?? undefined,
+    })),
+    swaps: swaps.map(swap => ({
+      id: swap.id,
+      type: swap.type,
+      date: swap.date,
+      shift: swap.shift,
+      fromRepresentativeId: swap.agent_a,
+      toRepresentativeId: swap.agent_b ?? swap.agent_a,
+      createdAt: swap.created_at,
+    })) as SwapEvent[],
+    coverageRules: coverageRules.map(rule => ({
+      id: rule.id,
+      scope:
+        rule.scope === 'SHIFT'
+          ? { type: 'SHIFT', shift: rule.shift }
+          : rule.scope === 'DATE'
+            ? { type: 'DATE', date: rule.date }
+            : { type: 'GLOBAL' },
+      required: rule.required,
+    })),
+  }
+}
+
+export async function syncAll(
+  storeState: AppStoreState,
+  userId: string
+): Promise<SyncResult> {
+  try {
+    await flushPendingQueue()
+
+    const results = await Promise.all([
+      syncRepresentatives(storeState.representatives, userId),
+      syncIncidents(storeState.incidents, userId),
+      syncSwaps(storeState.swaps, userId),
+      syncCoverageRules(storeState.coverageRules, userId),
+      storeState.weeklyPlan ? syncWeeklyPlan(storeState.weeklyPlan, userId) : Promise.resolve({ success: true }),
+    ])
+
+    const failed = results.find(result => !result.success)
+    if (failed) {
+      return failed
+    }
+
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: toErrorMessage(error) }
+  }
+}
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    void hybridPersistence.flushPendingSync()
+    void flushPendingQueue()
   })
 }

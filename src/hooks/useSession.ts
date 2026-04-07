@@ -5,7 +5,7 @@ import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
-interface UseSessionResult {
+type UseSessionResult = {
   user: User | null
   session: Session | null
   loading: boolean
@@ -14,23 +14,11 @@ interface UseSessionResult {
 
 export function useSession(): UseSessionResult {
   const router = useRouter()
-  const supabase = useMemo(() => {
-    try {
-      return createClient()
-    } catch {
-      return null
-    }
-  }, [])
-
+  const supabase = useMemo(() => createClient(), [])
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
-
     void supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       setSession(data.session)
       setLoading(false)
@@ -38,12 +26,10 @@ export function useSession(): UseSessionResult {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, nextSession: Session | null) => {
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, nextSession: Session | null) => {
       setSession(nextSession)
       setLoading(false)
-      }
-    )
+    })
 
     return () => {
       subscription.unsubscribe()
@@ -51,10 +37,7 @@ export function useSession(): UseSessionResult {
   }, [supabase])
 
   const signOut = async (): Promise<void> => {
-    if (supabase) {
-      await supabase.auth.signOut()
-    }
-
+    await supabase.auth.signOut()
     router.push('/login')
   }
 
