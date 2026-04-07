@@ -29,11 +29,35 @@ export function useAppShellSyncMeta(): AppShellSyncMeta {
   }, [])
 
   return useMemo(() => {
-    if (!isOnline || cloudSyncStatus === 'offline' || cloudSyncStatus === 'error') {
+    if (!isOnline || cloudSyncStatus === 'offline') {
       return {
         label: 'Sin conexión',
         tone: '#dc2626',
         surface: 'rgba(220, 38, 38, 0.12)',
+      }
+    }
+
+    if (cloudSyncStatus === 'error') {
+      return {
+        label: 'Error de sync',
+        tone: '#dc2626',
+        surface: 'rgba(220, 38, 38, 0.12)',
+      }
+    }
+
+    if (cloudSyncStatus === 'unauthenticated') {
+      return {
+        label: 'Inicia sesión',
+        tone: '#64748b',
+        surface: 'rgba(100, 116, 139, 0.12)',
+      }
+    }
+
+    if (cloudSyncStatus === 'checking') {
+      return {
+        label: 'Verificando...',
+        tone: '#475569',
+        surface: 'rgba(71, 85, 105, 0.12)',
       }
     }
 

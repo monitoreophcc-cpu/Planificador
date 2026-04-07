@@ -4,7 +4,7 @@
    Cache Strategies: Intelligent & Explicit
    ===================================== */
 
-const SW_VERSION = 'v1.0.0';
+const SW_VERSION = 'v1.1.0';
 const CACHE_PREFIX = 'control-operativo';
 
 const SHELL_CACHE = `${CACHE_PREFIX}-shell-${SW_VERSION}`;

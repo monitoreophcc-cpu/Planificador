@@ -31,6 +31,8 @@ export type AppStoreCloudCapabilities = CloudStateSlice & {
 }
 
 let hasCloudSyncWatcher = false
+let activeCloudSync: Promise<void> | null = null
+let shouldRerunCloudSync = false
 
 export function buildCloudPlanHistoryEvents(
   weeklyPlans: WeeklyPlan[]
@@ -80,7 +82,7 @@ function hasLocalCloudData(state: CloudStateSlice): boolean {
   )
 }
 
-export async function runCloudSync(
+async function executeCloudSync(
   getState: () => AppStoreCloudCapabilities,
   setCloudStatus: (status: CloudSyncStatus) => void
 ): Promise<void> {
@@ -96,7 +98,7 @@ export async function runCloudSync(
     } = await supabase.auth.getSession()
 
     if (!session?.user.id) {
-      setCloudStatus('synced')
+      setCloudStatus('unauthenticated')
       return
     }
 
@@ -114,6 +116,29 @@ export async function runCloudSync(
   } catch (error) {
     console.error('[Cloud Sync] No se pudo sincronizar con Supabase.', error)
     setCloudStatus('error')
+  }
+}
+
+export async function runCloudSync(
+  getState: () => AppStoreCloudCapabilities,
+  setCloudStatus: (status: CloudSyncStatus) => void
+): Promise<void> {
+  if (activeCloudSync) {
+    shouldRerunCloudSync = true
+    return activeCloudSync
+  }
+
+  activeCloudSync = executeCloudSync(getState, setCloudStatus)
+
+  try {
+    await activeCloudSync
+  } finally {
+    activeCloudSync = null
+
+    if (shouldRerunCloudSync) {
+      shouldRerunCloudSync = false
+      return runCloudSync(getState, setCloudStatus)
+    }
   }
 }
 
