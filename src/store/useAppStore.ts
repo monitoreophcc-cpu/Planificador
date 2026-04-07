@@ -44,6 +44,11 @@ import {
   initializeAppState,
 } from './appStorePersistence'
 
+
+export type CloudSyncStatus = 'synced' | 'syncing' | 'offline' | 'error'
+
+let hasCloudSyncWatcher = false
+
 // --- Main App State ---
 export type AppState = PlanningBaseState &
   ManagementScheduleSlice &
@@ -55,8 +60,11 @@ export type AppState = PlanningBaseState &
   SpecialScheduleSlice &
   SwapSlice & {
   isLoading: boolean
+  cloudSyncStatus: CloudSyncStatus
 
   // Actions
+  triggerCloudSync: () => void
+
   initialize: () => Promise<void>
   resetState: (keepFormalIncidents: boolean) => void
   showConfirm: (options: ConfirmOptions) => Promise<boolean>
@@ -103,10 +111,113 @@ export const useAppStore = create<AppState>()(
     ...createSpecialScheduleSlice(set, get, api),
     ...createSwapSlice(set, get, api),
     isLoading: true,
+    cloudSyncStatus: 'synced',
+
+    triggerCloudSync: () => {
+      void (async () => {
+        try {
+          if (typeof window !== 'undefined' && !window.navigator.onLine) {
+            set(state => { state.cloudSyncStatus = 'offline' })
+            return
+          }
+
+          set(state => { state.cloudSyncStatus = 'syncing' })
+
+          const [{ createClient }, { syncAll }] = await Promise.all([
+            import('@/lib/supabase/client'),
+            import('@/persistence/supabase-sync'),
+          ])
+
+          const supabase = createClient()
+          const { data } = await supabase.auth.getSession()
+          const userId = data.session?.user.id
+
+          if (!userId) {
+            set(state => { state.cloudSyncStatus = 'synced' })
+            return
+          }
+
+          const result = await syncAll(get(), userId)
+          set(state => {
+            state.cloudSyncStatus = result.success ? 'synced' : result.error === 'offline' ? 'offline' : 'error'
+          })
+        } catch {
+          set(state => { state.cloudSyncStatus = 'error' })
+        }
+      })()
+    },
 
     dailyLogDate: new Date().toISOString().split('T')[0],
 
-    initialize: () => initializeAppState(set, get),
+    initialize: async () => {
+      await initializeAppState(set, get)
+
+      try {
+        const [{ createClient }, { loadFromSupabase }] = await Promise.all([
+          import('@/lib/supabase/client'),
+          import('@/persistence/supabase-sync'),
+        ])
+
+        const currentState = get()
+        const isLocalEmpty =
+          currentState.representatives.length === 0 &&
+          currentState.incidents.length === 0 &&
+          currentState.swaps.length === 0
+
+        if (isLocalEmpty) {
+          const supabase = createClient()
+          const { data } = await supabase.auth.getSession()
+          const userId = data.session?.user.id
+
+          if (userId) {
+            const cloudState = await loadFromSupabase(userId)
+            set(state => {
+              state.representatives = cloudState.representatives
+              state.incidents = cloudState.incidents
+              state.swaps = cloudState.swaps
+              state.coverageRules = cloudState.coverageRules
+            })
+            get()._generateCalendarDays()
+          }
+        }
+      } catch {
+        // Cloud bootstrap is optional. Local IndexedDB remains source of truth.
+      }
+
+      if (typeof window !== 'undefined' && !hasCloudSyncWatcher) {
+        let lastSignature = ''
+        let syncTimer: number | undefined
+
+        const computeSignature = () => {
+          const base = stateToPersist(get())
+          return JSON.stringify({
+            representatives: base.representatives,
+            incidents: base.incidents,
+            swaps: base.swaps,
+            coverageRules: base.coverageRules,
+          })
+        }
+
+        lastSignature = computeSignature()
+
+        api.subscribe(state => {
+          if (state.isLoading) return
+          const nextSignature = computeSignature()
+          if (nextSignature === lastSignature) return
+          lastSignature = nextSignature
+          window.clearTimeout(syncTimer)
+          syncTimer = window.setTimeout(() => {
+            get().triggerCloudSync()
+          }, 500)
+        })
+
+        window.addEventListener('online', () => {
+          get().triggerCloudSync()
+        })
+
+        hasCloudSyncWatcher = true
+      }
+    },
 
     resetState: async keepFormalIncidents => {
       const { showConfirm } = get()
