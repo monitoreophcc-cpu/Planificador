@@ -5,7 +5,6 @@ import { ToastProvider } from '@/ui/components/ToastProvider'
 import { EditModeProvider } from '@/hooks/useEditMode'
 import { useEffect, useState } from 'react'
 
-
 export default function Page() {
   const [isReady, setIsReady] = useState(false)
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
@@ -72,30 +71,32 @@ export default function Page() {
 
   if (bootstrapError) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        fontFamily: 'sans-serif',
-        background: '#f8fafc',
-        padding: '24px'
-      }}>
-        <div style={{
-          maxWidth: '480px',
-          width: '100%',
-          background: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          fontFamily: 'sans-serif',
+          background: '#f8fafc',
           padding: '24px',
-          boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)'
-        }}>
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '480px',
+            width: '100%',
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+          }}
+        >
           <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>
             No se pudo cargar la aplicación
           </h1>
-          <p style={{ margin: '12px 0 0', color: '#4b5563', lineHeight: 1.5 }}>
-            {bootstrapError}
-          </p>
+          <p style={{ margin: '12px 0 0', color: '#4b5563', lineHeight: 1.5 }}>{bootstrapError}</p>
           <button
             onClick={() => window.location.reload()}
             style={{
@@ -106,7 +107,7 @@ export default function Page() {
               background: '#2563eb',
               color: 'white',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             Reintentar
@@ -118,15 +119,17 @@ export default function Page() {
 
   if (!isReady) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        fontFamily: 'sans-serif',
-        fontSize: '1.2rem',
-        color: '#6b7280'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          fontFamily: 'sans-serif',
+          fontSize: '1.2rem',
+          color: '#6b7280',
+        }}
+      >
         Cargando estado de la aplicación...
       </div>
     )
