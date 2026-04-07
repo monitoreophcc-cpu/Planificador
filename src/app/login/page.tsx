@@ -10,6 +10,17 @@ export default function LoginPage() {
     setLoading(true)
     const supabase = createClient()
 
+import { useSearchParams } from 'next/navigation'
+import styles from './page.module.css'
+
+export default function LoginPage() {
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
+  const [loading, setLoading] = useState(false)
+
+  const handleLogin = async (): Promise<void> => {
+    setLoading(true)
+    const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -76,6 +87,19 @@ export default function LoginPage() {
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.3-1.6 3.9-5.4 3.9-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3 .8 3.7 1.4l2.5-2.4C16.7 3.6 14.6 2.7 12 2.7 6.9 2.7 2.8 6.9 2.8 12s4.1 9.3 9.2 9.3c5.3 0 8.8-3.7 8.8-8.9 0-.6-.1-1.1-.1-1.5H12Z"/>
           </svg>
+    <main className={styles.wrapper}>
+      <section className={styles.card}>
+        <h1 className={styles.title}>Planificador</h1>
+        <p className={styles.subtitle}>Sistema de gestión operativa</p>
+        {error ? <p className={styles.error}>No se pudo autenticar. Intenta de nuevo.</p> : null}
+
+        <button
+          type="button"
+          onClick={() => void handleLogin()}
+          className={styles.button}
+          disabled={loading}
+        >
+          <span aria-hidden="true">🔵</span>
           {loading ? 'Redirigiendo...' : 'Continuar con Google'}
         </button>
       </section>
