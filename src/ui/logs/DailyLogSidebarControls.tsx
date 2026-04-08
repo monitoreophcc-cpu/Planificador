@@ -1,15 +1,21 @@
+import type { CSSProperties } from 'react'
+import type { IncidentType } from '@/domain/types'
 import { Search, Shield, TriangleAlert, UserRound, UserX, X } from 'lucide-react'
+import type { DailyLogBulkMode } from './dailyLogTypes'
 import { dailyLogSidebarStyles } from './dailyLogSidebarStyles'
 
 export type SidebarFocusMode = 'ALL' | 'ATTENTION' | 'COVERAGES' | 'ABSENT'
 
 type DailyLogSidebarControlsProps = {
   activeCoveragesCount: number
+  bulkMode: DailyLogBulkMode | null
   effectiveAdministrativeMode: boolean
   filteredCount: number
   focusMode: SidebarFocusMode
   hideAbsent: boolean
+  incidentType: IncidentType
   onOpenCoverageManager: () => void
+  onOpenBulkMode: (mode: DailyLogBulkMode) => void
   onFocusModeChange: (mode: SidebarFocusMode) => void
   onSearchTermChange: (value: string) => void
   onToggleHideAbsent: () => void
@@ -19,17 +25,24 @@ type DailyLogSidebarControlsProps = {
 
 export function DailyLogSidebarControls({
   activeCoveragesCount,
+  bulkMode,
   effectiveAdministrativeMode,
   filteredCount,
   focusMode,
   hideAbsent,
+  incidentType,
   onOpenCoverageManager,
+  onOpenBulkMode,
   onFocusModeChange,
   onSearchTermChange,
   onToggleHideAbsent,
   searchTerm,
   totalCount,
 }: DailyLogSidebarControlsProps) {
+  const availableBulkMode =
+    incidentType === 'AUSENCIA' || incidentType === 'OTRO' ? incidentType : null
+  const isBulkActive = availableBulkMode !== null && bulkMode === availableBulkMode
+
   const focusItems: Array<{
     mode: SidebarFocusMode
     label: string
@@ -68,7 +81,33 @@ export function DailyLogSidebarControls({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <button
+            type="button"
+            disabled={availableBulkMode === null}
+            aria-pressed={isBulkActive}
+            onClick={() => {
+              if (availableBulkMode) {
+                onOpenBulkMode(availableBulkMode)
+              }
+            }}
+            style={getBulkTriggerStyle(isBulkActive, availableBulkMode === 'AUSENCIA')}
+            title={
+              availableBulkMode
+                ? `Registrar ${availableBulkMode === 'AUSENCIA' ? 'ausencias' : 'otros'} por lote`
+                : 'El lote solo está disponible para Ausencia u Otro'
+            }
+          >
+            Lote
+          </button>
           {activeCoveragesCount > 0 && (
             <button
               onClick={onOpenCoverageManager}
@@ -246,4 +285,46 @@ export function DailyLogSidebarControls({
       </div>
     </>
   )
+}
+
+function getBulkTriggerStyle(
+  isActive: boolean,
+  isAbsenceMode: boolean | null
+): CSSProperties {
+  const isDisabled = isAbsenceMode === null
+
+  return {
+    border: `1px solid ${
+      isActive
+        ? isAbsenceMode
+          ? 'var(--border-danger)'
+          : 'rgba(var(--accent-rgb), 0.16)'
+        : 'var(--shell-border)'
+    }`,
+    borderRadius: '999px',
+    cursor: isDisabled ? 'not-allowed' : 'pointer',
+    color: isActive
+      ? isAbsenceMode
+        ? 'var(--text-danger)'
+        : 'var(--accent-strong)'
+      : isDisabled
+        ? 'var(--text-faint)'
+        : 'var(--text-muted)',
+    fontSize: '11px',
+    fontWeight: 800,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '7px 10px',
+    boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+    background: isActive
+      ? isAbsenceMode
+        ? 'var(--bg-danger)'
+        : 'rgba(var(--accent-rgb), 0.08)'
+      : isDisabled
+        ? 'rgba(255,255,255,0.38)'
+        : 'rgba(255,255,255,0.6)',
+    letterSpacing: '0.02em',
+    opacity: isDisabled ? 0.72 : 1,
+  }
 }

@@ -11,3 +11,5 @@ export type DailyLogRepresentativeRow = {
 }
 
 export type DailyLogFilterMode = 'TODAY' | 'WEEK' | 'MONTH'
+
+export type DailyLogBulkMode = 'AUSENCIA' | 'OTRO'

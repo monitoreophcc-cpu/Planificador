@@ -2,6 +2,7 @@ import { Incident, Representative } from '@/domain/types'
 import {
     OperationalReport,
 } from '@/domain/reports/operationalTypes'
+import { calculatePoints } from '@/domain/analytics/computeMonthlySummary'
 import { buildOperationalReading } from './buildOperationalReportReading'
 import { summarizePeriodMetrics, calculatePeriodDelta } from './buildOperationalReportMetrics'
 import { buildOperationalReportPeriods } from './buildOperationalReportPeriods'
@@ -25,7 +26,15 @@ export function buildOperationalReport(
     kind: 'MONTH' | 'QUARTER',
     anchorDate: Date
 ): OperationalReport {
+    const representativesById = new Map(
+        reps.map(representative => [representative.id, representative])
+    )
     const periods = buildOperationalReportPeriods(kind, anchorDate)
+    const currentPeriodIncidents = incidents.filter(
+        incident =>
+            incident.startDate >= periods.current.from &&
+            incident.startDate <= periods.current.to
+    )
     const currentMetrics = summarizePeriodMetrics(
         incidents,
         periods.current.from,
@@ -50,6 +59,40 @@ export function buildOperationalReport(
         currentMetrics,
         previousMetrics,
     })
+    const shifts: OperationalReport['shifts'] = {
+        DAY: { incidents: 0, points: 0 },
+        NIGHT: { incidents: 0, points: 0 },
+    }
+    const topIncidentsMap = new Map<
+        string,
+        OperationalReport['topIncidents'][number]
+    >()
+
+    currentPeriodIncidents.forEach(incident => {
+        const points = calculatePoints(incident)
+        const incidentSummary = topIncidentsMap.get(incident.type) ?? {
+            type: incident.type,
+            count: 0,
+            points: 0,
+        }
+
+        incidentSummary.count += 1
+        incidentSummary.points += points
+        topIncidentsMap.set(incident.type, incidentSummary)
+
+        if (points <= 0) {
+            return
+        }
+
+        const representative = representativesById.get(incident.representativeId)
+        const resolvedShift =
+            incident.assignment?.type === 'SINGLE'
+                ? incident.assignment.shift
+                : representative?.baseShift ?? 'DAY'
+
+        shifts[resolvedShift].incidents += 1
+        shifts[resolvedShift].points += points
+    })
 
     return {
         current: {
@@ -69,11 +112,14 @@ export function buildOperationalReport(
             },
         },
         risk,
-        shifts: {
-            DAY: { incidents: 0, points: 0 },
-            NIGHT: { incidents: 0, points: 0 },
-        },
-        topIncidents: [],
+        shifts,
+        topIncidents: [...topIncidentsMap.values()].sort((a, b) => {
+            if (b.count !== a.count) {
+                return b.count - a.count
+            }
+
+            return b.points - a.points
+        }),
         reading,
     }
 }

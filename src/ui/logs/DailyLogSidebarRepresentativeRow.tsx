@@ -1,57 +1,96 @@
+import type { CSSProperties } from 'react'
 import { AlertTriangle, RefreshCw, Shield } from 'lucide-react'
+import type { DailyLogBulkMode } from './dailyLogTypes'
 import type { DailyLogRepresentativeRow } from './dailyLogTypes'
 import { dailyLogSidebarStyles } from './dailyLogSidebarStyles'
 import { DailyLogSidebarStatusBadge } from './DailyLogSidebarStatusBadge'
 
 type DailyLogSidebarRepresentativeRowProps = {
+  bulkMode: DailyLogBulkMode | null
+  bulkSelected: boolean
   onSelectRepresentative: (representativeId: string) => void
+  onToggleBulkRepresentative: (representativeId: string) => void
   row: DailyLogRepresentativeRow
   selected: boolean
 }
 
 export function DailyLogSidebarRepresentativeRow({
+  bulkMode,
+  bulkSelected,
   onSelectRepresentative,
+  onToggleBulkRepresentative,
   row,
   selected,
 }: DailyLogSidebarRepresentativeRowProps) {
-  return (
-    <button
-      onClick={() => onSelectRepresentative(row.id)}
-      style={{
-        ...dailyLogSidebarStyles.listItem,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        ...(selected ? dailyLogSidebarStyles.activeListItem : {}),
-        ...(row.isOperationallyAbsent ? { opacity: 0.7 } : {}),
-        ...(row.isUnassigned
-          ? {
-              borderLeft: '4px solid var(--danger)',
-              background:
-                'linear-gradient(180deg, var(--bg-danger) 0%, rgba(255,255,255,0.6) 100%)',
-            }
-          : {}),
-      }}
-    >
-      <span
+  const sharedStyle = {
+    ...dailyLogSidebarStyles.listItem,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...((bulkMode ? bulkSelected : selected)
+      ? dailyLogSidebarStyles.activeListItem
+      : {}),
+    ...(row.isOperationallyAbsent ? { opacity: 0.7 } : {}),
+    ...(row.isUnassigned
+      ? {
+          borderLeft: '4px solid var(--danger)',
+          background:
+            'linear-gradient(180deg, var(--bg-danger) 0%, rgba(255,255,255,0.6) 100%)',
+        }
+      : {}),
+  } satisfies CSSProperties
+
+  const content = (
+    <>
+      <div
         style={{
-          textDecoration: row.isOperationallyAbsent ? 'line-through' : 'none',
-          color: row.isOperationallyAbsent
-            ? 'var(--text-muted)'
-            : row.isUnassigned
-              ? 'var(--text-danger)'
-              : 'inherit',
-          fontWeight: row.isUnassigned ? 600 : 400,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          minWidth: 0,
         }}
       >
-        {row.name}
-      </span>
+        {bulkMode ? (
+          <input
+            type="checkbox"
+            checked={bulkSelected}
+            onChange={() => onToggleBulkRepresentative(row.id)}
+            onClick={event => event.stopPropagation()}
+            style={{
+              width: '16px',
+              height: '16px',
+              accentColor: bulkMode === 'AUSENCIA' ? 'var(--text-danger)' : 'var(--accent)',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+            aria-label={`Seleccionar a ${row.name} para registro por lote`}
+          />
+        ) : null}
+        <span
+          style={{
+            textDecoration: row.isOperationallyAbsent ? 'line-through' : 'none',
+            color: row.isOperationallyAbsent
+              ? 'var(--text-muted)'
+              : row.isUnassigned
+                ? 'var(--text-danger)'
+                : 'inherit',
+            fontWeight: row.isUnassigned || bulkSelected ? 600 : 400,
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {row.name}
+        </span>
+      </div>
 
       <div
         style={{
           display: 'flex',
           gap: '4px',
           alignItems: 'center',
+          flexShrink: 0,
         }}
       >
         {row.isUnassigned && (
@@ -104,6 +143,29 @@ export function DailyLogSidebarRepresentativeRow({
           />
         )}
       </div>
+    </>
+  )
+
+  if (bulkMode) {
+    return (
+      <label
+        style={{
+          ...sharedStyle,
+          cursor: 'pointer',
+          gap: '10px',
+        }}
+      >
+        {content}
+      </label>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => onSelectRepresentative(row.id)}
+      style={sharedStyle}
+    >
+      {content}
     </button>
   )
 }

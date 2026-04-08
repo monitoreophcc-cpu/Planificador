@@ -27,10 +27,17 @@ export function AppShellHeader({
 }: AppShellHeaderProps) {
   return (
     <header className="app-shell-header">
-      <div className="app-shell-header__inner">
-        <AppShellHeaderBrand />
-        <AppShellHeaderTabs activeView={activeView} onViewChange={onViewChange} />
-        <AppShellHeaderSession />
+      <div className="app-shell-header__chrome">
+        <div className="app-shell-header__chrome-inner">
+          <AppShellHeaderBrand />
+          <AppShellHeaderSession />
+        </div>
+      </div>
+
+      <div className="app-shell-header__nav-wrap">
+        <div className="app-shell-header__nav-inner">
+          <AppShellHeaderTabs activeView={activeView} onViewChange={onViewChange} />
+        </div>
       </div>
     </header>
   )

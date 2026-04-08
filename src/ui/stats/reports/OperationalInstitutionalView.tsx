@@ -4,6 +4,7 @@ import { AlertTriangle, Award } from 'lucide-react'
 import type { OperationalReport } from '@/domain/reports/operationalTypes'
 import { exportOperationalReport } from './exportOperationalReport'
 import { OperationalReportComparisonTable } from './OperationalReportComparisonTable'
+import { OperationalReportExecutivePanel } from './OperationalReportExecutivePanel'
 import { OperationalReportHeader } from './OperationalReportHeader'
 import { OperationalReportPersonList } from './OperationalReportPersonList'
 
@@ -23,6 +24,8 @@ export function OperationalInstitutionalView({
         currentPeriodLabel={report.current.period.label}
         onExport={() => exportOperationalReport(report)}
       />
+
+      <OperationalReportExecutivePanel report={report} />
 
       <div>
         <OperationalReportComparisonTable
@@ -50,22 +53,6 @@ export function OperationalInstitutionalView({
           icon={Award}
           variant="success"
         />
-      </div>
-
-      <div
-        style={{
-          padding: '18px',
-          background:
-            'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.42) 100%)',
-          border: '1px solid var(--shell-border)',
-          borderRadius: '18px',
-          fontSize: '14px',
-          fontStyle: 'italic',
-          color: 'var(--text-main)',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <strong>Lectura:</strong> {report.reading}
       </div>
     </>
   )

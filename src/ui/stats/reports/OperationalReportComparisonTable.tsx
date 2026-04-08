@@ -14,9 +14,14 @@ const COMPARISON_ROWS = [
 ] as const
 
 function DeltaBadge({ value, inverse }: { value: number; inverse?: boolean }) {
-  const isPositiveOutcome = inverse ? value > 0 : value < 0
-  const color = isPositiveOutcome ? 'var(--text-success)' : 'var(--text-danger)'
-  const Icon = isPositiveOutcome ? TrendingDown : TrendingUp
+  const isNeutral = value === 0
+  const isPositiveOutcome = inverse ? value < 0 : value > 0
+  const color = isNeutral
+    ? 'var(--text-muted)'
+    : isPositiveOutcome
+      ? 'var(--text-success)'
+      : 'var(--text-danger)'
+  const Icon = isNeutral ? TrendingUp : isPositiveOutcome ? TrendingDown : TrendingUp
 
   return (
     <div
@@ -25,9 +30,17 @@ function DeltaBadge({ value, inverse }: { value: number; inverse?: boolean }) {
         alignItems: 'center',
         gap: '6px',
         color,
-        background: isPositiveOutcome ? 'var(--bg-success)' : 'var(--bg-danger)',
+        background: isNeutral
+          ? 'rgba(159, 183, 198, 0.14)'
+          : isPositiveOutcome
+            ? 'var(--bg-success)'
+            : 'var(--bg-danger)',
         border: `1px solid ${
-          isPositiveOutcome ? 'var(--border-success)' : 'var(--border-danger)'
+          isNeutral
+            ? 'var(--shell-border)'
+            : isPositiveOutcome
+              ? 'var(--border-success)'
+              : 'var(--border-danger)'
         }`,
         borderRadius: '999px',
         padding: '6px 10px',

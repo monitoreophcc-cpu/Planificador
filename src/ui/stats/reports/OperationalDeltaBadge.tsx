@@ -11,12 +11,39 @@ export function OperationalDeltaBadge({
   value,
   inverse,
 }: OperationalDeltaBadgeProps) {
-  const isPositiveOutcome = inverse ? value > 0 : value < 0
-  const color = isPositiveOutcome ? '#059669' : '#b91c1c'
-  const Icon = isPositiveOutcome ? TrendingDown : TrendingUp
+  const isNeutral = value === 0
+  const isPositiveOutcome = inverse ? value < 0 : value > 0
+  const color = isNeutral
+    ? 'var(--text-muted)'
+    : isPositiveOutcome
+      ? 'var(--text-success)'
+      : 'var(--text-danger)'
+  const Icon = isNeutral ? TrendingUp : isPositiveOutcome ? TrendingDown : TrendingUp
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color }}>
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        color,
+        background: isNeutral
+          ? 'rgba(159, 183, 198, 0.14)'
+          : isPositiveOutcome
+            ? 'var(--bg-success)'
+            : 'var(--bg-danger)',
+        border: `1px solid ${
+          isNeutral
+            ? 'var(--shell-border)'
+            : isPositiveOutcome
+              ? 'var(--border-success)'
+              : 'var(--border-danger)'
+        }`,
+        borderRadius: '999px',
+        padding: '6px 10px',
+        fontSize: '12px',
+      }}
+    >
       <Icon size={16} />
       <span style={{ fontWeight: 700 }}>
         {value > 0 ? '+' : ''}
