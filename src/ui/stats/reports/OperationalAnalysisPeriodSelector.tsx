@@ -31,18 +31,18 @@ export function OperationalAnalysisPeriodSelector({
   const years = [currentYear, currentYear - 1, currentYear - 2]
 
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <label
+    <div style={{ marginBottom: '18px' }}>
+      <div
         style={{
-          display: 'block',
           marginBottom: '8px',
-          fontWeight: 500,
-          fontSize: '14px',
+          fontWeight: 700,
+          fontSize: '13px',
+          color: 'var(--text-main)',
         }}
       >
         {label}
-      </label>
-      <div style={{ display: 'flex', gap: '8px' }}>
+      </div>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <select
           value={value.kind}
           onChange={event =>
@@ -53,13 +53,17 @@ export function OperationalAnalysisPeriodSelector({
           }
           disabled={lockKind}
           style={{
-            padding: '8px 12px',
-            border: '1px solid var(--border-strong)',
-            borderRadius: '6px',
-            background: lockKind ? '#f3f4f6' : 'var(--bg-panel)',
+            padding: '10px 14px',
+            border: '1px solid var(--shell-border)',
+            borderRadius: '16px',
+            background: lockKind
+              ? 'rgba(159, 183, 198, 0.14)'
+              : 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
             cursor: lockKind ? 'not-allowed' : 'pointer',
             fontSize: '14px',
             opacity: lockKind ? 0.6 : 1,
+            color: 'var(--text-main)',
+            boxShadow: 'var(--shadow-sm)',
           }}
         >
           <option value="MONTH">Mes</option>
@@ -74,13 +78,17 @@ export function OperationalAnalysisPeriodSelector({
               onChange({ ...value, month })
             }}
             style={{
-              padding: '8px 12px',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '6px',
-              background: 'var(--bg-panel)',
+              padding: '10px 14px',
+              border: '1px solid var(--shell-border)',
+              borderRadius: '16px',
+              background:
+                'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
               cursor: 'pointer',
               fontSize: '14px',
               flex: 1,
+              minWidth: '180px',
+              color: 'var(--text-main)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             {MONTHS.map((month, index) => (
@@ -101,13 +109,17 @@ export function OperationalAnalysisPeriodSelector({
               })
             }
             style={{
-              padding: '8px 12px',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '6px',
-              background: 'var(--bg-panel)',
+              padding: '10px 14px',
+              border: '1px solid var(--shell-border)',
+              borderRadius: '16px',
+              background:
+                'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
               cursor: 'pointer',
               fontSize: '14px',
               flex: 1,
+              minWidth: '180px',
+              color: 'var(--text-main)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             {QUARTERS.map(quarter => (
@@ -127,12 +139,15 @@ export function OperationalAnalysisPeriodSelector({
             })
           }
           style={{
-            padding: '8px 12px',
-            border: '1px solid var(--border-strong)',
-            borderRadius: '6px',
-            background: 'var(--bg-panel)',
+            padding: '10px 14px',
+            border: '1px solid var(--shell-border)',
+            borderRadius: '16px',
+            background:
+              'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
             cursor: 'pointer',
             fontSize: '14px',
+            color: 'var(--text-main)',
+            boxShadow: 'var(--shadow-sm)',
           }}
         >
           {years.map(year => (
@@ -142,6 +157,11 @@ export function OperationalAnalysisPeriodSelector({
           ))}
         </select>
       </div>
+      {lockKind && (
+        <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
+          El tipo de período se hereda del bloque base para mantener la comparación consistente.
+        </div>
+      )}
     </div>
   )
 }

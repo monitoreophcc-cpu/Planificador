@@ -177,11 +177,11 @@ export function DailyLogView() {
       ) : null}
 
       <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 'var(--space-md)',
-            alignItems: 'start',
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 'var(--space-md)',
+          alignItems: 'start',
         }}
       >
         <DailyLogSidebar
@@ -192,7 +192,19 @@ export function DailyLogView() {
           nightPresent={controller.dailyStats.nightPresent}
           nightPlanned={controller.dailyStats.nightPlanned}
           activeCoveragesCount={controller.activeCoveragesForDay.length}
+          bulkAbsenceJustified={controller.bulkAbsenceJustified}
+          bulkCustomPoints={controller.bulkCustomPoints}
+          bulkError={controller.bulkError}
+          bulkMode={controller.bulkMode}
+          bulkNote={controller.bulkNote}
+          bulkSelectedRepIds={controller.bulkSelectedRepIds}
+          isBulkSubmitting={controller.isBulkSubmitting}
           onOpenCoverageManager={() => controller.setIsCoverageManagerOpen(true)}
+          onBulkAbsenceJustifiedChange={controller.setBulkAbsenceJustified}
+          onBulkCustomPointsChange={controller.setBulkCustomPoints}
+          onBulkNoteChange={controller.setBulkNote}
+          onOpenBulkMode={controller.openBulkMode}
+          onSubmitBulkRegistration={controller.handleBulkSubmit}
           hideAbsent={controller.hideAbsent}
           onToggleHideAbsent={controller.toggleHideAbsent}
           incidentType={controller.incidentType}
@@ -201,6 +213,8 @@ export function DailyLogView() {
           rows={controller.representativeRows}
           selectedRepId={controller.selectedRep?.id ?? null}
           onSelectRepresentative={controller.onSelectRepresentative}
+          onToggleBulkRepresentative={controller.toggleBulkRepresentative}
+          onCloseBulkMode={controller.resetBulkRegistration}
         />
 
         <section

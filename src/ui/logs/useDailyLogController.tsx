@@ -19,6 +19,7 @@ export function useDailyLogController() {
     showConfirm,
     pushUndo,
     removeIncident,
+    removeIncidents,
     dailyLogDate,
     setDailyLogDate,
   } = useAppStore(state => ({
@@ -31,6 +32,7 @@ export function useDailyLogController() {
     showConfirm: state.showConfirm,
     pushUndo: state.pushUndo,
     removeIncident: state.removeIncident,
+    removeIncidents: state.removeIncidents,
     dailyLogDate: state.dailyLogDate,
     setDailyLogDate: state.setDailyLogDate,
   }))
@@ -83,7 +85,19 @@ export function useDailyLogController() {
     setSelectedRep,
   ])
 
-  const { handleSubmit, onCoverageResolutionConfirm } = useDailyLogSubmission({
+  useEffect(() => {
+    if (!formState.bulkMode) return
+
+    const supportedBulkMode =
+      incidentType === 'AUSENCIA' || incidentType === 'OTRO' ? incidentType : null
+
+    if (supportedBulkMode !== formState.bulkMode) {
+      formState.resetBulkRegistration()
+    }
+  }, [formState, incidentType])
+
+  const { handleBulkSubmit, handleSubmit, onCoverageResolutionConfirm } =
+    useDailyLogSubmission({
     activeCoveragesForDay: derived.activeCoveragesForDay,
     activeShift: formState.activeShift,
     activeWeeklyPlan: derived.activeWeeklyPlan,
@@ -97,6 +111,7 @@ export function useDailyLogController() {
     note: formState.note,
     pushUndo,
     removeIncident,
+    removeIncidents,
     representatives,
     selectedRep,
     setAbsenceConfirmState: formState.setAbsenceConfirmState,
@@ -106,6 +121,49 @@ export function useDailyLogController() {
     showConfirm,
   })
 
+  const onSubmitBulkRegistration = async () => {
+    if (!formState.bulkMode) {
+      return
+    }
+
+    formState.setBulkError(null)
+    formState.setIsBulkSubmitting(true)
+
+    const result = await handleBulkSubmit({
+      bulkMode: formState.bulkMode,
+      bulkSelectedRepIds: formState.bulkSelectedRepIds,
+      bulkNote: formState.bulkNote,
+      bulkAbsenceJustified: formState.bulkAbsenceJustified,
+      bulkCustomPoints: formState.bulkCustomPoints,
+    })
+
+    formState.setIsBulkSubmitting(false)
+
+    if (result.ok) {
+      formState.resetBulkRegistration()
+      return
+    }
+
+    if (result.reason === 'Acción cancelada por el usuario.') {
+      return
+    }
+
+    if (result.failures.length > 0) {
+      formState.setBulkSelectedRepIds(result.failures.map(failure => failure.id))
+      formState.setBulkError(
+        `${result.reason} ${result.failures
+          .slice(0, 3)
+          .map(failure => `${failure.name}: ${failure.reason}`)
+          .join(' · ')}${
+          result.failures.length > 3 ? ' · ...' : ''
+        }`
+      )
+      return
+    }
+
+    formState.setBulkError(result.reason)
+  }
+
   return {
     ...derived,
     ...formState,
@@ -114,6 +172,7 @@ export function useDailyLogController() {
     isLoading,
     logDate,
     representatives,
+    handleBulkSubmit: onSubmitBulkRegistration,
     handleSubmit,
     onCoverageResolutionConfirm: (isJustified: boolean) =>
       onCoverageResolutionConfirm(isJustified, formState.coverageResolution),

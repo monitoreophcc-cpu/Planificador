@@ -1,6 +1,7 @@
 import { calculatePoints } from '@/domain/analytics/computeMonthlySummary'
 import type { IncidentType } from '@/domain/types'
 import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { InlineAlert } from '../components/InlineAlert'
 import { getDailyLogIncidentSubmitStyle } from './dailyLogIncidentFormStyles'
 
@@ -111,7 +112,9 @@ function buildIncidentPreview({
   logDate: string
   selectedRepName?: string
 }) {
-  const formattedDate = format(parseISO(logDate), "d 'de' MMMM")
+  const formattedDate = format(parseISO(logDate), "d 'de' MMMM", {
+    locale: es,
+  })
   const targetName = selectedRepName ?? 'la ficha seleccionada'
   const labelMap: Record<IncidentType, string> = {
     TARDANZA: 'tardanza',

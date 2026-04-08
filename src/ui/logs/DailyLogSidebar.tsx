@@ -1,6 +1,6 @@
 import React from 'react'
 import type { IncidentType } from '@/domain/types'
-import type { DailyLogRepresentativeRow } from './dailyLogTypes'
+import type { DailyLogBulkMode, DailyLogRepresentativeRow } from './dailyLogTypes'
 import { DailyLogSidebarRepresentativeList } from './DailyLogSidebarRepresentativeList'
 import { DailyLogSidebarShiftPanel } from './DailyLogSidebarShiftPanel'
 
@@ -12,7 +12,19 @@ type DailyLogSidebarProps = {
   nightPresent: number
   nightPlanned: number
   activeCoveragesCount: number
+  bulkAbsenceJustified: boolean
+  bulkCustomPoints: number
+  bulkError: string | null
+  bulkMode: DailyLogBulkMode | null
+  bulkNote: string
+  bulkSelectedRepIds: string[]
+  isBulkSubmitting: boolean
   onOpenCoverageManager: () => void
+  onBulkAbsenceJustifiedChange: (value: boolean) => void
+  onBulkCustomPointsChange: (value: number) => void
+  onBulkNoteChange: (value: string) => void
+  onOpenBulkMode: (mode: DailyLogBulkMode) => void
+  onSubmitBulkRegistration: () => void
   hideAbsent: boolean
   onToggleHideAbsent: () => void
   incidentType: IncidentType
@@ -21,6 +33,8 @@ type DailyLogSidebarProps = {
   rows: DailyLogRepresentativeRow[]
   selectedRepId: string | null
   onSelectRepresentative: (representativeId: string) => void
+  onToggleBulkRepresentative: (representativeId: string) => void
+  onCloseBulkMode: () => void
 }
 
 export function DailyLogSidebar({
@@ -31,7 +45,19 @@ export function DailyLogSidebar({
   nightPresent,
   nightPlanned,
   activeCoveragesCount,
+  bulkAbsenceJustified,
+  bulkCustomPoints,
+  bulkError,
+  bulkMode,
+  bulkNote,
+  bulkSelectedRepIds,
+  isBulkSubmitting,
   onOpenCoverageManager,
+  onBulkAbsenceJustifiedChange,
+  onBulkCustomPointsChange,
+  onBulkNoteChange,
+  onOpenBulkMode,
+  onSubmitBulkRegistration,
   hideAbsent,
   onToggleHideAbsent,
   incidentType,
@@ -40,6 +66,8 @@ export function DailyLogSidebar({
   rows,
   selectedRepId,
   onSelectRepresentative,
+  onToggleBulkRepresentative,
+  onCloseBulkMode,
 }: DailyLogSidebarProps) {
   const effectiveAdministrativeMode =
     incidentType === 'VACACIONES' || incidentType === 'LICENCIA'
@@ -59,10 +87,8 @@ export function DailyLogSidebar({
         flexDirection: 'column',
         gap: 'var(--space-md)',
         boxShadow: 'var(--shadow-md)',
-        position: 'sticky',
-        top: '16px',
-        maxHeight: 'calc(100vh - 32px)',
-        overflowY: 'hidden',
+        position: 'relative',
+        overflow: 'visible',
         alignSelf: 'flex-start',
       }}
     >
@@ -77,12 +103,27 @@ export function DailyLogSidebar({
 
       <DailyLogSidebarRepresentativeList
         activeCoveragesCount={activeCoveragesCount}
+        bulkAbsenceJustified={bulkAbsenceJustified}
+        bulkCustomPoints={bulkCustomPoints}
+        bulkError={bulkError}
+        bulkMode={bulkMode}
+        bulkNote={bulkNote}
+        bulkSelectedRepIds={bulkSelectedRepIds}
         effectiveAdministrativeMode={effectiveAdministrativeMode}
         hideAbsent={hideAbsent}
+        incidentType={incidentType}
+        isBulkSubmitting={isBulkSubmitting}
         onOpenCoverageManager={onOpenCoverageManager}
+        onBulkAbsenceJustifiedChange={onBulkAbsenceJustifiedChange}
+        onBulkCustomPointsChange={onBulkCustomPointsChange}
+        onBulkNoteChange={onBulkNoteChange}
+        onOpenBulkMode={onOpenBulkMode}
+        onSubmitBulkRegistration={onSubmitBulkRegistration}
         onSearchTermChange={onSearchTermChange}
         onSelectRepresentative={onSelectRepresentative}
+        onToggleBulkRepresentative={onToggleBulkRepresentative}
         onToggleHideAbsent={onToggleHideAbsent}
+        onCloseBulkMode={onCloseBulkMode}
         rows={rows}
         searchTerm={searchTerm}
         selectedRepId={selectedRepId}

@@ -21,14 +21,19 @@ import {
   handleDailyLogAbsenceSubmit,
   handleDailyLogCoverageResolutionConfirm,
 } from './dailyLogAbsenceFlow'
-import { submitDailyLogIncident } from './dailyLogSubmissionHelpers'
+import {
+  submitDailyLogIncident,
+  submitDailyLogIncidentBatch,
+} from './dailyLogSubmissionHelpers'
+import type { DailyLogBulkMode } from './dailyLogTypes'
 
 interface UseDailyLogSubmissionParams {
   activeCoveragesForDay: Coverage[]
   activeShift: 'DAY' | 'NIGHT'
   activeWeeklyPlan: WeeklyPlan | null
   addIncident: (
-    data: IncidentInput
+    data: IncidentInput,
+    skipConfirm?: boolean
   ) => Promise<{ ok: true; newId: string } | { ok: false; reason: string }>
   allCalendarDaysForRelevantMonths: DayInfo[]
   incidents: Incident[]
@@ -42,6 +47,7 @@ interface UseDailyLogSubmissionParams {
     timeoutMs?: number
   ) => void
   removeIncident: (id: string, silent?: boolean) => void
+  removeIncidents: (ids: string[]) => void
   representatives: Representative[]
   selectedRep: Representative | null
   setAbsenceConfirmState: (value: AbsenceConfirmState) => void
@@ -73,6 +79,7 @@ export function useDailyLogSubmission({
   note,
   pushUndo,
   removeIncident,
+  removeIncidents,
   representatives,
   selectedRep,
   setAbsenceConfirmState,
@@ -156,7 +163,29 @@ export function useDailyLogSubmission({
     })
   }
 
+  const handleBulkSubmit = async (args: {
+    bulkMode: DailyLogBulkMode
+    bulkSelectedRepIds: string[]
+    bulkNote: string
+    bulkAbsenceJustified: boolean
+    bulkCustomPoints: number
+  }) =>
+    submitDailyLogIncidentBatch({
+      addIncident,
+      bulkAbsenceJustified: args.bulkAbsenceJustified,
+      bulkCustomPoints: args.bulkCustomPoints,
+      bulkMode: args.bulkMode,
+      bulkNote: args.bulkNote,
+      bulkSelectedRepIds: args.bulkSelectedRepIds,
+      logDate,
+      pushUndo,
+      removeIncidents,
+      representatives,
+      showConfirm,
+    })
+
   return {
+    handleBulkSubmit,
     handleSubmit,
     onCoverageResolutionConfirm,
   }

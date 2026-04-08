@@ -91,7 +91,13 @@ export function BackupManagementList({
           punto de restauración explícito.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '12px',
+          }}
+        >
           {backups.map(backup => (
             <div
               key={backup.key}
@@ -101,10 +107,12 @@ export function BackupManagementList({
                 border: '1px solid rgba(148, 163, 184, 0.2)',
                 borderRadius: '16px',
                 display: 'flex',
+                flexDirection: 'column',
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: 'stretch',
                 gap: '12px',
                 boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)',
+                minHeight: '100%',
               }}
             >
               <div>
@@ -197,7 +205,7 @@ export function BackupManagementList({
                   ))}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => void onRestoreBackup(backup.key)}
                   style={{
@@ -209,6 +217,7 @@ export function BackupManagementList({
                     cursor: 'pointer',
                     fontWeight: 700,
                     fontSize: '13px',
+                    flex: '1 1 140px',
                   }}
                 >
                   Restaurar
@@ -224,6 +233,8 @@ export function BackupManagementList({
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '44px',
                   }}
                 >
                   <Trash2 size={16} />

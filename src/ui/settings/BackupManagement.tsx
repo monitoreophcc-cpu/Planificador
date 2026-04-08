@@ -109,8 +109,8 @@ export function BackupManagement() {
 
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
               gap: '10px',
             }}
           >

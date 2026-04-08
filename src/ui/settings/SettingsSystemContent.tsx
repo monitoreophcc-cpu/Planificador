@@ -24,20 +24,27 @@ export function SettingsSystemContent({
   toggleAdvancedMode,
 }: SettingsSystemContentProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="settings-system-grid">
       <div
+        className="settings-system-grid__backup"
         style={{
           ...settingsViewStyles.settingItem,
           padding: 0,
           overflow: 'hidden',
+          marginBottom: 0,
         }}
       >
         <BackupManagement />
       </div>
 
-      <QuickGuide />
+      <div className="settings-system-grid__guide">
+        <QuickGuide />
+      </div>
 
-      <div style={settingsViewStyles.settingItem}>
+      <div
+        className="settings-system-grid__advanced"
+        style={{ ...settingsViewStyles.settingItem, marginBottom: 0 }}
+      >
         <div
           style={{
             display: 'flex',
@@ -63,7 +70,10 @@ export function SettingsSystemContent({
         </div>
       </div>
 
-      <div style={settingsViewStyles.settingItem}>
+      <div
+        className="settings-system-grid__history"
+        style={{ ...settingsViewStyles.settingItem, marginBottom: 0 }}
+      >
         <div style={settingsViewStyles.sectionEyebrow}>Rastreo operativo</div>
         <h3 style={settingsViewStyles.sectionTitle}>Historial y Auditoría</h3>
         <p
@@ -118,8 +128,10 @@ export function SettingsSystemContent({
       </div>
 
       <div
+        className="settings-system-grid__danger"
         style={{
           ...settingsViewStyles.settingItem,
+          marginBottom: 0,
           borderColor: 'var(--border-danger)',
           background:
             'linear-gradient(180deg, var(--bg-danger) 0%, rgba(255,255,255,0.56) 100%)',
@@ -154,6 +166,45 @@ export function SettingsSystemContent({
           Resetear Planificación
         </button>
       </div>
+
+      <style jsx>{`
+        .settings-system-grid {
+          display: grid;
+          gap: 24px;
+          align-items: start;
+        }
+
+        @media (min-width: 1180px) {
+          .settings-system-grid {
+            grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.92fr);
+            grid-template-areas:
+              'backup guide'
+              'backup advanced'
+              'backup history'
+              'danger history';
+          }
+
+          .settings-system-grid__backup {
+            grid-area: backup;
+          }
+
+          .settings-system-grid__guide {
+            grid-area: guide;
+          }
+
+          .settings-system-grid__advanced {
+            grid-area: advanced;
+          }
+
+          .settings-system-grid__history {
+            grid-area: history;
+          }
+
+          .settings-system-grid__danger {
+            grid-area: danger;
+          }
+        }
+      `}</style>
     </div>
   )
 }

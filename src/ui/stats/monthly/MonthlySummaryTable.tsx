@@ -1,7 +1,6 @@
 'use client'
 
 import type { CSSProperties } from 'react'
-import { AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react'
 import type {
   PersonMonthlySummary,
   RiskLevel,
@@ -39,7 +38,6 @@ function RiskBadge({ level }: { level: RiskLevel }) {
       color: string
       background: string
       border: string
-      Icon: typeof AlertTriangle
     }
   > = {
     danger: {
@@ -47,44 +45,48 @@ function RiskBadge({ level }: { level: RiskLevel }) {
       color: 'var(--text-danger)',
       background: 'var(--bg-danger)',
       border: 'var(--border-danger)',
-      Icon: ShieldAlert,
     },
     warning: {
       label: 'Atención',
       color: 'var(--text-warning)',
       background: 'var(--bg-warning)',
       border: 'var(--border-warning)',
-      Icon: AlertTriangle,
     },
     ok: {
       label: 'Estable',
       color: 'var(--text-success)',
       background: 'var(--bg-success)',
       border: 'var(--border-success)',
-      Icon: CheckCircle2,
     },
   }
 
-  const { label, color, background, border, Icon } = config[level]
+  const { label, color, background, border } = config[level]
 
   return (
     <div
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '6px',
-        padding: '6px 10px',
+        justifyContent: 'center',
+        width: '26px',
+        height: '26px',
         borderRadius: '999px',
         background,
         border: `1px solid ${border}`,
-        color,
-        fontSize: '12px',
-        fontWeight: 700,
       }}
       title={label}
+      aria-label={label}
     >
-      <Icon size={14} />
-      <span>{label}</span>
+      <span
+        aria-hidden="true"
+        style={{
+          width: '10px',
+          height: '10px',
+          borderRadius: '999px',
+          background: color,
+          boxShadow: `0 0 0 4px ${background}`,
+        }}
+      />
     </div>
   )
 }

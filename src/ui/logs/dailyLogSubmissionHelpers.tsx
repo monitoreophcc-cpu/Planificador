@@ -8,6 +8,7 @@ import type {
   ISODate,
   Representative,
 } from '@/domain/types'
+import type { DailyLogBulkMode } from './dailyLogTypes'
 import { checkIncidentConflicts } from '@/domain/incidents/checkIncidentConflicts'
 
 type ShowConfirm = (options: {
@@ -123,4 +124,167 @@ export async function submitDailyLogIncident(args: {
   }
 
   alert(`Error: ${result.reason}`)
+}
+
+export async function submitDailyLogIncidentBatch(args: {
+  addIncident: (
+    data: IncidentInput,
+    skipConfirm?: boolean
+  ) => Promise<{ ok: true; newId: string } | { ok: false; reason: string }>
+  bulkMode: DailyLogBulkMode
+  bulkNote: string
+  bulkSelectedRepIds: string[]
+  bulkAbsenceJustified: boolean
+  bulkCustomPoints: number
+  logDate: ISODate
+  pushUndo: (
+    action: { label: string; undo: () => void },
+    timeoutMs?: number
+  ) => void
+  removeIncidents: (ids: string[]) => void
+  representatives: Representative[]
+  showConfirm: ShowConfirm
+}) {
+  const {
+    addIncident,
+    bulkAbsenceJustified,
+    bulkCustomPoints,
+    bulkMode,
+    bulkNote,
+    bulkSelectedRepIds,
+    logDate,
+    pushUndo,
+    removeIncidents,
+    representatives,
+    showConfirm,
+  } = args
+
+  const selectedRepresentatives = bulkSelectedRepIds
+    .map(representativeId =>
+      representatives.find(representative => representative.id === representativeId)
+    )
+    .filter((representative): representative is Representative => Boolean(representative))
+
+  if (selectedRepresentatives.length === 0) {
+    return {
+      ok: false as const,
+      reason: 'Selecciona al menos un representante para el lote.',
+      failures: [],
+      createdIds: [],
+    }
+  }
+
+  const countLabel =
+    selectedRepresentatives.length === 1
+      ? '1 persona'
+      : `${selectedRepresentatives.length} personas`
+
+  const title =
+    bulkMode === 'AUSENCIA'
+      ? `Vas a registrar ausencia ${
+          bulkAbsenceJustified ? 'justificada' : 'injustificada'
+        } a ${countLabel}. ¿Confirmar?`
+      : `Vas a registrar evento manual a ${countLabel}. ¿Confirmar?`
+
+  const description =
+    bulkMode === 'AUSENCIA'
+      ? bulkNote.trim()
+        ? `Comentario global: "${bulkNote.trim()}".`
+        : 'Se aplicará el mismo criterio a todas las fichas seleccionadas.'
+      : bulkNote.trim()
+        ? `Cada registro usará ${bulkCustomPoints} punto(s) y el comentario "${bulkNote.trim()}".`
+        : `Cada registro usará ${bulkCustomPoints} punto(s) manuales.`
+
+  const confirmed = await showConfirm({
+    title: 'Registrar lote',
+    description: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div>{title}</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{description}</div>
+      </div>
+    ),
+    intent:
+      bulkMode === 'AUSENCIA' && !bulkAbsenceJustified ? 'danger' : 'info',
+    confirmLabel: 'Registrar lote',
+    cancelLabel: 'Cancelar',
+  })
+
+  if (!confirmed) {
+    return {
+      ok: false as const,
+      reason: 'Acción cancelada por el usuario.',
+      failures: [],
+      createdIds: [],
+    }
+  }
+
+  const createdIds: string[] = []
+  const failures: Array<{ id: string; name: string; reason: string }> = []
+
+  for (const representative of selectedRepresentatives) {
+    const input: IncidentInput =
+      bulkMode === 'AUSENCIA'
+        ? {
+            representativeId: representative.id,
+            type: 'AUSENCIA',
+            startDate: logDate,
+            duration: 1,
+            note: bulkNote.trim() || undefined,
+            details: bulkAbsenceJustified ? 'JUSTIFICADA' : 'INJUSTIFICADA',
+          }
+        : {
+            representativeId: representative.id,
+            type: 'OTRO',
+            startDate: logDate,
+            duration: 1,
+            note: bulkNote.trim() || undefined,
+            customPoints: Number.isFinite(bulkCustomPoints)
+              ? Math.max(0, bulkCustomPoints)
+              : 0,
+          }
+
+    const result = await addIncident(input, true)
+
+    if (result.ok) {
+      createdIds.push(result.newId)
+      continue
+    }
+
+    failures.push({
+      id: representative.id,
+      name: representative.name,
+      reason: result.reason,
+    })
+  }
+
+  if (createdIds.length > 0) {
+    pushUndo(
+      {
+        label:
+          createdIds.length === 1
+            ? '1 registro masivo'
+            : `${createdIds.length} registros masivos`,
+        undo: () => removeIncidents(createdIds),
+      },
+      7000
+    )
+  }
+
+  if (failures.length > 0) {
+    return {
+      ok: false as const,
+      reason:
+        createdIds.length > 0
+          ? `Se registraron ${createdIds.length} de ${selectedRepresentatives.length}.`
+          : 'No se pudo registrar el lote.',
+      failures,
+      createdIds,
+    }
+  }
+
+  return {
+    ok: true as const,
+    failures: [],
+    createdIds,
+  }
 }

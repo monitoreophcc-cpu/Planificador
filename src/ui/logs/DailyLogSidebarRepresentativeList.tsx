@@ -1,19 +1,37 @@
+import type { IncidentType } from '@/domain/types'
 import { useMemo, useState } from 'react'
+import { DailyLogBulkRegistrationPanel } from './DailyLogBulkRegistrationPanel'
 import type { DailyLogRepresentativeRow } from './dailyLogTypes'
 import {
   DailyLogSidebarControls,
   type SidebarFocusMode,
 } from './DailyLogSidebarControls'
+import type { DailyLogBulkMode } from './dailyLogTypes'
 import { DailyLogSidebarRepresentativeRow } from './DailyLogSidebarRepresentativeRow'
 
 type DailyLogSidebarRepresentativeListProps = {
   activeCoveragesCount: number
+  bulkAbsenceJustified: boolean
+  bulkCustomPoints: number
+  bulkError: string | null
+  bulkMode: DailyLogBulkMode | null
+  bulkNote: string
+  bulkSelectedRepIds: string[]
   effectiveAdministrativeMode: boolean
   hideAbsent: boolean
+  incidentType: IncidentType
+  isBulkSubmitting: boolean
   onOpenCoverageManager: () => void
+  onBulkAbsenceJustifiedChange: (value: boolean) => void
+  onBulkCustomPointsChange: (value: number) => void
+  onBulkNoteChange: (value: string) => void
+  onOpenBulkMode: (mode: DailyLogBulkMode) => void
+  onSubmitBulkRegistration: () => void
   onSearchTermChange: (value: string) => void
   onSelectRepresentative: (representativeId: string) => void
+  onToggleBulkRepresentative: (representativeId: string) => void
   onToggleHideAbsent: () => void
+  onCloseBulkMode: () => void
   rows: DailyLogRepresentativeRow[]
   searchTerm: string
   selectedRepId: string | null
@@ -21,12 +39,27 @@ type DailyLogSidebarRepresentativeListProps = {
 
 export function DailyLogSidebarRepresentativeList({
   activeCoveragesCount,
+  bulkAbsenceJustified,
+  bulkCustomPoints,
+  bulkError,
+  bulkMode,
+  bulkNote,
+  bulkSelectedRepIds,
   effectiveAdministrativeMode,
   hideAbsent,
+  incidentType,
+  isBulkSubmitting,
   onOpenCoverageManager,
+  onBulkAbsenceJustifiedChange,
+  onBulkCustomPointsChange,
+  onBulkNoteChange,
+  onOpenBulkMode,
+  onSubmitBulkRegistration,
   onSearchTermChange,
   onSelectRepresentative,
+  onToggleBulkRepresentative,
   onToggleHideAbsent,
+  onCloseBulkMode,
   rows,
   searchTerm,
   selectedRepId,
@@ -59,20 +92,42 @@ export function DailyLogSidebarRepresentativeList({
     !filteredRows.some(row => row.id === selectedRepId)
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
       <DailyLogSidebarControls
         activeCoveragesCount={activeCoveragesCount}
+        bulkMode={bulkMode}
         effectiveAdministrativeMode={effectiveAdministrativeMode}
         filteredCount={filteredRows.length}
         focusMode={focusMode}
         hideAbsent={hideAbsent}
+        incidentType={incidentType}
         onOpenCoverageManager={onOpenCoverageManager}
+        onOpenBulkMode={mode =>
+          bulkMode === mode ? onCloseBulkMode() : onOpenBulkMode(mode)
+        }
         onFocusModeChange={setFocusMode}
         onSearchTermChange={onSearchTermChange}
         onToggleHideAbsent={onToggleHideAbsent}
         searchTerm={searchTerm}
         totalCount={rows.length}
       />
+
+      {bulkMode ? (
+        <DailyLogBulkRegistrationPanel
+          bulkAbsenceJustified={bulkAbsenceJustified}
+          bulkCustomPoints={bulkCustomPoints}
+          bulkError={bulkError}
+          bulkMode={bulkMode}
+          bulkNote={bulkNote}
+          isBulkSubmitting={isBulkSubmitting}
+          selectedCount={bulkSelectedRepIds.length}
+          onBulkAbsenceJustifiedChange={onBulkAbsenceJustifiedChange}
+          onBulkCustomPointsChange={onBulkCustomPointsChange}
+          onBulkNoteChange={onBulkNoteChange}
+          onCancel={onCloseBulkMode}
+          onSubmit={onSubmitBulkRegistration}
+        />
+      ) : null}
 
       {selectedRepHiddenByView ? (
         <div
@@ -112,14 +167,16 @@ export function DailyLogSidebarRepresentativeList({
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
-          overflowY: 'auto',
-          flex: 1,
+          overflow: 'visible',
         }}
       >
         {filteredRows.length > 0 ? (
           filteredRows.map(row => (
             <DailyLogSidebarRepresentativeRow
               key={row.id}
+              bulkMode={bulkMode}
+              bulkSelected={bulkSelectedRepIds.includes(row.id)}
+              onToggleBulkRepresentative={onToggleBulkRepresentative}
               row={row}
               selected={selectedRepId === row.id}
               onSelectRepresentative={onSelectRepresentative}

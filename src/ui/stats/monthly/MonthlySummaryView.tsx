@@ -82,13 +82,7 @@ export function MonthlySummaryView() {
 
       <MonthlySummaryMetricsPanel metrics={metrics} />
 
-      <div
-        style={{
-          marginBottom: '32px',
-          paddingBottom: '16px',
-          borderBottom: '1px dashed var(--shell-border)',
-        }}
-      >
+      <div style={{ marginBottom: '8px' }}>
         <MonthlySummaryChart summary={summary} />
       </div>
 
