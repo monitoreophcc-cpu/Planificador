@@ -6,7 +6,7 @@ import { useSession } from '@/hooks/useSession'
 import { useAppShellSyncMeta } from './useAppShellSyncMeta'
 
 export function AppShellHeaderSession() {
-  const { user, loading, signOut } = useSession()
+  const { user, loading } = useSession()
   const syncMeta = useAppShellSyncMeta()
 
   const userName = useMemo(() => {
@@ -207,24 +207,6 @@ export function AppShellHeaderSession() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => void signOut()}
-        disabled={loading}
-        style={{
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
-          background: 'var(--bg-surface)',
-          color: 'var(--text-main)',
-          padding: '10px 12px',
-          fontSize: 'var(--font-size-sm)',
-          fontWeight: 600,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        Salir
-      </button>
     </div>
   )
 }

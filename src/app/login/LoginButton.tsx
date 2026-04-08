@@ -1,10 +1,13 @@
 'use client'
 
+import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
+import { sanitizeNextPath } from '@/lib/auth/redirects'
 import styles from './page.module.css'
 
 export function LoginButton() {
   const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
 
   const handleLogin = async (): Promise<void> => {
     setLoading(true)
@@ -12,13 +15,23 @@ export function LoginButton() {
     try {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
+      const callbackUrl = new URL('/auth/callback', window.location.origin)
+      const nextPath = sanitizeNextPath(searchParams.get('next'))
 
-      await supabase.auth.signInWithOAuth({
+      if (nextPath !== '/') {
+        callbackUrl.searchParams.set('next', nextPath)
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl.toString(),
         },
       })
+
+      if (error) {
+        window.location.assign('/login?error=auth')
+      }
     } finally {
       setLoading(false)
     }

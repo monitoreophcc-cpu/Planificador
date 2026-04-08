@@ -6,20 +6,24 @@ import { SortableRepCard } from './SortableRepCard'
 
 interface ShiftSectionProps {
     shift: ShiftType
+    title?: string
     representatives: Representative[]
+    selectedRepId: string | null
+    onSelect: (rep: Representative) => void
     onEdit: (rep: Representative) => void
-    onAddSchedule: (repId: string | null) => void
-    addingScheduleFor: string | null
     advancedEditMode: boolean
+    allowReorder?: boolean
 }
 
 export function ShiftSection({
     shift,
+    title,
     representatives,
+    selectedRepId,
+    onSelect,
     onEdit,
-    onAddSchedule,
-    addingScheduleFor,
     advancedEditMode,
+    allowReorder = advancedEditMode,
 }: ShiftSectionProps) {
     const reorderRepresentatives = useAppStore(s => s.reorderRepresentatives)
 
@@ -41,21 +45,52 @@ export function ShiftSection({
         <div>
             <div style={{
                 fontSize: '12px',
-                color: advancedEditMode ? '#92400e' : '#6b7280',
+                color: allowReorder ? '#92400e' : '#6b7280',
                 marginBottom: '12px',
                 fontStyle: 'italic',
-                background: advancedEditMode ? '#fef3c7' : '#f9fafb',
+                background: allowReorder ? '#fef3c7' : '#f9fafb',
                 padding: '8px 12px',
                 borderRadius: '6px',
-                border: `1px solid ${advancedEditMode ? '#fbbf24' : '#e5e7eb'}`
+                border: `1px solid ${allowReorder ? '#fbbf24' : '#e5e7eb'}`
             }}>
-                {advancedEditMode
+                {allowReorder
                     ? '💡 El orden define el ranking del incentivo. Arrastra desde ≡ para reordenar.'
-                    : '🔒 Activa el Modo de Edición Avanzada para reordenar representantes.'
+                    : 'Selecciona una persona para abrir su panel de trabajo. El reordenamiento queda para la vista por turno.'
                 }
             </div>
 
-            {advancedEditMode ? (
+            {title ? (
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '12px',
+                    }}
+                >
+                    <h4
+                        style={{
+                            margin: 0,
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            color: 'var(--text-main)',
+                        }}
+                    >
+                        {title}
+                    </h4>
+                    <span
+                        style={{
+                            fontSize: '12px',
+                            color: 'var(--text-muted)',
+                            fontWeight: 600,
+                        }}
+                    >
+                        {representatives.length} representante(s)
+                    </span>
+                </div>
+            ) : null}
+
+            {allowReorder ? (
                 <DndContext
                     collisionDetection={closestCenter}
                     onDragEnd={handleDragEnd}
@@ -65,31 +100,63 @@ export function ShiftSection({
                         strategy={verticalListSortingStrategy}
                     >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {representatives.map(rep => (
-                                <SortableRepCard
-                                    key={rep.id}
-                                    rep={rep}
-                                    onEdit={onEdit}
-                                    onAddSchedule={onAddSchedule}
-                                    addingScheduleFor={addingScheduleFor}
-                                    advancedEditMode={advancedEditMode}
-                                />
-                            ))}
+                            {representatives.length === 0 ? (
+                                <div
+                                    style={{
+                                        padding: '16px',
+                                        borderRadius: '12px',
+                                        border: '1px dashed rgba(148, 163, 184, 0.3)',
+                                        background: 'rgba(248, 250, 252, 0.9)',
+                                        color: '#64748b',
+                                        fontSize: '13px',
+                                        lineHeight: 1.6,
+                                    }}
+                                >
+                                    No hay representantes que coincidan con esta vista.
+                                </div>
+                            ) : (
+                                representatives.map(rep => (
+                                    <SortableRepCard
+                                        key={rep.id}
+                                        rep={rep}
+                                        isSelected={selectedRepId === rep.id}
+                                        onSelect={onSelect}
+                                        onEdit={onEdit}
+                                        advancedEditMode={advancedEditMode}
+                                    />
+                                ))
+                            )}
                         </div>
                     </SortableContext>
                 </DndContext>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {representatives.map(rep => (
-                        <SortableRepCard
-                            key={rep.id}
-                            rep={rep}
-                            onEdit={onEdit}
-                            onAddSchedule={onAddSchedule}
-                            addingScheduleFor={addingScheduleFor}
-                            advancedEditMode={advancedEditMode}
-                        />
-                    ))}
+                    {representatives.length === 0 ? (
+                        <div
+                            style={{
+                                padding: '16px',
+                                borderRadius: '12px',
+                                border: '1px dashed rgba(148, 163, 184, 0.3)',
+                                background: 'rgba(248, 250, 252, 0.9)',
+                                color: '#64748b',
+                                fontSize: '13px',
+                                lineHeight: 1.6,
+                            }}
+                        >
+                            No hay representantes que coincidan con esta vista.
+                        </div>
+                    ) : (
+                        representatives.map(rep => (
+                            <SortableRepCard
+                                key={rep.id}
+                                rep={rep}
+                                isSelected={selectedRepId === rep.id}
+                                onSelect={onSelect}
+                                onEdit={onEdit}
+                                advancedEditMode={advancedEditMode}
+                            />
+                        ))
+                    )}
                 </div>
             )}
         </div>

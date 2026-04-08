@@ -18,6 +18,10 @@ import { useAppStore } from '@/store/useAppStore'
 import {
   type AutoBackupMetadata,
   type BackupListEntry,
+  AUTO_BACKUP_KEY,
+  buildRecoveryConfirmationMessage,
+  formatBackupDate,
+  formatBackupKindLabel,
 } from './backupManagementUtils'
 
 interface UseBackupManagementResult {
@@ -41,6 +45,13 @@ function createPayloadFromBackupState(state: BackupPayload): BackupPayload {
     },
     state.coverages || []
   )
+}
+
+function buildCurrentBackupPayload(
+  exportState: () => Parameters<typeof buildBackupPayload>[0],
+  coverages: Parameters<typeof buildBackupPayload>[1]
+): BackupPayload {
+  return buildBackupPayload(exportState(), coverages)
 }
 
 export function useBackupManagement(): UseBackupManagementResult {
@@ -72,9 +83,14 @@ export function useBackupManagement(): UseBackupManagementResult {
     refreshBackupList()
   }, [])
 
+  const createRecoveryGuard = () => {
+    saveBackupToLocalStorage(buildCurrentBackupPayload(exportState, coverages), 'recovery')
+    refreshBackupList()
+  }
+
   const handleExport = () => {
     try {
-      exportBackup(buildBackupPayload(exportState(), coverages))
+      exportBackup(buildCurrentBackupPayload(exportState, coverages))
       showSuccess('Backup exportado exitosamente')
     } catch (err) {
       showError(`Error al exportar backup: ${(err as Error).message}`)
@@ -87,14 +103,21 @@ export function useBackupManagement(): UseBackupManagementResult {
 
     try {
       const state = await importBackup(file)
+      const confirmationMessage = buildRecoveryConfirmationMessage(
+        `el archivo ${file.name}`,
+        {
+          representatives: state.representatives.length,
+          incidents: state.incidents.length,
+          swaps: state.swaps.length,
+          coverageRules: state.coverageRules.length,
+          coverages: Array.isArray(state.coverages) ? state.coverages.length : 0,
+        }
+      )
 
-      if (
-        confirm(
-          '¿Estás seguro de que deseas restaurar este backup? Esto reemplazará todos los datos actuales.'
-        )
-      ) {
+      if (confirm(confirmationMessage)) {
+        createRecoveryGuard()
         const result = await importState(createPayloadFromBackupState(state))
-        showSuccess(result.message)
+        showSuccess(`${result.message} Se guardó un respaldo de recuperación del estado anterior.`)
       }
     } catch (err) {
       showError(`Error al importar backup: ${(err as Error).message}`)
@@ -105,7 +128,7 @@ export function useBackupManagement(): UseBackupManagementResult {
 
   const handleSaveBackup = () => {
     try {
-      saveBackupToLocalStorage(buildBackupPayload(exportState(), coverages))
+      saveBackupToLocalStorage(buildCurrentBackupPayload(exportState, coverages))
       refreshBackupList()
       showSuccess('Backup guardado en el navegador')
     } catch (err) {
@@ -114,7 +137,31 @@ export function useBackupManagement(): UseBackupManagementResult {
   }
 
   const handleRestoreBackup = async (key: string) => {
-    if (!confirm('¿Estás seguro de que deseas restaurar este backup?')) return
+    const backupMeta =
+      key === AUTO_BACKUP_KEY
+        ? autoBackup
+        : backups.find(backup => backup.key === key)
+
+    const backupLabel = backupMeta
+      ? `${formatBackupKindLabel(backupMeta.kind).toLowerCase()} del ${formatBackupDate(backupMeta.timestamp)}`
+      : 'este respaldo'
+
+    if (
+      !confirm(
+        buildRecoveryConfirmationMessage(
+          backupLabel,
+          backupMeta?.summary ?? {
+            representatives: 0,
+            incidents: 0,
+            swaps: 0,
+            coverageRules: 0,
+            coverages: 0,
+          }
+        )
+      )
+    ) {
+      return
+    }
 
     try {
       const state = loadBackupFromLocalStorage(key)
@@ -123,8 +170,9 @@ export function useBackupManagement(): UseBackupManagementResult {
         return
       }
 
+      createRecoveryGuard()
       const result = await importState(createPayloadFromBackupState(state))
-      showSuccess(result.message)
+      showSuccess(`${result.message} Se guardó un respaldo de recuperación del estado anterior.`)
     } catch (err) {
       showError(`Error al restaurar backup: ${(err as Error).message}`)
     }

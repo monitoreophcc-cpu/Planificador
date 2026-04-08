@@ -56,7 +56,7 @@ export function DailyLogSidebarRepresentativeRow({
         {row.isUnassigned && (
           <DailyLogSidebarStatusBadge
             icon={<AlertTriangle size={10} />}
-            label="DESCUBIERTO"
+            label="Sin cobertura"
             title="Este turno debería estar cubierto pero no tiene responsable asignado"
             background="#fee2e2"
             color="#b91c1c"

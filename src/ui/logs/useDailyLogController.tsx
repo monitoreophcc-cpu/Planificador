@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useDeferredValue, useEffect, useMemo } from 'react'
 import { parseISO } from 'date-fns'
 import { useAppStore } from '@/store/useAppStore'
 import { useDailyLogDerivedData } from './useDailyLogDerivedData'
@@ -43,6 +43,7 @@ export function useDailyLogController() {
     setSearchTerm,
     setSelectedRep,
   } = formState
+  const deferredSearchTerm = useDeferredValue(formState.searchTerm)
 
   const dateForLog = useMemo(() => parseISO(logDate), [logDate])
 
@@ -58,7 +59,7 @@ export function useDailyLogController() {
     isLoading,
     logDate,
     representatives,
-    searchTerm: formState.searchTerm,
+    searchTerm: deferredSearchTerm,
     selectedRep,
     specialSchedules,
   })

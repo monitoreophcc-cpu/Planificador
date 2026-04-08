@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { buildNextPath, sanitizeNextPath } from '@/lib/auth/redirects'
 import { updateSession } from '@/lib/supabase/middleware'
 
 const PUBLIC_PATH_PREFIXES = ['/login', '/auth']
@@ -30,11 +31,17 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { response, hasSession } = await updateSession(request)
 
   if (!hasSession && !isPublicPath(pathname)) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set(
+      'next',
+      buildNextPath(pathname, request.nextUrl.search)
+    )
+    return NextResponse.redirect(loginUrl)
   }
 
   if (hasSession && pathname === '/login') {
-    return NextResponse.redirect(new URL('/', request.url))
+    const nextPath = sanitizeNextPath(request.nextUrl.searchParams.get('next'))
+    return NextResponse.redirect(new URL(nextPath, request.url))
   }
 
   return response

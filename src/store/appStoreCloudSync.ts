@@ -15,7 +15,9 @@ import {
   syncAll,
 } from '@/persistence/supabase-sync'
 import type { CloudSnapshot } from '@/persistence/supabase-sync'
+import { getPendingQueueSummary } from '@/persistence/supabase-sync-runtime'
 import type { CloudSyncStatus } from './useCloudSyncStore'
+import { useSyncHealthStore } from './useSyncHealthStore'
 
 type CloudStateSlice = {
   representatives: Representative[]
@@ -33,6 +35,10 @@ export type AppStoreCloudCapabilities = CloudStateSlice & {
 let hasCloudSyncWatcher = false
 let activeCloudSync: Promise<void> | null = null
 let shouldRerunCloudSync = false
+
+async function readPendingSummaryForUser(userId?: string) {
+  return getPendingQueueSummary(userId)
+}
 
 export function buildCloudPlanHistoryEvents(
   weeklyPlans: WeeklyPlan[]
@@ -86,36 +92,52 @@ async function executeCloudSync(
   getState: () => AppStoreCloudCapabilities,
   setCloudStatus: (status: CloudSyncStatus) => void
 ): Promise<void> {
-  if (typeof window !== 'undefined' && !window.navigator.onLine) {
-    setCloudStatus('offline')
-    return
-  }
+  const syncHealth = useSyncHealthStore.getState()
 
   try {
     const supabase = createClient()
     const {
       data: { session },
     } = await supabase.auth.getSession()
+    const userId = session?.user.id ?? undefined
+    const initialPendingSummary = await readPendingSummaryForUser(userId)
 
-    if (!session?.user.id) {
+    syncHealth.setPendingSummary(initialPendingSummary)
+
+    if (!userId) {
       setCloudStatus('unauthenticated')
+      syncHealth.markCloudUnauthenticated(initialPendingSummary)
       return
     }
 
     setCloudStatus('syncing')
+    syncHealth.markCloudAttempt()
 
-    const result = await syncAll(getState(), session.user.id)
+    const result = await syncAll(getState(), userId)
+    const pendingSummary = await readPendingSummaryForUser(userId)
 
     if (result.success) {
       setCloudStatus('synced')
+      syncHealth.markCloudSuccess(pendingSummary)
     } else if (result.error === 'offline_pending_sync') {
       setCloudStatus('offline')
+      syncHealth.markCloudFailure('offline', null, pendingSummary)
     } else {
       setCloudStatus('error')
+      syncHealth.markCloudFailure(
+        'error',
+        result.error ?? 'unexpected_sync_error',
+        pendingSummary
+      )
     }
   } catch (error) {
     console.error('[Cloud Sync] No se pudo sincronizar con Supabase.', error)
     setCloudStatus('error')
+    syncHealth.markCloudFailure(
+      'error',
+      error instanceof Error ? error.message : 'unexpected_sync_error',
+      await readPendingSummaryForUser()
+    )
   }
 }
 
@@ -170,6 +192,32 @@ export function ensureCloudSyncWatcher(
   let lastSignature = computeCloudSignature(getState())
   let syncTimer: number | undefined
 
+  const refreshPendingSummary = async (): Promise<void> => {
+    try {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      const summary = await readPendingSummaryForUser(session?.user.id)
+      const syncHealth = useSyncHealthStore.getState()
+
+      syncHealth.setPendingSummary(summary)
+
+      if (!session?.user.id) {
+        setCloudStatus('unauthenticated')
+        syncHealth.markCloudUnauthenticated(summary)
+        return
+      }
+
+      if (!window.navigator.onLine) {
+        setCloudStatus('offline')
+        syncHealth.markCloudFailure('offline', null, summary)
+      }
+    } catch (error) {
+      console.error('[Cloud Sync] No se pudo refrescar la cola pendiente.', error)
+    }
+  }
+
   subscribe(state => {
     if (state.isLoading) return
 
@@ -187,12 +235,16 @@ export function ensureCloudSyncWatcher(
     void triggerCloudSync()
   })
 
+  window.addEventListener('offline', () => {
+    void refreshPendingSummary()
+  })
+
   hasCloudSyncWatcher = true
 
   if (window.navigator.onLine) {
     void triggerCloudSync()
   } else {
-    setCloudStatus('offline')
+    void refreshPendingSummary()
   }
 }
 

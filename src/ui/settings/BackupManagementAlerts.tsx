@@ -14,15 +14,15 @@ export function BackupManagementAlerts({
       {error && (
         <div
           style={{
-            padding: '12px 16px',
-            background: 'var(--bg-danger)',
-            border: '1px solid var(--border-danger)',
-            borderRadius: '8px',
-            marginBottom: '16px',
+            padding: '14px 16px',
+            background: 'linear-gradient(180deg, #fef2f2 0%, #fff7f7 100%)',
+            border: '1px solid #fca5a5',
+            borderRadius: '14px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            color: 'var(--text-danger)',
+            color: '#b91c1c',
+            boxShadow: '0 10px 24px rgba(185, 28, 28, 0.08)',
           }}
         >
           <AlertCircle size={18} />
@@ -33,12 +33,12 @@ export function BackupManagementAlerts({
       {success && (
         <div
           style={{
-            padding: '12px 16px',
-            background: '#f0fdf4',
+            padding: '14px 16px',
+            background: 'linear-gradient(180deg, #ecfdf5 0%, #f8fffb 100%)',
             border: '1px solid #86efac',
-            borderRadius: '8px',
-            marginBottom: '16px',
+            borderRadius: '14px',
             color: '#166534',
+            boxShadow: '0 10px 24px rgba(22, 101, 52, 0.08)',
           }}
         >
           {success}
