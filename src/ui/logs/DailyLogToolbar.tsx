@@ -73,18 +73,18 @@ export function DailyLogToolbar({
             ? 'Eventos dentro de la semana activa'
             : 'Eventos dentro del mes activo',
       icon: Activity,
-      accent: '#1d4ed8',
-      background: 'rgba(239, 246, 255, 0.96)',
-      border: 'rgba(37, 99, 235, 0.18)',
+      accent: 'var(--accent)',
+      background: 'rgba(var(--accent-rgb), 0.08)',
+      border: 'rgba(var(--accent-rgb), 0.18)',
     },
     {
       label: 'Eventos en curso',
       value: ongoingIncidentsCount.toString(),
       note: 'Licencias y vacaciones activas',
       icon: CalendarRange,
-      accent: '#0f766e',
-      background: 'rgba(240, 253, 250, 0.96)',
-      border: 'rgba(13, 148, 136, 0.18)',
+      accent: 'var(--success)',
+      background: 'var(--bg-success)',
+      border: 'var(--border-success)',
     },
   ]
 
@@ -93,19 +93,19 @@ export function DailyLogToolbar({
       label: 'Día',
       value: `${dayPresent}/${dayPlanned}`,
       icon: Sun,
-      accent: '#b45309',
+      accent: 'var(--accent-warm)',
     },
     {
       label: 'Noche',
       value: `${nightPresent}/${nightPlanned}`,
       icon: Moon,
-      accent: '#4338ca',
+      accent: 'var(--accent)',
     },
     {
       label: 'Coberturas',
       value: activeCoveragesCount.toString(),
       icon: Shield,
-      accent: '#7c3aed',
+      accent: 'var(--success)',
       note:
         coveringCount > 0 ? `${coveringCount} persona(s) cubriendo` : undefined,
     },
@@ -114,11 +114,11 @@ export function DailyLogToolbar({
   return (
     <section
       style={{
-        borderRadius: '24px',
-        border: '1px solid rgba(15, 23, 42, 0.08)',
+        borderRadius: '26px',
+        border: '1px solid var(--shell-border)',
         background:
-          'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 52%, rgba(239,246,255,0.9) 100%)',
-        boxShadow: '0 18px 44px rgba(15, 23, 42, 0.05)',
+          'linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-tint) 58%, rgba(var(--accent-rgb), 0.08) 100%)',
+        boxShadow: 'var(--shadow-md)',
         padding: '22px 24px',
         display: 'flex',
         flexDirection: 'column',
@@ -141,7 +141,7 @@ export function DailyLogToolbar({
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#2563eb',
+              color: 'var(--accent)',
               marginBottom: '10px',
             }}
           >
@@ -188,12 +188,13 @@ export function DailyLogToolbar({
               gap: '8px',
               padding: '9px 13px',
               borderRadius: '999px',
-              border: '1px solid rgba(37, 99, 235, 0.14)',
-              background: 'rgba(239, 246, 255, 0.92)',
-              color: '#1d4ed8',
+              border: '1px solid rgba(var(--accent-rgb), 0.16)',
+              background: 'rgba(var(--accent-rgb), 0.08)',
+              color: 'var(--accent-strong)',
               fontSize: '12px',
               fontWeight: 700,
               cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -217,7 +218,7 @@ export function DailyLogToolbar({
           <button
             type="button"
             onClick={() => onActiveShiftChange('DAY')}
-            style={getShiftChipStyle(activeShift === 'DAY', '#f59e0b')}
+            style={getShiftChipStyle(activeShift === 'DAY', 'var(--accent-warm)')}
           >
             <Sun size={15} />
             Día
@@ -225,7 +226,7 @@ export function DailyLogToolbar({
           <button
             type="button"
             onClick={() => onActiveShiftChange('NIGHT')}
-            style={getShiftChipStyle(activeShift === 'NIGHT', '#6366f1')}
+            style={getShiftChipStyle(activeShift === 'NIGHT', 'var(--accent)')}
           >
             <Moon size={15} />
             Noche
@@ -237,11 +238,12 @@ export function DailyLogToolbar({
               gap: '8px',
               padding: '8px 12px',
               borderRadius: '999px',
-              border: '1px solid rgba(148, 163, 184, 0.18)',
-              background: 'rgba(255,255,255,0.86)',
-              color: '#334155',
+              border: '1px solid var(--shell-border)',
+              background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+              color: 'var(--text-main)',
               fontSize: '12px',
               fontWeight: 700,
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             <UserRound size={14} />
@@ -255,11 +257,12 @@ export function DailyLogToolbar({
                 gap: '8px',
                 padding: '8px 12px',
                 borderRadius: '999px',
-                border: '1px solid rgba(37, 99, 235, 0.16)',
-                background: 'rgba(239, 246, 255, 0.92)',
-                color: '#1d4ed8',
+                border: '1px solid rgba(var(--accent-rgb), 0.16)',
+                background: 'rgba(var(--accent-rgb), 0.08)',
+                color: 'var(--accent-strong)',
                 fontSize: '12px',
                 fontWeight: 700,
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               Foco actual: {selectedRepName}
@@ -289,11 +292,12 @@ export function DailyLogToolbar({
               style={{
                 borderRadius: '16px',
                 border: `1px solid ${item.border}`,
-                background: item.background,
+                background: `linear-gradient(180deg, ${item.background} 0%, var(--surface-raised) 100%)`,
                 padding: '14px 16px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '10px',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               <div
@@ -303,7 +307,7 @@ export function DailyLogToolbar({
                   borderRadius: '12px',
                   display: 'grid',
                   placeItems: 'center',
-                  background: 'rgba(255, 255, 255, 0.88)',
+                  background: 'var(--surface-raised)',
                   color: item.accent,
                   border: `1px solid ${item.border}`,
                 }}
@@ -317,7 +321,7 @@ export function DailyLogToolbar({
                     fontWeight: 700,
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
-                    color: '#64748b',
+                    color: 'var(--text-faint)',
                     marginBottom: '4px',
                   }}
                 >
@@ -337,7 +341,7 @@ export function DailyLogToolbar({
                     marginTop: '6px',
                     fontSize: '12px',
                     lineHeight: 1.5,
-                    color: '#64748b',
+                    color: 'var(--text-muted)',
                   }}
                 >
                   {item.note}
@@ -363,15 +367,16 @@ export function DailyLogToolbar({
               <div
                 key={metric.label}
                 style={{
-                  borderRadius: '16px',
-                  border: '1px solid rgba(148, 163, 184, 0.16)',
-                  background: 'rgba(255,255,255,0.88)',
-                  padding: '12px 14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                }}
-              >
+                borderRadius: '16px',
+                border: '1px solid var(--shell-border)',
+                background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
                 <div
                   style={{
                     width: '34px',
@@ -379,9 +384,9 @@ export function DailyLogToolbar({
                     borderRadius: '12px',
                     display: 'grid',
                     placeItems: 'center',
-                    background: 'rgba(248,250,252,0.92)',
+                    background: 'rgba(255,255,255,0.64)',
                     color: metric.accent,
-                    border: '1px solid rgba(148, 163, 184, 0.14)',
+                    border: '1px solid var(--shell-border)',
                     flexShrink: 0,
                   }}
                 >
@@ -394,7 +399,7 @@ export function DailyLogToolbar({
                       fontWeight: 700,
                       letterSpacing: '0.04em',
                       textTransform: 'uppercase',
-                      color: '#64748b',
+                      color: 'var(--text-faint)',
                       marginBottom: '2px',
                     }}
                   >
@@ -414,7 +419,7 @@ export function DailyLogToolbar({
                       style={{
                         marginTop: '4px',
                         fontSize: '12px',
-                        color: '#64748b',
+                        color: 'var(--text-muted)',
                       }}
                     >
                       {metric.note}
@@ -437,12 +442,14 @@ function getShiftChipStyle(isActive: boolean, accent: string): React.CSSProperti
     gap: '8px',
     padding: '8px 12px',
     borderRadius: '999px',
-    border: `1px solid ${isActive ? accent : 'rgba(148, 163, 184, 0.18)'}`,
-    background: isActive ? 'white' : 'rgba(255,255,255,0.78)',
-    color: isActive ? accent : '#475569',
+    border: `1px solid ${isActive ? accent : 'var(--shell-border)'}`,
+    background: isActive
+      ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
+      : 'transparent',
+    color: isActive ? accent : 'var(--text-muted)',
     fontSize: '12px',
     fontWeight: 700,
     cursor: 'pointer',
-    boxShadow: isActive ? '0 10px 20px rgba(15, 23, 42, 0.05)' : 'none',
+    boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
   }
 }

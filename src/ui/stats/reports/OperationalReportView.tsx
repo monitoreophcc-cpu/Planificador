@@ -18,7 +18,7 @@ export function OperationalReportView() {
   const report = useAppStore(state => selectOperationalReport(state, periodKind))
 
   if (!report) {
-    return <div style={{ padding: 24 }}>Cargando reporte...</div>
+    return <div className="app-shell-loading" style={{ margin: '24px' }}>Cargando reporte...</div>
   }
 
   return (
@@ -28,6 +28,8 @@ export function OperationalReportView() {
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
       }}
     >
       <OperationalReportModeToggle mode={mode} onChange={setMode} />

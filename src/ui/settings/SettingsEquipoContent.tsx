@@ -24,30 +24,19 @@ export function SettingsEquipoContent({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <section
         style={{
-          borderRadius: '20px',
-          border: '1px solid rgba(15, 23, 42, 0.08)',
+          borderRadius: '24px',
+          border: '1px solid var(--shell-border)',
           background:
-            'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
-          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.04)',
-          padding: '18px 20px',
+            'linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-tint) 58%, rgba(var(--accent-rgb), 0.08) 100%)',
+          boxShadow: 'var(--shadow-sm)',
+          padding: '20px 22px',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
         }}
       >
         <div>
-          <div
-            style={{
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: '#2563eb',
-              marginBottom: '8px',
-            }}
-          >
-            Configuración operativa
-          </div>
+          <div style={settingsViewStyles.sectionEyebrow}>Configuración operativa</div>
           <h2
             style={{
               margin: 0,
@@ -77,8 +66,9 @@ export function SettingsEquipoContent({
             padding: '6px',
             width: 'fit-content',
             borderRadius: '999px',
-            background: 'rgba(241, 245, 249, 0.9)',
-            border: '1px solid rgba(148, 163, 184, 0.18)',
+            background: 'var(--surface-tint)',
+            border: '1px solid var(--shell-border)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
           }}
         >
           <button

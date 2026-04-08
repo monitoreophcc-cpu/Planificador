@@ -64,6 +64,8 @@ export function DailyLogDateNavigator({
           color: 'var(--text-main)',
           minWidth: '220px',
           textAlign: 'center',
+          padding: '0 8px',
+          letterSpacing: '-0.01em',
         }}
       >
         {format(date, "EEEE, dd 'de' MMMM", { locale: es })}
@@ -114,9 +116,9 @@ export function DailyLogDateNavigator({
             top: '100%',
             right: 0,
             marginTop: 'var(--space-sm)',
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
+            background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--bg-panel) 100%)',
+            border: '1px solid var(--shell-border)',
+            borderRadius: '20px',
             padding: 'var(--space-md)',
             zIndex: 10,
             boxShadow: 'var(--shadow-md)',
@@ -147,6 +149,7 @@ export function DailyLogDateNavigator({
                 fontWeight: 700,
                 color: 'var(--text-main)',
                 textTransform: 'capitalize',
+                letterSpacing: '-0.01em',
               }}
             >
               {format(displayMonth, "MMMM 'de' yyyy", { locale: es })}

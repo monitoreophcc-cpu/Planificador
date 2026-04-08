@@ -52,9 +52,9 @@ export function DailyLogView() {
       pills.push({
         label: 'Sin cobertura',
         tone: {
-          accent: '#b91c1c',
-          background: 'rgba(254, 242, 242, 0.96)',
-          border: 'rgba(248, 113, 113, 0.22)',
+          accent: 'var(--text-danger)',
+          background: 'var(--bg-danger)',
+          border: 'var(--border-danger)',
         },
       })
     }
@@ -63,9 +63,9 @@ export function DailyLogView() {
       pills.push({
         label: `Cubre a ${selectedRow.coveringName ?? 'otro agente'}`,
         tone: {
-          accent: '#6d28d9',
-          background: 'rgba(245, 243, 255, 0.96)',
-          border: 'rgba(124, 58, 237, 0.2)',
+          accent: 'var(--accent)',
+          background: 'rgba(var(--accent-rgb), 0.08)',
+          border: 'rgba(var(--accent-rgb), 0.16)',
         },
       })
     }
@@ -74,9 +74,9 @@ export function DailyLogView() {
       pills.push({
         label: `Cubierto por ${selectedRow.coveredByName ?? 'otro agente'}`,
         tone: {
-          accent: '#1d4ed8',
-          background: 'rgba(239, 246, 255, 0.96)',
-          border: 'rgba(37, 99, 235, 0.18)',
+          accent: 'var(--accent-strong)',
+          background: 'rgba(var(--accent-rgb), 0.08)',
+          border: 'rgba(var(--accent-rgb), 0.16)',
         },
       })
     }
@@ -85,9 +85,9 @@ export function DailyLogView() {
       pills.push({
         label: 'Ausencia operativa',
         tone: {
-          accent: '#475569',
-          background: 'rgba(248, 250, 252, 0.96)',
-          border: 'rgba(148, 163, 184, 0.2)',
+          accent: 'var(--text-muted)',
+          background: 'var(--surface-raised)',
+          border: 'var(--shell-border)',
         },
       })
     }
@@ -127,7 +127,7 @@ export function DailyLogView() {
     controller.isLoading ||
     controller.allCalendarDaysForRelevantMonths.length === 0
   ) {
-    return <div>Cargando...</div>
+    return <div className="app-shell-loading">Cargando registro diario...</div>
   }
 
   return (
@@ -136,8 +136,11 @@ export function DailyLogView() {
         display: 'flex',
         flexDirection: 'column',
         gap: '18px',
-        background: 'var(--bg-app)',
         padding: 'var(--space-lg)',
+        borderRadius: '28px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)',
+        border: '1px solid rgba(255,255,255,0.18)',
       }}
     >
       <DailyLogToolbar
@@ -174,11 +177,11 @@ export function DailyLogView() {
       ) : null}
 
       <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 'var(--space-md)',
-          alignItems: 'start',
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 'var(--space-md)',
+            alignItems: 'start',
         }}
       >
         <DailyLogSidebar

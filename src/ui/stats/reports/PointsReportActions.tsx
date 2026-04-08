@@ -11,20 +11,21 @@ const actionButtonStyle: CSSProperties = {
   alignItems: 'center',
   gap: '8px',
   fontSize: '13px',
-  padding: '8px 12px',
-  background: 'white',
-  border: '1px solid var(--border-strong)',
-  borderRadius: '6px',
+  padding: '10px 14px',
+  background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+  border: '1px solid var(--shell-border)',
+  borderRadius: '16px',
   cursor: 'pointer',
-  fontWeight: 500,
+  fontWeight: 700,
   color: 'var(--text-main)',
+  boxShadow: 'var(--shadow-sm)',
 }
 
 export function PointsReportActions({
   onOpenReorderModal,
 }: PointsReportActionsProps) {
   return (
-    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
       <button
         onClick={() => onOpenReorderModal('DAY')}
         style={actionButtonStyle}

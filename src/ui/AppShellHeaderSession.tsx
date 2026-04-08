@@ -25,63 +25,36 @@ export function AppShellHeaderSession() {
 
   if (!loading && !user) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-sm)',
-          marginLeft: 'auto',
-          padding: 'var(--space-sm) 0',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-sm)',
-            padding: '10px 12px',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)',
-            background:
-              'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-subtle) 100%)',
-          }}
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '999px',
-              background: syncMeta.tone,
-              boxShadow: `0 0 0 4px ${syncMeta.surface}`,
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              color: 'var(--text-main)',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: 600,
-            }}
-          >
-            Sesion no disponible
-          </span>
+      <div className="app-shell-session">
+        <div className="app-shell-session__card app-shell-session__card--quiet">
+          <div className="app-shell-session__meta">
+            <p className="app-shell-session__eyebrow">Acceso</p>
+            <div className="app-shell-session__status-row">
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '999px',
+                  background: syncMeta.tone,
+                  boxShadow: `0 0 0 4px ${syncMeta.surface}`,
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                className="app-shell-session__status-label"
+                style={{ color: 'var(--text-main)' }}
+              >
+                Sesion no disponible
+              </span>
+            </div>
+            <p className="app-shell-session__subcopy">
+              Inicia sesion para activar el respaldo por usuario y mantener la nube al dia.
+            </p>
+          </div>
         </div>
 
-        <Link
-          href="/login"
-          style={{
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--bg-surface)',
-            color: 'var(--text-main)',
-            padding: '10px 12px',
-            fontSize: 'var(--font-size-sm)',
-            fontWeight: 600,
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <Link href="/login" className="app-shell-session__button">
           Entrar
         </Link>
       </div>
@@ -89,44 +62,9 @@ export function AppShellHeaderSession() {
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--space-sm)',
-        marginLeft: 'auto',
-        padding: 'var(--space-sm) 0',
-        flexWrap: 'wrap',
-        justifyContent: 'flex-end',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-sm)',
-          minWidth: 0,
-          padding: '10px 12px',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-subtle)',
-          background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-subtle) 100%)',
-        }}
-      >
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: '999px',
-            overflow: 'hidden',
-            border: '1px solid var(--border-subtle)',
-            background: 'var(--bg-subtle)',
-            display: 'grid',
-            placeItems: 'center',
-            color: 'var(--text-main)',
-            fontWeight: 600,
-            flexShrink: 0,
-          }}
-        >
+    <div className="app-shell-session">
+      <div className="app-shell-session__card">
+        <div className="app-shell-session__avatar">
           {userAvatar ? (
             <div
               role="img"
@@ -144,29 +82,12 @@ export function AppShellHeaderSession() {
           )}
         </div>
 
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              color: 'var(--text-main)',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: 180,
-            }}
-          >
-            {loading ? 'Cargando sesión...' : userName}
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              marginTop: 2,
-              minWidth: 0,
-            }}
-          >
+        <div className="app-shell-session__meta">
+          <p className="app-shell-session__eyebrow">
+            {loading ? 'Verificando acceso' : 'Sesion activa'}
+          </p>
+          <div className="app-shell-session__name">{loading ? 'Cargando sesión...' : userName}</div>
+          <div className="app-shell-session__status-row">
             <span
               aria-hidden="true"
               style={{
@@ -179,34 +100,21 @@ export function AppShellHeaderSession() {
               }}
             />
             <div
+              className="app-shell-session__status-label"
               style={{
                 color: syncMeta.tone,
-                fontSize: 'var(--font-size-xs)',
-                whiteSpace: 'nowrap',
-                fontWeight: 600,
               }}
             >
               {syncMeta.label}
             </div>
             {user?.email && typeof user.user_metadata?.full_name === 'string' && (
-              <div
-                style={{
-                  color: 'var(--text-muted)',
-                  fontSize: 'var(--font-size-xs)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: 160,
-                }}
-                title={user.email}
-              >
+              <div className="app-shell-session__email" title={user.email}>
                 {user.email}
               </div>
             )}
           </div>
         </div>
       </div>
-
     </div>
   )
 }

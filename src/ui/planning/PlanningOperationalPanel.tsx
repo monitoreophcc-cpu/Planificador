@@ -66,7 +66,18 @@ export function PlanningOperationalPanel({
               alignItems: 'start',
             }}
           >
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                borderRadius: '24px',
+                border: '1px solid var(--shell-border)',
+                background:
+                  'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.32) 100%)',
+                boxShadow: 'var(--shadow-sm)',
+                padding: '18px',
+              }}
+            >
               <PlanView
                 weeklyPlan={weeklyPlan}
                 weekDays={weekDays}
@@ -85,6 +96,12 @@ export function PlanningOperationalPanel({
                 top: '20px',
                 width: '340px',
                 flexShrink: 0,
+                padding: '18px',
+                borderRadius: '24px',
+                border: '1px solid var(--shell-border)',
+                background:
+                  'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-tint) 100%)',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
               <div
@@ -101,8 +118,8 @@ export function PlanningOperationalPanel({
                     style={{
                       marginBottom: 'var(--space-md)',
                       padding: 'var(--space-md)',
-                      background: 'var(--bg-subtle)',
-                      borderRadius: 'var(--radius-md)',
+                      background: 'linear-gradient(180deg, var(--bg-subtle) 0%, var(--surface-veil) 100%)',
+                      borderRadius: '18px',
                       border: '1px dashed var(--border-strong)',
                       textAlign: 'center',
                       color: 'var(--text-muted)',

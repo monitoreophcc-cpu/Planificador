@@ -31,7 +31,13 @@ export function OperationalInstitutionalView({
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '16px',
+        }}
+      >
         <OperationalReportPersonList
           title="Mayor Riesgo Operativo"
           data={report.risk.needsAttention}
@@ -48,13 +54,15 @@ export function OperationalInstitutionalView({
 
       <div
         style={{
-          padding: '16px',
-          background: '#f9fafb',
-          border: '1px solid #e5e7eb',
-          borderRadius: '8px',
+          padding: '18px',
+          background:
+            'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.42) 100%)',
+          border: '1px solid var(--shell-border)',
+          borderRadius: '18px',
           fontSize: '14px',
           fontStyle: 'italic',
-          color: '#374151',
+          color: 'var(--text-main)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <strong>Lectura:</strong> {report.reading}

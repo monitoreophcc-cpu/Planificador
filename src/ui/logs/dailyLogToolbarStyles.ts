@@ -3,27 +3,27 @@ import { DailyLogFilterMode } from './DailyLogToolbar'
 
 const controlButtonStyle: CSSProperties = {
   padding: '8px 10px',
-  border: '1px solid rgba(148, 163, 184, 0.18)',
-  background: 'rgba(255,255,255,0.9)',
+  border: '1px solid var(--shell-border)',
+  background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
   borderRadius: '999px',
-  color: '#334155',
+  color: 'var(--text-main)',
   cursor: 'pointer',
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  boxShadow: '0 10px 20px rgba(15, 23, 42, 0.04)',
+  boxShadow: 'var(--shadow-sm)',
 }
 
 const activeFilterButtonStyle: CSSProperties = {
-  background: 'var(--accent)',
+  background: 'linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%)',
   color: 'var(--text-on-accent)',
-  borderColor: 'var(--accent)',
+  borderColor: 'rgba(var(--accent-rgb), 0.24)',
 }
 
 const inactiveFilterButtonStyle: CSSProperties = {
-  background: 'rgba(255,255,255,0.82)',
-  color: '#475569',
-  borderColor: 'rgba(148, 163, 184, 0.18)',
+  background: 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.64) 100%)',
+  color: 'var(--text-muted)',
+  borderColor: 'var(--shell-border)',
 }
 
 export function getDailyLogControlButtonStyle(): CSSProperties {
@@ -42,7 +42,7 @@ export function getDailyLogFilterButtonStyle(
     fontWeight: 700,
     cursor: 'pointer',
     boxShadow:
-      activeMode === mode ? '0 10px 18px rgba(37, 99, 235, 0.12)' : 'none',
+      activeMode === mode ? '0 12px 20px rgba(var(--accent-rgb), 0.14)' : 'none',
     ...(activeMode === mode
       ? activeFilterButtonStyle
       : inactiveFilterButtonStyle),

@@ -16,23 +16,32 @@ export function DailyLogSidebarShiftPanel({
   onActiveShiftChange,
 }: DailyLogSidebarShiftPanelProps) {
   return (
-    <div>
+    <section
+      style={{
+        borderRadius: '20px',
+        border: '1px solid var(--shell-border)',
+        background: 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.45) 100%)',
+        padding: '16px',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
       <h3
         style={{
           fontWeight: 'var(--font-weight-medium)',
           margin: '0 0 6px 0',
-          color: 'var(--text-muted)',
+          color: 'var(--text-main)',
           fontSize: 'var(--font-size-sm)',
+          letterSpacing: '-0.01em',
         }}
       >
-        Turnos
+        Estado de turnos
       </h3>
       <p
         style={{
           margin: '0 0 12px 0',
           fontSize: '12px',
           lineHeight: 1.5,
-          color: '#64748b',
+          color: 'var(--text-muted)',
         }}
       >
         Toca un bloque para cambiar el foco del turno.
@@ -50,6 +59,7 @@ export function DailyLogSidebarShiftPanel({
           onClick={() => onActiveShiftChange('DAY')}
           presentCount={dayPresent}
           plannedCount={dayPlanned}
+          accent="var(--accent-warm)"
         />
         <ShiftStatusDisplay
           label="Noche"
@@ -57,9 +67,10 @@ export function DailyLogSidebarShiftPanel({
           onClick={() => onActiveShiftChange('NIGHT')}
           presentCount={nightPresent}
           plannedCount={nightPlanned}
+          accent="var(--accent)"
         />
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -69,12 +80,14 @@ function ShiftStatusDisplay({
   onClick,
   presentCount,
   plannedCount,
+  accent,
 }: {
   label: string
   isActive: boolean
   onClick: () => void
   presentCount: number
   plannedCount: number
+  accent: string
 }) {
   return (
     <button
@@ -82,18 +95,21 @@ function ShiftStatusDisplay({
       onClick={onClick}
       style={{
         padding: '12px',
-        borderRadius: '14px',
+        borderRadius: '16px',
         border:
           isActive
-            ? '1px solid rgba(37, 99, 235, 0.2)'
-            : '1px solid rgba(148, 163, 184, 0.16)',
-        background: isActive ? 'rgba(239, 246, 255, 0.92)' : 'rgba(255,255,255,0.9)',
+            ? `1px solid ${accent}`
+            : '1px solid var(--shell-border)',
+        background: isActive
+          ? 'linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.52) 100%)'
+          : 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.4) 100%)',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
         gap: '8px',
         textAlign: 'left',
+        boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
       }}
     >
       <div
@@ -108,7 +124,7 @@ function ShiftStatusDisplay({
         <span
           style={{
             fontWeight: 700,
-            color: isActive ? '#1e40af' : '#374151',
+            color: isActive ? accent : 'var(--text-main)',
             fontSize: '13px',
           }}
         >
@@ -117,7 +133,7 @@ function ShiftStatusDisplay({
         <span
           style={{
             fontSize: '11px',
-            color: isActive ? '#1d4ed8' : '#64748b',
+            color: isActive ? accent : 'var(--text-muted)',
             fontWeight: 700,
           }}
         >
@@ -135,19 +151,19 @@ function ShiftStatusDisplay({
           style={{
             fontSize: '1.05rem',
             fontWeight: 700,
-            color: '#111827',
+            color: 'var(--text-main)',
           }}
         >
           {presentCount}
         </span>
-        <span style={{ fontSize: '12px', color: '#6b7280' }}>
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
           / {plannedCount}
         </span>
       </div>
       <span
         style={{
           fontSize: '11px',
-          color: '#64748b',
+          color: 'var(--text-muted)',
           lineHeight: 1.45,
         }}
       >

@@ -57,7 +57,7 @@ export function MonthlySummaryView() {
 
   if (!summary) {
     return (
-      <div style={{ padding: '40px' }}>
+      <div className="app-shell-loading" style={{ margin: '24px' }}>
         Cargando resumen mensual...
       </div>
     )
@@ -70,6 +70,8 @@ export function MonthlySummaryView() {
         flexDirection: 'column',
         gap: '24px',
         padding: '24px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
       }}
     >
       <MonthlySummaryHeader
@@ -84,7 +86,7 @@ export function MonthlySummaryView() {
         style={{
           marginBottom: '32px',
           paddingBottom: '16px',
-          borderBottom: '1px dashed #e5e7eb',
+          borderBottom: '1px dashed var(--shell-border)',
         }}
       >
         <MonthlySummaryChart summary={summary} />

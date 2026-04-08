@@ -79,12 +79,13 @@ export function DailyLogSidebarRepresentativeList({
           style={{
             marginBottom: '12px',
             padding: '12px 14px',
-            borderRadius: '14px',
-            border: '1px solid rgba(37, 99, 235, 0.14)',
-            background: 'rgba(239, 246, 255, 0.92)',
-            color: '#1d4ed8',
+            borderRadius: '16px',
+            border: '1px solid rgba(var(--accent-rgb), 0.14)',
+            background: 'rgba(var(--accent-rgb), 0.08)',
+            color: 'var(--accent-strong)',
             fontSize: '12px',
             lineHeight: 1.5,
+            boxShadow: 'var(--shadow-sm)',
           }}
         >
           La ficha seleccionada quedó fuera de este filtro rápido.
@@ -95,7 +96,7 @@ export function DailyLogSidebarRepresentativeList({
               marginLeft: '8px',
               background: 'none',
               border: 'none',
-              color: '#1d4ed8',
+              color: 'var(--accent-strong)',
               fontWeight: 700,
               cursor: 'pointer',
               padding: 0,
@@ -128,12 +129,12 @@ export function DailyLogSidebarRepresentativeList({
           <div
             style={{
               padding: '18px 14px',
-              borderRadius: '16px',
-              border: '1px dashed rgba(148, 163, 184, 0.24)',
-              background: 'rgba(248,250,252,0.86)',
+              borderRadius: '18px',
+              border: '1px dashed var(--shell-border)',
+              background: 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.35) 100%)',
               fontSize: '13px',
               lineHeight: 1.6,
-              color: '#64748b',
+              color: 'var(--text-muted)',
             }}
           >
             No hay representantes que coincidan con esta búsqueda o vista rápida.

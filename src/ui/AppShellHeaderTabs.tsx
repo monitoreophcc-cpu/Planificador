@@ -1,6 +1,6 @@
 'use client'
 
-import type { CSSProperties } from 'react'
+import { BarChart3, ClipboardList, CalendarDays, SlidersHorizontal } from 'lucide-react'
 import type { AppShellView } from './appShellTypes'
 
 type AppShellHeaderTabsProps = {
@@ -8,11 +8,15 @@ type AppShellHeaderTabsProps = {
   onViewChange: (view: AppShellView) => void
 }
 
-const APP_SHELL_VIEWS: Array<{ id: AppShellView; label: string }> = [
-  { id: 'DAILY_LOG', label: 'Registro Diario' },
-  { id: 'PLANNING', label: 'Planificación' },
-  { id: 'STATS', label: 'Reportes' },
-  { id: 'SETTINGS', label: 'Configuración' },
+const APP_SHELL_VIEWS: Array<{
+  id: AppShellView
+  label: string
+  icon: typeof ClipboardList
+}> = [
+  { id: 'DAILY_LOG', label: 'Registro Diario', icon: ClipboardList },
+  { id: 'PLANNING', label: 'Planificación', icon: CalendarDays },
+  { id: 'STATS', label: 'Reportes', icon: BarChart3 },
+  { id: 'SETTINGS', label: 'Configuración', icon: SlidersHorizontal },
 ]
 
 export function AppShellHeaderTabs({
@@ -20,35 +24,27 @@ export function AppShellHeaderTabs({
   onViewChange,
 }: AppShellHeaderTabsProps) {
   return (
-    <nav style={{ display: 'flex', height: '100%', gap: 'var(--space-sm)', flex: 1 }}>
-      {APP_SHELL_VIEWS.map(view => (
-        <button
-          key={view.id}
-          style={getViewTabStyle(activeView === view.id)}
-          onClick={() => onViewChange(view.id)}
-        >
-          {view.label}
-        </button>
-      ))}
+    <nav className="app-shell-nav" aria-label="Vistas principales">
+      {APP_SHELL_VIEWS.map(view => {
+        const Icon = view.icon
+        const isActive = activeView === view.id
+
+        return (
+          <button
+            key={view.id}
+            type="button"
+            className="app-shell-nav__tab"
+            data-active={isActive}
+            aria-current={isActive ? 'page' : undefined}
+            onClick={() => onViewChange(view.id)}
+          >
+            <span className="app-shell-nav__tab-icon">
+              <Icon size={15} />
+            </span>
+            <span className="app-shell-nav__tab-label">{view.label}</span>
+          </button>
+        )
+      })}
     </nav>
   )
-}
-
-function getViewTabStyle(isActive: boolean): CSSProperties {
-  return {
-    padding: '0 var(--space-md)',
-    cursor: 'pointer',
-    border: 'none',
-    borderBottom: isActive
-      ? '3px solid var(--accent)'
-      : '3px solid transparent',
-    color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-    fontWeight: isActive ? 600 : 500,
-    background: 'transparent',
-    fontSize: 'var(--font-size-base)',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    transition: 'all 0.2s ease-in-out',
-  }
 }

@@ -26,14 +26,15 @@ export function DailyLogSidebarStatusBadge({
         fontSize: '10px',
         background,
         color,
-        padding: '2px 6px',
-        borderRadius: '4px',
+        padding: '3px 7px',
+        borderRadius: '999px',
         fontWeight: bold ? 700 : 600,
         display: 'flex',
         alignItems: 'center',
-        gap: '2px',
+        gap: '4px',
         cursor: 'help',
         border,
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       {icon} {label}

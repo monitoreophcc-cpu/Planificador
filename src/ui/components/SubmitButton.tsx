@@ -12,16 +12,20 @@ type Props = {
 function getBaseStyle(): React.CSSProperties {
   return {
     width: '100%',
-    height: '44px',
-    borderRadius: '6px',
-    fontWeight: 500,
-    transition: 'all 0.3s ease',
+    minHeight: '48px',
+    padding: '12px 16px',
+    borderRadius: '16px',
+    fontWeight: 700,
+    letterSpacing: '0.01em',
+    transition: 'all 0.25s ease',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    border: 'none',
+    border: '1px solid transparent',
     cursor: 'pointer',
+    boxShadow: 'var(--shadow-sm)',
+    backdropFilter: 'blur(10px)',
   }
 }
 
@@ -31,12 +35,15 @@ export function SubmitButton({ state, label = 'Registrar', disabled = false }: P
   if (disabled) {
     return (
       <button
+        type="submit"
         disabled
         style={{
           ...baseStyle,
-          backgroundColor: '#e5e7eb', // bg-gray-200
-          color: '#9ca3af', // text-gray-400
+          background: 'linear-gradient(180deg, var(--bg-subtle) 0%, var(--surface-veil) 100%)',
+          color: 'var(--text-faint)',
+          borderColor: 'var(--border-subtle)',
           cursor: 'not-allowed',
+          boxShadow: 'none',
         }}
       >
         {label}
@@ -47,11 +54,13 @@ export function SubmitButton({ state, label = 'Registrar', disabled = false }: P
   if (state === 'loading') {
     return (
       <button
+        type="submit"
         disabled
         style={{
           ...baseStyle,
-          backgroundColor: '#f3f4f6', // bg-muted
-          color: '#6b7280', // text-muted-foreground
+          background: 'linear-gradient(180deg, var(--bg-subtle) 0%, var(--surface-veil) 100%)',
+          color: 'var(--text-muted)',
+          borderColor: 'var(--border-subtle)',
         }}
       >
         <Loader2 className="animate-spin" size={16} />
@@ -63,11 +72,14 @@ export function SubmitButton({ state, label = 'Registrar', disabled = false }: P
   if (state === 'success') {
     return (
       <button
+        type="submit"
         disabled
         style={{
           ...baseStyle,
-          backgroundColor: '#16a34a', // bg-green-600
-          color: 'white',
+          background: 'linear-gradient(180deg, var(--success) 0%, var(--text-success) 160%)',
+          color: 'var(--text-on-accent)',
+          borderColor: 'rgba(47, 125, 96, 0.28)',
+          boxShadow: '0 18px 30px rgba(47, 125, 96, 0.18)',
         }}
       >
         <Check size={18} /> Guardado
@@ -78,11 +90,14 @@ export function SubmitButton({ state, label = 'Registrar', disabled = false }: P
   if (state === 'error') {
     return (
       <button
+        type="submit"
         disabled
         style={{
           ...baseStyle,
-          backgroundColor: '#dc2626', // bg-red-600
-          color: 'white',
+          background: 'linear-gradient(180deg, var(--danger) 0%, var(--text-danger) 160%)',
+          color: 'var(--text-on-accent)',
+          borderColor: 'rgba(192, 85, 61, 0.24)',
+          boxShadow: '0 18px 30px rgba(192, 85, 61, 0.18)',
         }}
       >
         <AlertTriangle size={18} /> Error
@@ -92,10 +107,13 @@ export function SubmitButton({ state, label = 'Registrar', disabled = false }: P
 
   return (
     <button
+      type="submit"
       style={{
         ...baseStyle,
-        backgroundColor: '#111827', // bg-black
-        color: 'white',
+        background: 'linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%)',
+        color: 'var(--text-on-accent)',
+        borderColor: 'rgba(var(--accent-rgb), 0.2)',
+        boxShadow: '0 18px 30px rgba(var(--accent-rgb), 0.2)',
       }}
     >
       {label}

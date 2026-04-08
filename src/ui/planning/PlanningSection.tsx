@@ -109,14 +109,25 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
 
   if (isLoading || weekDays.length === 0) {
     return (
-      <div style={{ padding: 'var(--space-xl)', fontFamily: 'sans-serif', color: 'var(--text-muted)' }}>
+      <div className="app-shell-loading" style={{ margin: '0 24px' }}>
         Cargando planificación...
       </div>
     )
   }
 
   return (
-    <div style={{ background: 'var(--bg-app)', minHeight: '100vh', padding: 'var(--space-lg)' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '18px',
+        padding: 'var(--space-lg)',
+        borderRadius: '28px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)',
+        border: '1px solid rgba(255,255,255,0.18)',
+      }}
+    >
       <PlanningSectionHeader
         activeShift={activeShift}
         highlightAdminOverride={mode === 'ADMIN_OVERRIDE'}

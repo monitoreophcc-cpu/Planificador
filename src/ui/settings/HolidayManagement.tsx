@@ -108,10 +108,10 @@ export function HolidayManagement() {
         style={{
           borderRadius: '22px',
           padding: '22px 24px',
-          border: '1px solid rgba(15, 23, 42, 0.08)',
+          border: '1px solid var(--shell-border)',
           background:
-            'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 52%, rgba(239,246,255,0.9) 100%)',
-          boxShadow: '0 18px 44px rgba(15, 23, 42, 0.05)',
+            'linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-tint) 58%, rgba(var(--accent-rgb), 0.08) 100%)',
+          boxShadow: 'var(--shadow-sm)',
           display: 'flex',
           flexDirection: 'column',
           gap: '18px',
@@ -124,7 +124,7 @@ export function HolidayManagement() {
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#2563eb',
+              color: 'var(--accent)',
               marginBottom: '10px',
             }}
           >
@@ -168,36 +168,36 @@ export function HolidayManagement() {
               value: holidays.length.toString(),
               note: 'Todos los feriados configurados en el calendario.',
               icon: CalendarDays,
-              accent: '#1d4ed8',
-              background: 'rgba(239, 246, 255, 0.96)',
-              border: 'rgba(37, 99, 235, 0.18)',
+              accent: 'var(--accent)',
+              background: 'rgba(var(--accent-rgb), 0.08)',
+              border: 'rgba(var(--accent-rgb), 0.18)',
             },
             {
               label: 'Próximos',
               value: upcomingHolidays.length.toString(),
               note: 'Aún no ocurren respecto a hoy.',
               icon: CalendarClock,
-              accent: '#4f46e5',
-              background: 'rgba(238, 242, 255, 0.96)',
-              border: 'rgba(99, 102, 241, 0.18)',
+              accent: 'var(--accent-strong)',
+              background: 'rgba(var(--accent-rgb), 0.1)',
+              border: 'rgba(var(--accent-rgb), 0.16)',
             },
             {
               label: `Año ${currentYear}`,
               value: currentYearHolidays.length.toString(),
               note: `${coveredMonths} mes(es) del año ya tienen feriado registrado.`,
               icon: CalendarFold,
-              accent: '#0f766e',
-              background: 'rgba(240, 253, 250, 0.96)',
-              border: 'rgba(13, 148, 136, 0.18)',
+              accent: 'var(--success)',
+              background: 'var(--bg-success)',
+              border: 'var(--border-success)',
             },
             {
               label: 'Próximo feriado',
               value: nextHoliday ? formatHolidayDate(nextHoliday.date) : 'Sin próximos',
               note: nextHoliday ? nextHoliday.label ?? 'Feriado sin etiqueta' : 'No hay más fechas futuras registradas.',
               icon: Sparkles,
-              accent: '#b45309',
-              background: 'rgba(255, 251, 235, 0.96)',
-              border: 'rgba(245, 158, 11, 0.22)',
+              accent: 'var(--accent-warm)',
+              background: 'rgba(var(--accent-warm-rgb), 0.1)',
+              border: 'rgba(var(--accent-warm-rgb), 0.22)',
             },
           ].map(item => {
             const Icon = item.icon
@@ -217,15 +217,15 @@ export function HolidayManagement() {
               >
                 <div
                   style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '12px',
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: 'rgba(255, 255, 255, 0.88)',
-                    color: item.accent,
-                    border: `1px solid ${item.border}`,
-                  }}
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: 'var(--surface-raised)',
+                  color: item.accent,
+                  border: `1px solid ${item.border}`,
+                }}
                 >
                   <Icon size={18} />
                 </div>
@@ -236,7 +236,7 @@ export function HolidayManagement() {
                       fontWeight: 700,
                       letterSpacing: '0.04em',
                       textTransform: 'uppercase',
-                      color: '#64748b',
+                      color: 'var(--text-faint)',
                       marginBottom: '4px',
                     }}
                   >
@@ -256,7 +256,7 @@ export function HolidayManagement() {
                       marginTop: '6px',
                       fontSize: '12px',
                       lineHeight: 1.5,
-                      color: '#64748b',
+                      color: 'var(--text-muted)',
                     }}
                   >
                     {item.note}
@@ -297,9 +297,9 @@ export function HolidayManagement() {
           <section
             style={{
               borderRadius: '18px',
-              border: '1px solid rgba(99, 102, 241, 0.16)',
+              border: '1px solid rgba(var(--accent-rgb), 0.16)',
               background:
-                'linear-gradient(180deg, rgba(238,242,255,0.52) 0%, rgba(255,255,255,0.98) 24%)',
+                'linear-gradient(180deg, rgba(var(--accent-rgb), 0.08) 0%, var(--surface-raised) 24%)',
               padding: '18px',
               display: 'flex',
               flexDirection: 'column',
@@ -308,13 +308,13 @@ export function HolidayManagement() {
           >
             <div
               style={{
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: '#4f46e5',
-              }}
-            >
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+            }}
+          >
               Qué hace este módulo
             </div>
             {[
@@ -327,9 +327,9 @@ export function HolidayManagement() {
                 style={{
                   padding: '12px 13px',
                   borderRadius: '14px',
-                  background: 'rgba(255,255,255,0.9)',
-                  border: '1px solid rgba(99, 102, 241, 0.12)',
-                  color: '#4338ca',
+                  background: 'var(--surface-raised)',
+                  border: '1px solid rgba(var(--accent-rgb), 0.12)',
+                  color: 'var(--accent-strong)',
                   fontSize: '13px',
                   lineHeight: 1.6,
                 }}
@@ -343,9 +343,9 @@ export function HolidayManagement() {
         <section
           style={{
             borderRadius: '22px',
-            border: '1px solid rgba(15, 23, 42, 0.08)',
-            background: 'rgba(255,255,255,0.98)',
-            boxShadow: '0 18px 42px rgba(15, 23, 42, 0.05)',
+            border: '1px solid var(--shell-border)',
+            background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--bg-panel) 100%)',
+            boxShadow: 'var(--shadow-sm)',
             padding: '20px',
             display: 'flex',
             flexDirection: 'column',

@@ -26,8 +26,9 @@ export function DailyLogSidebarRepresentativeRow({
         ...(row.isOperationallyAbsent ? { opacity: 0.7 } : {}),
         ...(row.isUnassigned
           ? {
-              borderLeft: '4px solid #ef4444',
-              backgroundColor: '#fef2f2',
+              borderLeft: '4px solid var(--danger)',
+              background:
+                'linear-gradient(180deg, var(--bg-danger) 0%, rgba(255,255,255,0.6) 100%)',
             }
           : {}),
       }}
@@ -36,9 +37,9 @@ export function DailyLogSidebarRepresentativeRow({
         style={{
           textDecoration: row.isOperationallyAbsent ? 'line-through' : 'none',
           color: row.isOperationallyAbsent
-            ? '#6b7280'
+            ? 'var(--text-muted)'
             : row.isUnassigned
-              ? '#b91c1c'
+              ? 'var(--text-danger)'
               : 'inherit',
           fontWeight: row.isUnassigned ? 600 : 400,
         }}
@@ -58,9 +59,9 @@ export function DailyLogSidebarRepresentativeRow({
             icon={<AlertTriangle size={10} />}
             label="Sin cobertura"
             title="Este turno debería estar cubierto pero no tiene responsable asignado"
-            background="#fee2e2"
-            color="#b91c1c"
-            border="1px solid #fca5a5"
+            background="var(--bg-danger)"
+            color="var(--text-danger)"
+            border="1px solid var(--border-danger)"
             bold
           />
         )}
@@ -70,8 +71,9 @@ export function DailyLogSidebarRepresentativeRow({
             icon={<Shield size={10} />}
             label="Cubierto"
             title={`Cubierto por ${row.coveredByName ?? '—'}`}
-            background="#dbeafe"
-            color="#1e40af"
+            background="rgba(var(--accent-rgb), 0.08)"
+            color="var(--accent-strong)"
+            border="1px solid rgba(var(--accent-rgb), 0.16)"
           />
         )}
 
@@ -79,11 +81,12 @@ export function DailyLogSidebarRepresentativeRow({
           <span
             style={{
               fontSize: '10px',
-              background: '#fee2e2',
-              color: '#b91c1c',
+              background: 'var(--bg-danger)',
+              color: 'var(--text-danger)',
               padding: '2px 6px',
-              borderRadius: '4px',
+              borderRadius: '999px',
               fontWeight: 600,
+              border: '1px solid var(--border-danger)',
             }}
           >
             Ausente
@@ -95,8 +98,9 @@ export function DailyLogSidebarRepresentativeRow({
             icon={<RefreshCw size={10} />}
             label="Cubriendo"
             title={`Cubriendo a ${row.coveringName ?? '—'}`}
-            background="#f3e8ff"
-            color="#6b21a8"
+            background="rgba(var(--accent-rgb), 0.08)"
+            color="var(--accent)"
+            border="1px solid rgba(var(--accent-rgb), 0.16)"
           />
         )}
       </div>
