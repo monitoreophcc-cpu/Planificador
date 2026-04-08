@@ -9,24 +9,24 @@ interface RepresentativeShiftTabsProps {
   activeRepsCount: number
   activeShift: ShiftType | 'ALL'
   advancedEditMode: boolean
-  addingScheduleFor: string | null
   dayReps: Representative[]
   nightReps: Representative[]
+  selectedRepId: string | null
   onActiveShiftChange: (shift: ShiftType | 'ALL') => void
-  onAddSchedule: (repId: string | null) => void
   onEdit: (rep: Representative) => void
+  onSelect: (rep: Representative) => void
 }
 
 export function RepresentativeShiftTabs({
   activeRepsCount,
   activeShift,
   advancedEditMode,
-  addingScheduleFor,
   dayReps,
   nightReps,
+  selectedRepId,
   onActiveShiftChange,
-  onAddSchedule,
   onEdit,
+  onSelect,
 }: RepresentativeShiftTabsProps) {
   return (
     <div>
@@ -51,11 +51,11 @@ export function RepresentativeShiftTabs({
               cursor: 'pointer',
               fontWeight: activeShift === 'ALL' ? 600 : 400,
               color: activeShift === 'ALL' ? '#111827' : '#6b7280',
-              fontSize: '14px',
-            }}
-          >
-            Todos ({activeRepsCount})
-          </button>
+            fontSize: '14px',
+          }}
+        >
+          Todos ({activeRepsCount})
+        </button>
         </Tooltip>
         <button
           onClick={() => onActiveShiftChange('DAY')}
@@ -104,53 +104,42 @@ export function RepresentativeShiftTabs({
               fontSize: '12px',
               color: 'var(--text-muted)',
               marginBottom: '12px',
-              fontStyle: 'italic',
+              lineHeight: 1.55,
             }}
           >
-            💡 Para reordenar, selecciona un turno específico
+            Revisa ambos turnos sin salir del contexto. Para reordenar, cambia a una
+            vista específica de turno.
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <h4
-                style={{
-                  margin: '0 0 8px 0',
-                  fontSize: '14px',
-                  color: '#f59e0b',
-                  fontWeight: 600,
-                }}
-              >
-                <Sun size={14} style={{ display: 'inline', marginRight: '6px' }} />
-                Turno Día ({dayReps.length})
-              </h4>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                {dayReps.map(rep => rep.name).join(', ') || 'Sin representantes'}
-              </div>
-            </div>
-            <div>
-              <h4
-                style={{
-                  margin: '0 0 8px 0',
-                  fontSize: '14px',
-                  color: '#6366f1',
-                  fontWeight: 600,
-                }}
-              >
-                <Moon size={14} style={{ display: 'inline', marginRight: '6px' }} />
-                Turno Noche ({nightReps.length})
-              </h4>
-              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                {nightReps.map(rep => rep.name).join(', ') || 'Sin representantes'}
-              </div>
-            </div>
+            <ShiftSection
+              shift="DAY"
+              title={`Turno Día`}
+              representatives={dayReps}
+              selectedRepId={selectedRepId}
+              onSelect={onSelect}
+              onEdit={onEdit}
+              advancedEditMode={advancedEditMode}
+              allowReorder={false}
+            />
+            <ShiftSection
+              shift="NIGHT"
+              title={`Turno Noche`}
+              representatives={nightReps}
+              selectedRepId={selectedRepId}
+              onSelect={onSelect}
+              onEdit={onEdit}
+              advancedEditMode={advancedEditMode}
+              allowReorder={false}
+            />
           </div>
         </div>
       ) : (
         <ShiftSection
           shift={activeShift}
           representatives={activeShift === 'DAY' ? dayReps : nightReps}
+          selectedRepId={selectedRepId}
+          onSelect={onSelect}
           onEdit={onEdit}
-          onAddSchedule={onAddSchedule}
-          addingScheduleFor={addingScheduleFor}
           advancedEditMode={advancedEditMode}
         />
       )}

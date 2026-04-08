@@ -27,6 +27,8 @@ export function PointsReportView() {
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
       }}
     >
       <PointsReportHeader

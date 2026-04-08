@@ -3,32 +3,81 @@
 import AppShellContent from '../ui/AppShell'
 import { ToastProvider } from '@/ui/components/ToastProvider'
 import { EditModeProvider } from '@/hooks/useEditMode'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { buildNextPath } from '@/lib/auth/redirects'
+import { useSession } from '@/hooks/useSession'
+import { useSyncHealthStore } from '@/store/useSyncHealthStore'
 
 export default function Page() {
+  const { user, loading: sessionLoading } = useSession()
+  const router = useRouter()
+  const pathname = usePathname()
   const [isReady, setIsReady] = useState(false)
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (sessionLoading || user) {
+      return
+    }
+
+    const search =
+      typeof window === 'undefined' ? '' : window.location.search
+    const nextPath = buildNextPath(pathname, search)
+    router.replace(`/login?next=${encodeURIComponent(nextPath)}`)
+  }, [pathname, router, sessionLoading, user])
+
+  useEffect(() => {
+    if (sessionLoading || !user) {
+      return
+    }
+
     let saveTimer: number | undefined
     let unsubscribe = () => {}
     let isActive = true
+    let lastPersistedSignature = ''
 
     void (async () => {
       try {
         const { useAppStore, stateToPersist } = await import('@/store/useAppStore')
+        const syncHealth = useSyncHealthStore.getState()
 
         await useAppStore.getState().initialize()
         if (!isActive) return
 
+        syncHealth.markLocalReady()
+        lastPersistedSignature = JSON.stringify(
+          stateToPersist(useAppStore.getState())
+        )
+
         unsubscribe = useAppStore.subscribe(state => {
           if (state.isLoading) return
+
+          const persistedState = stateToPersist(useAppStore.getState())
+          const nextPersistedSignature = JSON.stringify(persistedState)
+
+          if (nextPersistedSignature === lastPersistedSignature) {
+            return
+          }
+
+          lastPersistedSignature = nextPersistedSignature
+          syncHealth.markLocalPending()
+
           clearTimeout(saveTimer)
           saveTimer = window.setTimeout(() => {
+            syncHealth.markLocalSaving()
             void import('@/persistence/storage')
-              .then(({ saveState }) => saveState(stateToPersist(useAppStore.getState())))
+              .then(({ saveState }) => saveState(persistedState))
+              .then(() => {
+                syncHealth.markLocalSaved()
+              })
               .catch(error => {
                 console.error('[AutoSave] No se pudo persistir el estado.', error)
+                syncHealth.markLocalError(
+                  error instanceof Error
+                    ? error.message
+                    : 'No se pudo guardar en este dispositivo.'
+                )
               })
           }, 300)
         })
@@ -67,7 +116,43 @@ export default function Page() {
       clearTimeout(saveTimer)
       unsubscribe()
     }
-  }, [])
+  }, [sessionLoading, user])
+
+  if (sessionLoading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          fontFamily: 'sans-serif',
+          fontSize: '1.2rem',
+          color: '#6b7280',
+        }}
+      >
+        Verificando sesión...
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          fontFamily: 'sans-serif',
+          fontSize: '1.1rem',
+          color: '#6b7280',
+        }}
+      >
+        Redirigiendo al login...
+      </div>
+    )
+  }
 
   if (bootstrapError) {
     return (

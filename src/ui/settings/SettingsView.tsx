@@ -18,6 +18,30 @@ import { settingsViewStyles } from './settingsViewStyles'
 
 type SettingsTab = 'equipo' | 'calendario' | 'sistema'
 
+const SETTINGS_TAB_META: Record<
+  SettingsTab,
+  { eyebrow: string; title: string; description: string }
+> = {
+  equipo: {
+    eyebrow: 'Estructura operativa',
+    title: 'Equipo, reglas y perfiles',
+    description:
+      'Gestiona representantes, demanda y la base operativa desde una vista más ordenada y con menos fricción.',
+  },
+  calendario: {
+    eyebrow: 'Calendario maestro',
+    title: 'Feriados y excepciones del año',
+    description:
+      'Mantén visibles los días que afectan vacaciones y reglas sin perderte entre listas largas.',
+  },
+  sistema: {
+    eyebrow: 'Confianza del sistema',
+    title: 'Respaldo, guía y control avanzado',
+    description:
+      'Todo lo relacionado con sync, backups, auditoría y recuperación reunido en una superficie más clara.',
+  },
+}
+
 export function SettingsView() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('sistema')
   const [activeEquipoSection, setActiveEquipoSection] = useState<EquipoSection>('representatives')
@@ -38,6 +62,7 @@ export function SettingsView() {
   const sortedHistory = [...historyEvents].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   )
+  const activeTabMeta = SETTINGS_TAB_META[activeTab]
 
   const handleReset = async () => {
     const confirmed = await showConfirm({
@@ -71,7 +96,7 @@ export function SettingsView() {
   }
 
   return (
-    <div style={{ padding: '0px 20px 40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={settingsViewStyles.container}>
       <LogViewerModal
         title="Historial de Cambios"
         isOpen={showHistory}
@@ -81,50 +106,41 @@ export function SettingsView() {
         emptyMessage="No hay eventos en el historial reciente."
       />
 
-      <div
-        style={{
-          background: 'var(--bg-panel)',
-          borderRadius: '12px 12px 0 0',
-          padding: '0 16px',
-          border: '1px solid var(--border-subtle)',
-          borderBottom: 'none',
-          marginBottom: 0,
-          display: 'flex',
-        }}
-      >
-        <button
-          style={settingsViewStyles.tab(activeTab === 'equipo')}
-          onClick={() => setActiveTab('equipo')}
-        >
-          <Users size={16} />
-          Equipo y Reglas
-        </button>
-        <button
-          style={settingsViewStyles.tab(activeTab === 'calendario')}
-          onClick={() => setActiveTab('calendario')}
-        >
-          <Calendar size={16} />
-          Calendario
-        </button>
-        <button
-          style={settingsViewStyles.tab(activeTab === 'sistema')}
-          onClick={() => setActiveTab('sistema')}
-        >
-          <Settings size={16} />
-          Sistema
-        </button>
-      </div>
+      <section style={settingsViewStyles.hero}>
+        <div>
+          <div style={settingsViewStyles.heroBadge}>{activeTabMeta.eyebrow}</div>
+          <h1 style={settingsViewStyles.heroTitle}>Configuración v2</h1>
+          <p style={settingsViewStyles.heroDescription}>
+            {activeTabMeta.description}
+          </p>
+        </div>
 
-      <div
-        style={{
-          background: 'var(--bg-panel)',
-          borderRadius: '0 0 12px 12px',
-          border: '1px solid var(--border-subtle)',
-          borderTop: 'none',
-          padding: '24px',
-          minHeight: '600px',
-        }}
-      >
+        <div style={settingsViewStyles.tabRail}>
+          <button
+            style={settingsViewStyles.tab(activeTab === 'equipo')}
+            onClick={() => setActiveTab('equipo')}
+          >
+            <Users size={16} />
+            Equipo y Reglas
+          </button>
+          <button
+            style={settingsViewStyles.tab(activeTab === 'calendario')}
+            onClick={() => setActiveTab('calendario')}
+          >
+            <Calendar size={16} />
+            Calendario
+          </button>
+          <button
+            style={settingsViewStyles.tab(activeTab === 'sistema')}
+            onClick={() => setActiveTab('sistema')}
+          >
+            <Settings size={16} />
+            Sistema
+          </button>
+        </div>
+      </section>
+
+      <div style={settingsViewStyles.contentSurface}>
         {activeTab === 'equipo' && (
           <SettingsEquipoContent
             activeEquipoSection={activeEquipoSection}

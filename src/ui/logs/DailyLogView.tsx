@@ -1,5 +1,7 @@
 'use client'
 
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import { DailyLogAttentionPanel } from './DailyLogAttentionPanel'
 import { DailyLogSidebar } from './DailyLogSidebar'
 import { DailyLogToolbar } from './DailyLogToolbar'
 import { DailyLogIncidentForm } from './DailyLogIncidentForm'
@@ -10,86 +12,236 @@ import { useDailyLogController } from './useDailyLogController'
 
 export function DailyLogView() {
   const controller = useDailyLogController()
+  const [isDashboardExpanded, setIsDashboardExpanded] = useState(false)
+  const formRef = useRef<HTMLElement | null>(null)
+  const previousSelectedRepIdRef = useRef<string | null>(null)
+
+  const coveringCount = useMemo(
+    () => controller.representativeRows.filter(row => row.isCovering).length,
+    [controller.representativeRows]
+  )
+  const selectedRow = useMemo(
+    () =>
+      controller.selectedRep
+        ? controller.representativeRows.find(
+            row => row.id === controller.selectedRep?.id
+          ) ?? null
+        : null,
+    [controller.representativeRows, controller.selectedRep]
+  )
+  const selectedRepMeta = selectedRow
+    ? selectedRow.isUnassigned
+      ? 'Su turno aparece sin cobertura ahora mismo.'
+      : selectedRow.isCovered
+        ? `Actualmente cubierto por ${selectedRow.coveredByName ?? 'otro agente'}.`
+        : selectedRow.isCovering
+          ? `Actualmente está cubriendo a ${selectedRow.coveringName ?? 'otro agente'}.`
+          : selectedRow.isOperationallyAbsent || selectedRow.isAbsent
+            ? 'Figura como ausente en la operación actual.'
+            : 'Listo para registrar un evento sobre esta ficha.'
+    : undefined
+  const selectedRepStatusPills = useMemo(() => {
+    if (!selectedRow) return []
+
+    const pills: Array<{
+      label: string
+      tone: { accent: string; background: string; border: string }
+    }> = []
+
+    if (selectedRow.isUnassigned) {
+      pills.push({
+        label: 'Sin cobertura',
+        tone: {
+          accent: 'var(--text-danger)',
+          background: 'var(--bg-danger)',
+          border: 'var(--border-danger)',
+        },
+      })
+    }
+
+    if (selectedRow.isCovering) {
+      pills.push({
+        label: `Cubre a ${selectedRow.coveringName ?? 'otro agente'}`,
+        tone: {
+          accent: 'var(--accent)',
+          background: 'rgba(var(--accent-rgb), 0.08)',
+          border: 'rgba(var(--accent-rgb), 0.16)',
+        },
+      })
+    }
+
+    if (selectedRow.isCovered) {
+      pills.push({
+        label: `Cubierto por ${selectedRow.coveredByName ?? 'otro agente'}`,
+        tone: {
+          accent: 'var(--accent-strong)',
+          background: 'rgba(var(--accent-rgb), 0.08)',
+          border: 'rgba(var(--accent-rgb), 0.16)',
+        },
+      })
+    }
+
+    if (selectedRow.isOperationallyAbsent || selectedRow.isAbsent) {
+      pills.push({
+        label: 'Ausencia operativa',
+        tone: {
+          accent: 'var(--text-muted)',
+          background: 'var(--surface-raised)',
+          border: 'var(--shell-border)',
+        },
+      })
+    }
+
+    return pills
+  }, [selectedRow])
+
+  const handleAttentionSelect = (
+    representativeId: string,
+    suggestedIncidentType?: typeof controller.incidentType
+  ) => {
+    startTransition(() => {
+      controller.onSelectRepresentative(representativeId)
+
+      if (suggestedIncidentType) {
+        controller.setIncidentType(suggestedIncidentType)
+      }
+    })
+  }
+
+  useEffect(() => {
+    const currentSelectedRepId = controller.selectedRep?.id ?? null
+
+    if (
+      currentSelectedRepId &&
+      currentSelectedRepId !== previousSelectedRepIdRef.current &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 1100px)').matches
+    ) {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    previousSelectedRepIdRef.current = currentSelectedRepId
+  }, [controller.selectedRep?.id])
 
   if (
     controller.isLoading ||
     controller.allCalendarDaysForRelevantMonths.length === 0
   ) {
-    return <div>Cargando...</div>
+    return <div className="app-shell-loading">Cargando registro diario...</div>
   }
 
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(300px, 20%) 1fr', // Responsive width
-        gap: 'var(--space-md)',
-        fontFamily: 'sans-serif',
-        background: 'var(--bg-app)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '18px',
         padding: 'var(--space-lg)',
-        alignItems: 'start', // Important for sticky
+        borderRadius: '28px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)',
+        border: '1px solid rgba(255,255,255,0.18)',
       }}
     >
-      <DailyLogSidebar
-        activeShift={controller.activeShift}
-        onActiveShiftChange={controller.setActiveShift}
-        dayPresent={controller.dailyStats.dayPresent}
-        dayPlanned={controller.dailyStats.dayPlanned}
-        nightPresent={controller.dailyStats.nightPresent}
-        nightPlanned={controller.dailyStats.nightPlanned}
+      <DailyLogToolbar
         activeCoveragesCount={controller.activeCoveragesForDay.length}
-        onOpenCoverageManager={() => controller.setIsCoverageManagerOpen(true)}
-        hideAbsent={controller.hideAbsent}
-        onToggleHideAbsent={controller.toggleHideAbsent}
-        incidentType={controller.incidentType}
-        searchTerm={controller.searchTerm}
-        onSearchTermChange={controller.setSearchTerm}
-        rows={controller.representativeRows}
-        selectedRepId={controller.selectedRep?.id ?? null}
-        onSelectRepresentative={controller.onSelectRepresentative}
+        activeShift={controller.activeShift}
+        coveringCount={coveringCount}
+        date={controller.dateForLog}
+        dayIncidentsCount={controller.dayIncidents.length}
+        dayPlanned={controller.dailyStats.dayPlanned}
+        dayPresent={controller.dailyStats.dayPresent}
+        filterMode={controller.filterMode}
+        isExpanded={isDashboardExpanded}
+        nightPlanned={controller.dailyStats.nightPlanned}
+        nightPresent={controller.dailyStats.nightPresent}
+        ongoingIncidentsCount={controller.ongoingIncidents.length}
+        onActiveShiftChange={controller.setActiveShift}
+        onDateChange={date =>
+          controller.setLogDate(format(date, 'yyyy-MM-dd'))
+        }
+        onFilterModeChange={controller.setFilterMode}
+        onToggleExpanded={() =>
+          setIsDashboardExpanded(currentValue => !currentValue)
+        }
+        selectedRepName={controller.selectedRep?.name}
+        visibleRepresentatives={controller.representativeRows.length}
       />
 
-      <section
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          // overflowY: 'auto', // REMOVED: Let window scroll
+      {isDashboardExpanded ? (
+        <DailyLogAttentionPanel
+          rows={controller.representativeRows}
+          selectedRepId={controller.selectedRep?.id ?? null}
+          onSelectRepresentative={handleAttentionSelect}
+        />
+      ) : null}
+
+      <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 'var(--space-md)',
+            alignItems: 'start',
         }}
       >
-        <DailyLogToolbar
-          date={controller.dateForLog}
-          onDateChange={date =>
-            controller.setLogDate(format(date, 'yyyy-MM-dd'))
-          }
-          filterMode={controller.filterMode}
-          onFilterModeChange={controller.setFilterMode}
-        />
-        <DailyLogIncidentForm
-          conflictMessages={
-            controller.conflictCheck.hasConflict
-              ? controller.conflictCheck.messages ?? [
-                  controller.conflictCheck.message ?? 'Conflicto detectado',
-                ]
-              : []
-          }
-          customPoints={controller.customPoints}
-          duration={controller.duration}
+        <DailyLogSidebar
+          activeShift={controller.activeShift}
+          onActiveShiftChange={controller.setActiveShift}
+          dayPresent={controller.dailyStats.dayPresent}
+          dayPlanned={controller.dailyStats.dayPlanned}
+          nightPresent={controller.dailyStats.nightPresent}
+          nightPlanned={controller.dailyStats.nightPlanned}
+          activeCoveragesCount={controller.activeCoveragesForDay.length}
+          onOpenCoverageManager={() => controller.setIsCoverageManagerOpen(true)}
+          hideAbsent={controller.hideAbsent}
+          onToggleHideAbsent={controller.toggleHideAbsent}
           incidentType={controller.incidentType}
-          note={controller.note}
-          onCustomPointsChange={controller.setCustomPoints}
-          onDurationChange={controller.setDuration}
-          onIncidentTypeChange={controller.setIncidentType}
-          onNoteChange={controller.setNote}
-          onSubmit={controller.handleSubmit}
-          selectedRepName={controller.selectedRep?.name}
+          searchTerm={controller.searchTerm}
+          onSearchTermChange={controller.setSearchTerm}
+          rows={controller.representativeRows}
+          selectedRepId={controller.selectedRep?.id ?? null}
+          onSelectRepresentative={controller.onSelectRepresentative}
         />
 
-        <DailyLogEventPanels
-          dayIncidents={controller.dayIncidents}
-          ongoingIncidents={controller.ongoingIncidents}
-        />
-      </section>
+        <section
+          ref={formRef}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            flex: '1 1 560px',
+            minWidth: 'min(100%, 360px)',
+          }}
+        >
+          <DailyLogIncidentForm
+            conflictMessages={
+              controller.conflictCheck.hasConflict
+                ? controller.conflictCheck.messages ?? [
+                    controller.conflictCheck.message ?? 'Conflicto detectado',
+                  ]
+                : []
+            }
+            customPoints={controller.customPoints}
+            duration={controller.duration}
+            incidentType={controller.incidentType}
+            note={controller.note}
+            onCustomPointsChange={controller.setCustomPoints}
+            onDurationChange={controller.setDuration}
+            onIncidentTypeChange={controller.setIncidentType}
+            onNoteChange={controller.setNote}
+            onSubmit={controller.handleSubmit}
+            logDate={controller.logDate}
+            selectedRepMeta={selectedRepMeta}
+            selectedRepName={controller.selectedRep?.name}
+            selectedRepStatusPills={selectedRepStatusPills}
+          />
+
+          <DailyLogEventPanels
+            dayIncidents={controller.dayIncidents}
+            ongoingIncidents={controller.ongoingIncidents}
+          />
+        </section>
+      </div>
 
       <DailyLogModals
         absenceConfirmState={controller.absenceConfirmState}

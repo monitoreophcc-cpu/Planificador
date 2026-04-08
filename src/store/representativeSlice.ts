@@ -7,6 +7,7 @@ export interface RepresentativeSlice {
   addRepresentative: (data: Omit<Representative, 'id' | 'isActive'>) => void
   updateRepresentative: (rep: Representative) => void
   deactivateRepresentative: (repId: string) => Promise<void>
+  reactivateRepresentative: (repId: string) => Promise<void>
   reorderRepresentatives: (
     shift: 'DAY' | 'NIGHT',
     orderedIds: string[]
@@ -69,6 +70,46 @@ export const createRepresentativeSlice: StateCreator<
     if (representative?.baseShift) {
       normalizeOrderIndexes(representative.baseShift)
     }
+  },
+
+  reactivateRepresentative: async repId => {
+    const { showConfirm, representatives, normalizeOrderIndexes } = get()
+    const representative = representatives.find(rep => rep.id === repId)
+
+    if (!representative || representative.isActive) {
+      return
+    }
+
+    const confirmed = await showConfirm({
+      title: '¿Reactivar Representante?',
+      description: `Estás a punto de reactivar a ${representative.name}. Volverá a participar en nuevos planes y se ubicará al final del turno ${representative.baseShift === 'DAY' ? 'de dia' : 'de noche'}. ¿Deseas continuar?`,
+      intent: 'info',
+      confirmLabel: 'Sí, reactivar',
+    })
+
+    if (!confirmed) return
+
+    set(state => {
+      const targetRepresentative = state.representatives.find(rep => rep.id === repId)
+
+      if (!targetRepresentative) {
+        return
+      }
+
+      const highestOrderIndex = state.representatives
+        .filter(
+          rep =>
+            rep.id !== repId &&
+            rep.baseShift === targetRepresentative.baseShift &&
+            rep.isActive
+        )
+        .reduce((highest, rep) => Math.max(highest, rep.orderIndex ?? -1), -1)
+
+      targetRepresentative.isActive = true
+      targetRepresentative.orderIndex = highestOrderIndex + 1
+    })
+
+    normalizeOrderIndexes(representative.baseShift)
   },
 
   reorderRepresentatives: (shift, orderedIds) => {

@@ -14,24 +14,29 @@ export function OperationalReportModeToggle({
       style={{
         display: 'flex',
         gap: '8px',
-        padding: '4px',
-        background: '#f3f4f6',
-        borderRadius: '8px',
+        padding: '6px',
+        background: 'var(--surface-tint)',
+        borderRadius: '18px',
+        border: '1px solid var(--shell-border)',
         width: 'fit-content',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
       }}
     >
       <button
         onClick={() => onChange('INSTITUTIONAL')}
         style={{
-          padding: '8px 16px',
-          border: 'none',
-          borderRadius: '6px',
-          background: mode === 'INSTITUTIONAL' ? 'white' : 'transparent',
-          color: mode === 'INSTITUTIONAL' ? '#1f2937' : '#6b7280',
-          fontWeight: mode === 'INSTITUTIONAL' ? 600 : 400,
+          padding: '9px 14px',
+          border: `1px solid ${mode === 'INSTITUTIONAL' ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent'}`,
+          borderRadius: '14px',
+          background:
+            mode === 'INSTITUTIONAL'
+              ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
+              : 'transparent',
+          color: mode === 'INSTITUTIONAL' ? 'var(--accent-strong)' : 'var(--text-muted)',
+          fontWeight: mode === 'INSTITUTIONAL' ? 700 : 500,
           cursor: 'pointer',
           fontSize: '14px',
-          boxShadow: mode === 'INSTITUTIONAL' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+          boxShadow: mode === 'INSTITUTIONAL' ? 'var(--shadow-sm)' : 'none',
         }}
       >
         ● Reporte Operativo
@@ -39,15 +44,18 @@ export function OperationalReportModeToggle({
       <button
         onClick={() => onChange('ANALYSIS')}
         style={{
-          padding: '8px 16px',
-          border: 'none',
-          borderRadius: '6px',
-          background: mode === 'ANALYSIS' ? 'white' : 'transparent',
-          color: mode === 'ANALYSIS' ? '#1f2937' : '#6b7280',
-          fontWeight: mode === 'ANALYSIS' ? 600 : 400,
+          padding: '9px 14px',
+          border: `1px solid ${mode === 'ANALYSIS' ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent'}`,
+          borderRadius: '14px',
+          background:
+            mode === 'ANALYSIS'
+              ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
+              : 'transparent',
+          color: mode === 'ANALYSIS' ? 'var(--accent-strong)' : 'var(--text-muted)',
+          fontWeight: mode === 'ANALYSIS' ? 700 : 500,
           cursor: 'pointer',
           fontSize: '14px',
-          boxShadow: mode === 'ANALYSIS' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+          boxShadow: mode === 'ANALYSIS' ? 'var(--shadow-sm)' : 'none',
         }}
       >
         ○ Análisis de Períodos

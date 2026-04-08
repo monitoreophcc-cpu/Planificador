@@ -43,6 +43,7 @@ import {
   initializeAppState,
 } from './appStorePersistence'
 import { useCloudSyncStore, type CloudSyncStatus } from './useCloudSyncStore'
+import { useSyncHealthStore } from './useSyncHealthStore'
 import { createAppStoreUiBridge } from './appStoreUiBridge'
 
 // --- Main App State ---
@@ -98,6 +99,7 @@ export const useAppStore = create<AppState>()(
         state.cloudSyncStatus = status
       })
       useCloudSyncStore.getState().setStatus(status)
+      useSyncHealthStore.getState().setCloudStatus(status)
     }
 
     const setWithCloudSync: typeof set = (...args) => {

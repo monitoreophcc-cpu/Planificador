@@ -1,6 +1,11 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { createClient } from '@/lib/supabase/client'
-import type { SyncResult, SyncRow, SyncTable } from './supabase-sync-types'
+import type {
+  PendingQueueSummary,
+  SyncResult,
+  SyncRow,
+  SyncTable,
+} from './supabase-sync-types'
 
 type PendingOperation = {
   key: string
@@ -71,6 +76,42 @@ export async function clearPending(userId: string, table: SyncTable): Promise<vo
 
   await db.delete('pending_sync', queueKey(userId, table))
   db.close()
+}
+
+export async function getPendingQueueSummary(
+  userId?: string
+): Promise<PendingQueueSummary> {
+  const db = await getQueueDb()
+  if (!db) {
+    return {
+      operations: 0,
+      rows: 0,
+      tables: [],
+      tableBreakdown: [],
+    }
+  }
+
+  const pending = await db.getAll('pending_sync')
+  db.close()
+
+  const relevant = userId
+    ? pending.filter(operation => operation.userId === userId)
+    : pending
+
+  const tableBreakdownMap = relevant.reduce<Map<SyncTable, number>>((acc, operation) => {
+    acc.set(operation.table, (acc.get(operation.table) ?? 0) + operation.rows.length)
+    return acc
+  }, new Map())
+
+  return {
+    operations: relevant.length,
+    rows: relevant.reduce((total, operation) => total + operation.rows.length, 0),
+    tables: [...new Set(relevant.map(operation => operation.table))],
+    tableBreakdown: [...tableBreakdownMap.entries()].map(([table, rows]) => ({
+      table,
+      rows,
+    })),
+  }
 }
 
 async function logSyncAudit(

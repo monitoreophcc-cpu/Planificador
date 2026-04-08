@@ -10,33 +10,20 @@ function AppShellInner() {
   const { activeView, setActiveView } = useAppShellNavigation()
 
   return (
-    <div
-      style={{
-        fontFamily: 'sans-serif',
-        background: 'var(--bg-app)',
-        minHeight: '100vh',
-      }}
-    >
+    <div className="app-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AppShellHeader activeView={activeView} onViewChange={setActiveView} />
 
-      <main style={{ padding: 'var(--space-lg) var(--space-xl)' }}>
+      <main
+        className="main-content app-main-shell"
+        style={{
+          flex: 1,
+        }}
+      >
         <AppShellViewRouter
           activeView={activeView}
           onNavigateToSettings={() => setActiveView('SETTINGS')}
         />
       </main>
-
-      <footer
-        style={{
-          padding: 'var(--space-lg) 0',
-          borderTop: '1px solid var(--border-subtle)',
-          color: 'var(--text-faint)',
-          fontSize: 'var(--font-size-xs)',
-          textAlign: 'center',
-          marginTop: 'auto'
-        }}
-      >
-      </footer>
 
       <AppShellGlobalModals />
     </div>

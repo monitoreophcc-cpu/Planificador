@@ -22,13 +22,29 @@ export function OperationalReportHeader({
   return (
     <div
       style={{
-        paddingBottom: '16px',
-        borderBottom: '1px solid #e5e7eb',
+        padding: '20px',
+        borderRadius: '22px',
+        border: '1px solid var(--shell-border)',
+        background:
+          'linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-tint) 60%, rgba(var(--accent-rgb), 0.06) 100%)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              marginBottom: '8px',
+            }}
+          >
+            Informe institucional
+          </div>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
             Reporte Operativo
           </h2>
           <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
@@ -42,14 +58,15 @@ export function OperationalReportHeader({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 12px',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '6px',
-              background: 'white',
-              color: '#374151',
+              padding: '10px 14px',
+              border: '1px solid var(--shell-border)',
+              borderRadius: '16px',
+              background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+              color: 'var(--text-main)',
               cursor: 'pointer',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 700,
+              boxShadow: 'var(--shadow-sm)',
             }}
             title="Descargar PDF para Jefatura"
           >
@@ -60,12 +77,14 @@ export function OperationalReportHeader({
             onChange={event => onPeriodChange(event.target.value as PeriodKind)}
             defaultValue="MONTH"
             style={{
-              padding: '8px 12px',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '6px',
-              background: 'var(--bg-panel)',
+              padding: '10px 12px',
+              border: '1px solid var(--shell-border)',
+              borderRadius: '16px',
+              background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
               cursor: 'pointer',
               fontSize: '14px',
+              color: 'var(--text-main)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             {PERIOD_OPTIONS.map(option => (

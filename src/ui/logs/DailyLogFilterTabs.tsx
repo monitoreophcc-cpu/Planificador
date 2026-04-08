@@ -20,7 +20,14 @@ export function DailyLogFilterTabs({
   onFilterModeChange,
 }: DailyLogFilterTabsProps) {
   return (
-    <div style={{ display: 'flex', gap: 'var(--space-sm)', paddingBottom: '4px' }}>
+    <div
+      style={{
+        display: 'flex',
+        gap: 'var(--space-sm)',
+        paddingBottom: '4px',
+        flexWrap: 'wrap',
+      }}
+    >
       {FILTER_OPTIONS.map(option => (
         <button
           key={option.mode}

@@ -81,14 +81,17 @@ export function AuditActionBadge({ action }: { action: AuditEventType | string }
   return (
     <span
       style={{
-        display: 'inline-block',
-        padding: '3px 9px',
-        borderRadius: '6px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '5px 10px',
+        borderRadius: '999px',
         fontSize: '11px',
-        fontWeight: 600,
+        fontWeight: 700,
+        letterSpacing: '0.02em',
         whiteSpace: 'nowrap',
         background: style.bg,
         color: style.text,
+        border: '1px solid rgba(0, 0, 0, 0.06)',
       }}
     >
       {style.label}

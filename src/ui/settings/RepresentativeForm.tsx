@@ -1,45 +1,85 @@
 'use client'
 
-import { useState } from 'react'
-import { createBaseSchedule } from '@/domain/state'
-import type {
-  BaseSchedule,
-  Representative,
-  RepresentativeRole,
-  ShiftType,
-} from '@/domain/types'
+import { useEffect, useMemo, useState } from 'react'
+import type { RepresentativeRole, ShiftType, Representative } from '@/domain/types'
 import { RepresentativeDayScheduleSelector } from './RepresentativeDayScheduleSelector'
 import { RepresentativeFormActions } from './RepresentativeFormActions'
 import { RepresentativeFormHeader } from './RepresentativeFormHeader'
 import { RepresentativeMixProfileField } from './RepresentativeMixProfileField'
 import { RepresentativeRoleField } from './RepresentativeRoleField'
 import { RepresentativeShiftSelector } from './RepresentativeShiftSelector'
+import {
+  countRepresentativeDayOffs,
+  createRepresentativeDraft,
+  getRepresentativeDraftChanges,
+  getRepresentativeMixLabel,
+  getRepresentativeRoleLabel,
+  getRepresentativeShiftLabel,
+  type RepresentativeDraft,
+} from './representativeEditorSchema'
 import { representativeFormStyles } from './representativeFormStyles'
 
-export type RepresentativeDraft = Omit<
-  Representative,
-  'id' | 'isActive' | 'orderIndex'
->
-
 interface RepresentativeFormProps {
+  onDirtyChange?: (isDirty: boolean) => void
   rep?: Representative
   onSave: (data: RepresentativeDraft, id?: string) => void
   onCancel: () => void
 }
 
 export function RepresentativeForm({
+  onDirtyChange,
   rep,
   onSave,
   onCancel,
 }: RepresentativeFormProps) {
-  const [name, setName] = useState(rep?.name || '')
-  const [baseShift, setBaseShift] = useState<ShiftType>(rep?.baseShift || 'DAY')
-  const [role, setRole] = useState<RepresentativeRole>(rep?.role || 'SALES')
-  const [baseSchedule, setBaseSchedule] = useState<BaseSchedule>(
-    rep?.baseSchedule || createBaseSchedule([1])
-  )
+  const initialDraft = useMemo(() => createRepresentativeDraft(rep), [rep])
+
+  const [name, setName] = useState(initialDraft.name)
+  const [baseShift, setBaseShift] = useState<ShiftType>(initialDraft.baseShift)
+  const [role, setRole] = useState<RepresentativeRole>(initialDraft.role)
+  const [baseSchedule, setBaseSchedule] = useState(initialDraft.baseSchedule)
   const [mixProfile, setMixProfile] = useState<'' | 'WEEKDAY' | 'WEEKEND'>(
-    rep?.mixProfile?.type || ''
+    initialDraft.mixProfile?.type || ''
+  )
+
+  useEffect(() => {
+    setName(initialDraft.name)
+    setBaseShift(initialDraft.baseShift)
+    setRole(initialDraft.role)
+    setBaseSchedule(initialDraft.baseSchedule)
+    setMixProfile(initialDraft.mixProfile?.type || '')
+  }, [initialDraft])
+
+  const currentDraft = useMemo<RepresentativeDraft>(
+    () => ({
+      name,
+      baseShift,
+      role,
+      baseSchedule,
+      mixProfile: mixProfile ? { type: mixProfile } : undefined,
+    }),
+    [baseSchedule, baseShift, mixProfile, name, role]
+  )
+
+  const pendingChanges = useMemo(
+    () => getRepresentativeDraftChanges(initialDraft, currentDraft),
+    [currentDraft, initialDraft]
+  )
+  const isDirty = pendingChanges.length > 0
+  const dayOffCount = useMemo(
+    () => countRepresentativeDayOffs(baseSchedule),
+    [baseSchedule]
+  )
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
+
+  useEffect(
+    () => () => {
+      onDirtyChange?.(false)
+    },
+    [onDirtyChange]
   )
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -48,15 +88,37 @@ export function RepresentativeForm({
       return
     }
 
-    const data: RepresentativeDraft = {
-      name,
-      baseShift,
-      role,
-      baseSchedule,
-      mixProfile: mixProfile ? { type: mixProfile } : undefined,
+    onSave(
+      {
+        ...currentDraft,
+        name: name.trim(),
+      },
+      rep?.id
+    )
+  }
+
+  const handleReset = () => {
+    setName(initialDraft.name)
+    setBaseShift(initialDraft.baseShift)
+    setRole(initialDraft.role)
+    setBaseSchedule(initialDraft.baseSchedule)
+    setMixProfile(initialDraft.mixProfile?.type || '')
+  }
+
+  const handleCancel = () => {
+    if (isDirty) {
+      const confirmed = confirm(
+        rep
+          ? 'Hay cambios sin guardar en esta ficha.\n\n¿Quieres salir de la edición y descartarlos?'
+          : 'Hay datos sin guardar en esta nueva ficha.\n\n¿Quieres limpiar el formulario y salir?'
+      )
+
+      if (!confirmed) {
+        return
+      }
     }
 
-    onSave(data, rep?.id)
+    onCancel()
   }
 
   return (
@@ -66,8 +128,46 @@ export function RepresentativeForm({
     >
       <RepresentativeFormHeader
         isEditing={Boolean(rep)}
-        onCancel={onCancel}
+        isDirty={isDirty}
+        repName={rep?.name}
+        onCancel={handleCancel}
       />
+
+      <div style={representativeFormStyles.liveSummary}>
+        {[
+          `Turno ${getRepresentativeShiftLabel(baseShift)}`,
+          getRepresentativeRoleLabel(role),
+          `${dayOffCount} dia(s) OFF base`,
+          getRepresentativeMixLabel({ mixProfile: mixProfile ? { type: mixProfile } : undefined }),
+        ].map(item => (
+          <span key={item} style={representativeFormStyles.liveSummaryChip}>
+            {item}
+          </span>
+        ))}
+      </div>
+
+      <div
+        style={
+          isDirty
+            ? representativeFormStyles.changeNoticePending
+            : representativeFormStyles.changeNoticeIdle
+        }
+      >
+        <div style={representativeFormStyles.changeNoticeTitle}>
+          {isDirty
+            ? `${pendingChanges.length} cambio(s) listo(s) para guardar`
+            : rep
+              ? 'Sin cambios pendientes en esta ficha'
+              : 'Completa la ficha base y guarda cuando todo se vea bien'}
+        </div>
+        <div style={representativeFormStyles.changeNoticeBody}>
+          {isDirty
+            ? `Campos tocados: ${pendingChanges.join(', ')}.`
+            : rep
+              ? 'Puedes ajustar solo una parte de la ficha y guardar sin tener que recapturar el resto.'
+              : 'El panel mantiene el contexto listo para que crear nuevas fichas sea rapido y ordenado.'}
+        </div>
+      </div>
 
       <div>
         <label style={representativeFormStyles.sectionTitle}>
@@ -110,7 +210,14 @@ export function RepresentativeForm({
         />
       </div>
 
-      <RepresentativeFormActions isEditing={Boolean(rep)} />
+      <RepresentativeFormActions
+        canReset={isDirty}
+        isDirty={isDirty}
+        isEditing={Boolean(rep)}
+        onCancel={handleCancel}
+        onReset={handleReset}
+        submitDisabled={!name.trim() || (Boolean(rep) && !isDirty)}
+      />
     </form>
   )
 }

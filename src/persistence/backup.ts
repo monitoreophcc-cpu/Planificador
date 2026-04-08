@@ -1,4 +1,14 @@
 import type { BackupPayload } from '@/application/backup/types'
+import {
+  AUTO_BACKUP_KEY,
+  type AutoBackupRecord,
+  type BackupRecord,
+  buildBackupStorageKey,
+  createBackupMetadata,
+  resolveBackupKindFromKey,
+  resolveBackupTimestampFromKey,
+} from '@/application/backup/metadata'
+import { parseBackup } from '@/application/backup/import'
 
 /**
  * Exports the current application state as a JSON file
@@ -29,18 +39,10 @@ export function importBackup(file: File): Promise<BackupPayload> {
         reader.onload = (e) => {
             try {
                 const content = e.target?.result as string
-                const state = JSON.parse(content) as BackupPayload
-
-                // Basic validation
-                if (!state.representatives || !state.calendar || !state.version) {
-                    throw new Error('Invalid backup file format')
-                }
-
-                state.coverages = Array.isArray(state.coverages) ? state.coverages : []
-
+                const state = parseBackup(content)
                 resolve(state)
             } catch (error) {
-                reject(new Error('Failed to parse backup file: ' + (error as Error).message))
+                reject(new Error((error as Error).message))
             }
         }
 
@@ -55,22 +57,29 @@ export function importBackup(file: File): Promise<BackupPayload> {
 /**
  * Gets list of backups from localStorage
  */
-export function getBackupHistory(): Array<{ key: string; timestamp: string; size: number }> {
-    const backups: Array<{ key: string; timestamp: string; size: number }> = []
+export function getBackupHistory(): BackupRecord[] {
+    const backups: BackupRecord[] = []
 
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i)
         // STRICT separation: Manual backups only in this list
         // We explicitly exclude the fixed auto-backup key
-        if (key?.startsWith('planning-backup-') && key !== 'planning-backup-auto-latest') {
+        if (key?.startsWith('planning-backup-') && key !== AUTO_BACKUP_KEY) {
             const value = localStorage.getItem(key)
             if (value) {
-                const timestamp = key.replace('planning-backup-manual-', '').replace('planning-backup-', '')
-                backups.push({
-                    key,
-                    timestamp,
-                    size: new Blob([value]).size,
-                })
+                try {
+                    const payload = parseBackup(value)
+                    const kind = resolveBackupKindFromKey(key)
+                    const timestamp = resolveBackupTimestampFromKey(key)
+
+                    backups.push({
+                        key,
+                        size: new Blob([value]).size,
+                        ...createBackupMetadata(payload, kind, timestamp),
+                    })
+                } catch {
+                    continue
+                }
             }
         }
     }
@@ -81,53 +90,54 @@ export function getBackupHistory(): Array<{ key: string; timestamp: string; size
 /**
  * Gets the auto-backup metadata if it exists
  */
-export function getAutoBackupMetadata(): { timestamp: string, size: number } | null {
-    const key = 'planning-backup-auto-latest'
+export function getAutoBackupMetadata(): AutoBackupRecord | null {
+    const key = AUTO_BACKUP_KEY
     const value = localStorage.getItem(key)
     if (!value) return null
 
-    // Check separate flag for timestamp, or fallback to now if not found (less reliable but safe)
-    // Actually, saveBackupToLocalStorage sets 'planning-auto-backup-last-run'
-    const lastRun = localStorage.getItem('planning-auto-backup-last-run')
-    return {
-        timestamp: lastRun || new Date().toISOString(),
-        size: new Blob([value]).size
+    try {
+        const payload = parseBackup(value)
+        const lastRun = localStorage.getItem('planning-auto-backup-last-run')
+        const timestamp = lastRun || payload.exportedAt || new Date().toISOString()
+
+        return {
+            size: new Blob([value]).size,
+            ...createBackupMetadata(payload, 'auto', timestamp),
+        }
+    } catch {
+        return null
     }
 }
 
 /**
  * Saves a backup to localStorage
  */
-export function saveBackupToLocalStorage(state: BackupPayload, type: 'manual' | 'auto' = 'manual'): void {
+export function saveBackupToLocalStorage(state: BackupPayload, type: 'manual' | 'auto' | 'recovery' = 'manual'): void {
     const timestamp = new Date().toISOString()
-
-    // Fix: Auto-backups use a fixed key to overwrite (Single Snapshot)
-    const key = type === 'auto'
-        ? 'planning-backup-auto-latest'
-        : `planning-backup-${type}-${timestamp}`
+    const key = buildBackupStorageKey(type, timestamp)
 
     const value = JSON.stringify(state)
 
     try {
-        // Manual backups: check quota if needed, but auto overwrites so no quota check for auto needed
-        // (localStorage has global limit, but we are not adding unlimited files)
-
         localStorage.setItem(key, value)
         if (type === 'auto') {
             localStorage.setItem('planning-auto-backup-last-run', timestamp)
         }
     } catch (error) {
-        // If quota exceeded, try removing oldest manual backup as last resort
         const backups = getBackupHistory()
         if (backups.length > 0) {
             localStorage.removeItem(backups[backups.length - 1].key)
             try {
                 localStorage.setItem(key, value)
+                if (type === 'auto') {
+                    localStorage.setItem('planning-auto-backup-last-run', timestamp)
+                }
             } catch {
-                console.error("Storage full, cannot save backup")
+                throw new Error('No se pudo guardar el respaldo en este navegador.')
             }
         } else {
             console.error("Storage full, cannot save backup", error)
+            throw new Error('No se pudo guardar el respaldo en este navegador.')
         }
     }
 }
@@ -164,9 +174,7 @@ export function loadBackupFromLocalStorage(key: string): BackupPayload | null {
     if (!value) return null
 
     try {
-        const parsed = JSON.parse(value) as BackupPayload
-        parsed.coverages = Array.isArray(parsed.coverages) ? parsed.coverages : []
-        return parsed
+        return parseBackup(value)
     } catch {
         return null
     }

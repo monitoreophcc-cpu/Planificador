@@ -47,20 +47,23 @@ export function DailyLogSidebar({
   return (
     <aside
       style={{
-        flexShrink: 0,
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-card)',
+        flex: '0 1 340px',
+        width: 'min(100%, 360px)',
+        maxWidth: '360px',
+        background:
+          'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-tint) 100%)',
+        borderRadius: '24px',
         padding: 'var(--space-lg)',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid var(--shell-border)',
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--space-md)',
-        marginBottom: 'var(--space-md)',
-        boxShadow: 'var(--shadow-sm)',
+        boxShadow: 'var(--shadow-md)',
         position: 'sticky',
-        top: '80px',
-        height: 'calc(100vh - 100px)',
+        top: '16px',
+        maxHeight: 'calc(100vh - 32px)',
         overflowY: 'hidden',
+        alignSelf: 'flex-start',
       }}
     >
       <DailyLogSidebarShiftPanel

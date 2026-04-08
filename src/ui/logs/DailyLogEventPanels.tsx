@@ -17,19 +17,17 @@ export function DailyLogEventPanels({
       style={{
         flex: 1,
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
         gap: 'var(--space-md)',
-        overflowY: 'hidden',
       }}
     >
       <div
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-card)',
+          borderRadius: '20px',
           padding: 'var(--space-lg)',
           overflowY: 'auto',
-          marginBottom: 'var(--space-lg)',
           boxShadow: 'var(--shadow-sm)',
         }}
       >
@@ -44,10 +42,9 @@ export function DailyLogEventPanels({
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-card)',
+          borderRadius: '20px',
           padding: 'var(--space-xl)',
           overflowY: 'auto',
-          marginBottom: 'var(--space-md)',
           boxShadow: 'var(--shadow-sm)',
         }}
       >

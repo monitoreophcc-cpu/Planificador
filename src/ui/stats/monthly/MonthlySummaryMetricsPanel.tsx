@@ -21,21 +21,37 @@ function MetricCard({
     <div
       style={{
         padding: '16px',
-        background: 'var(--bg-panel)',
-        borderRadius: '8px',
-        border: '1px solid var(--border-subtle)',
+        background:
+          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.45) 100%)',
+        borderRadius: '18px',
+        border: '1px solid var(--shell-border)',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Icon size={18} style={{ color }} />
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: '12px',
+            display: 'grid',
+            placeItems: 'center',
+            background: 'rgba(255,255,255,0.6)',
+            border: '1px solid var(--shell-border)',
+            color,
+          }}
+        >
+          <Icon size={18} />
+        </div>
         <span
           style={{
             fontSize: '13px',
             color: 'var(--text-muted)',
-            fontWeight: 500,
+            fontWeight: 700,
+            letterSpacing: '0.02em',
           }}
         >
           {label}
@@ -68,19 +84,19 @@ export function MonthlySummaryMetricsPanel({
         icon={Plane}
         label="De Vacaciones"
         value={metrics.onVacation}
-        color="#2563eb"
+        color="var(--accent)"
       />
       <MetricCard
         icon={FileText}
         label="De Licencia"
         value={metrics.onLicense}
-        color="#7c3aed"
+        color="var(--accent-strong)"
       />
       <MetricCard
         icon={AlertTriangle}
         label="Agentes con ≥10 pts"
         value={metrics.atRisk}
-        color="#dc2626"
+        color="var(--text-danger)"
       />
     </div>
   )

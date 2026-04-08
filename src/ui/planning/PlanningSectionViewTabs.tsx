@@ -15,19 +15,20 @@ interface PlanningSectionViewTabsProps {
 
 function shiftTabStyle(isActive: boolean) {
   return {
-    padding: 'var(--space-sm) var(--space-md)',
+    padding: '10px 14px',
     cursor: 'pointer',
-    border: 'none',
-    borderBottom: isActive
-      ? '2px solid var(--text-main)'
-      : '2px solid transparent',
-    color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+    border: `1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent'}`,
+    color: isActive ? 'var(--accent-strong)' : 'var(--text-muted)',
     fontWeight: isActive
       ? 'var(--font-weight-semibold)'
       : 'var(--font-weight-medium)',
-    background: 'transparent',
-    fontSize: 'var(--font-size-md)',
+    background: isActive
+      ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
+      : 'transparent',
+    fontSize: '14px',
     marginRight: '10px',
+    borderRadius: '16px',
+    boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
   } as const
 }
 
@@ -43,13 +44,27 @@ export function PlanningSectionViewTabs({
     <div style={{ marginBottom: 'var(--space-lg)' }}>
       <div
         style={{
-          borderBottom: '1px solid var(--border-subtle)',
+          border: '1px solid var(--shell-border)',
+          borderRadius: '22px',
+          background:
+            'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-tint) 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap',
+          padding: '10px 12px',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '4px',
+          }}
+        >
           <button
             style={shiftTabStyle(
               activeShift === 'DAY' && viewMode === 'OPERATIONAL'
@@ -78,17 +93,18 @@ export function PlanningSectionViewTabs({
           <button
             onClick={onOpenSwapManager}
             style={{
-              padding: 'var(--space-sm) var(--space-md)',
-              backgroundColor: 'var(--accent)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
+              padding: '10px 14px',
+              background: 'linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%)',
+              color: 'var(--text-on-accent)',
+              border: '1px solid rgba(var(--accent-rgb), 0.24)',
+              borderRadius: '16px',
               fontWeight: 'var(--font-weight-semibold)',
-              fontSize: 'var(--font-size-base)',
+              fontSize: '14px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: 'var(--space-sm)',
+              boxShadow: '0 18px 30px rgba(var(--accent-rgb), 0.16)',
             }}
           >
             <svg

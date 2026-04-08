@@ -10,19 +10,22 @@ interface PointsReportTableProps {
 }
 
 const tableHeaderStyle: CSSProperties = {
-  padding: '10px 12px',
+  padding: '12px 14px',
   textAlign: 'left',
   fontSize: '12px',
-  fontWeight: 600,
+  fontWeight: 700,
   color: 'var(--text-muted)',
   textTransform: 'uppercase',
-  borderBottom: '1px solid #e5e7eb',
+  letterSpacing: '0.06em',
+  borderBottom: '1px solid var(--shell-border)',
+  background: 'rgba(244, 238, 228, 0.7)',
 }
 
 const cellStyle: CSSProperties = {
-  padding: '10px 12px',
-  borderTop: '1px solid #f3f4f6',
+  padding: '12px 14px',
+  borderTop: '1px solid rgba(202, 189, 168, 0.38)',
   fontSize: '14px',
+  color: 'var(--text-main)',
 }
 
 function generatePointsMatrix(data: PayrollRow[]): string {
@@ -46,20 +49,105 @@ export function PointsReportTable({
   title,
   onCopy,
 }: PointsReportTableProps) {
+  const totals = data.reduce(
+    (acc, row) => ({
+      tardanza: acc.tardanza + row.tardanza,
+      ausencia: acc.ausencia + row.ausencia,
+      errores: acc.errores + row.errores,
+      otros: acc.otros + row.otros,
+      salesTotal: acc.salesTotal + row.salesTotal,
+      total: acc.total + row.total,
+    }),
+    {
+      tardanza: 0,
+      ausencia: 0,
+      errores: 0,
+      otros: 0,
+      salesTotal: 0,
+      total: 0,
+    }
+  )
+
   return (
-    <section>
+    <section
+      style={{
+        border: '1px solid var(--shell-border)',
+        borderRadius: '22px',
+        background:
+          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.42) 100%)',
+        boxShadow: 'var(--shadow-sm)',
+        overflow: 'hidden',
+      }}
+    >
       <header
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '12px',
+          alignItems: 'flex-start',
+          padding: '20px',
+          gap: '16px',
+          flexWrap: 'wrap',
+          borderBottom: '1px solid var(--shell-border)',
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(248,242,233,0.72) 100%)',
         }}
       >
-        <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>
-          {title}
-        </h3>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              marginBottom: '8px',
+            }}
+          >
+            Tabla exportable
+          </div>
+          <h3
+            style={{
+              fontSize: '18px',
+              fontWeight: 700,
+              margin: 0,
+              color: 'var(--text-main)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {title}
+          </h3>
+          <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+            Matriz lista para revisar y copiar rápidamente a Excel.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 12px',
+              borderRadius: '999px',
+              background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+              border: '1px solid var(--shell-border)',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                color: 'var(--text-muted)',
+              }}
+            >
+              Agentes
+            </span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>
+              {data.length}
+            </span>
+          </div>
           <button
             onClick={() => onCopy(generatePointsMatrix(data), title)}
             style={{
@@ -67,29 +155,23 @@ export function PointsReportTable({
               alignItems: 'center',
               gap: '6px',
               fontSize: '12px',
-              padding: '6px 12px',
-              background: '#eef2ff',
-              color: '#312e81',
-              border: '1px solid #c7d2fe',
-              borderRadius: '6px',
+              padding: '10px 14px',
+              background: 'rgba(var(--accent-rgb), 0.08)',
+              color: 'var(--accent)',
+              border: '1px solid rgba(var(--accent-rgb), 0.16)',
+              borderRadius: '999px',
               cursor: 'pointer',
-              fontWeight: 600,
+              fontWeight: 700,
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             <Download size={14} /> Copiar Puntos (para Excel)
           </button>
         </div>
       </header>
-      <div
-        style={{
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
-          overflow: 'hidden',
-          background: 'var(--bg-panel)',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f9fafb' }}>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', minWidth: '860px', borderCollapse: 'collapse' }}>
+          <thead>
             <tr>
               <th style={tableHeaderStyle}>Empleado</th>
               <th style={{ ...tableHeaderStyle, textAlign: 'right' }}>
@@ -106,7 +188,7 @@ export function PointsReportTable({
                 style={{
                   ...tableHeaderStyle,
                   textAlign: 'right',
-                  color: '#6366f1',
+                  color: 'var(--accent)',
                 }}
               >
                 Ventas
@@ -134,7 +216,7 @@ export function PointsReportTable({
                   style={{
                     ...cellStyle,
                     textAlign: 'right',
-                    color: '#4f46e5',
+                    color: 'var(--accent)',
                     fontWeight: 600,
                   }}
                 >
@@ -159,7 +241,7 @@ export function PointsReportTable({
                   style={{
                     ...cellStyle,
                     textAlign: 'center',
-                    color: '#9ca3af',
+                    color: 'var(--text-muted)',
                     fontStyle: 'italic',
                   }}
                 >
@@ -168,6 +250,61 @@ export function PointsReportTable({
               </tr>
             )}
           </tbody>
+          {data.length > 0 && (
+            <tfoot>
+              <tr
+                style={{
+                  background: 'rgba(244, 238, 228, 0.7)',
+                  borderTop: '1px solid var(--shell-border)',
+                }}
+              >
+                <td
+                  style={{
+                    ...cellStyle,
+                    fontWeight: 700,
+                    borderTop: 'none',
+                  }}
+                >
+                  Total del bloque
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'right', borderTop: 'none', fontWeight: 700 }}>
+                  {totals.tardanza || ''}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'right', borderTop: 'none', fontWeight: 700 }}>
+                  {totals.ausencia || ''}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'right', borderTop: 'none', fontWeight: 700 }}>
+                  {totals.errores || ''}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'right', borderTop: 'none', fontWeight: 700 }}>
+                  {totals.otros || ''}
+                </td>
+                <td
+                  style={{
+                    ...cellStyle,
+                    textAlign: 'right',
+                    borderTop: 'none',
+                    fontWeight: 700,
+                    color: 'var(--accent)',
+                  }}
+                >
+                  {totals.salesTotal > 0 ? formatCurrency(totals.salesTotal) : ''}
+                </td>
+                <td
+                  style={{
+                    ...cellStyle,
+                    textAlign: 'right',
+                    borderTop: 'none',
+                    fontWeight: 800,
+                    color:
+                      totals.total > 0 ? 'var(--text-danger)' : 'var(--text-main)',
+                  }}
+                >
+                  {totals.total}
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </section>

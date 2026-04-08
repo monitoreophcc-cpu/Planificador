@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react'
 import type {
   PersonMonthlySummary,
   RiskLevel,
@@ -12,40 +13,123 @@ interface MonthlySummaryTableProps {
 }
 
 const headerStyle: CSSProperties = {
-  padding: '10px 12px',
+  padding: '12px 14px',
   textAlign: 'left',
   fontSize: '12px',
-  fontWeight: 600,
+  fontWeight: 700,
   color: 'var(--text-muted)',
   textTransform: 'uppercase',
-  borderBottom: '1px solid #e5e7eb',
-  opacity: 0.7,
+  letterSpacing: '0.06em',
+  borderBottom: '1px solid var(--shell-border)',
+  background: 'rgba(244, 238, 228, 0.7)',
 }
 
 const cellStyle: CSSProperties = {
-  padding: '12px',
-  borderTop: '1px solid #f3f4f6',
+  padding: '14px',
+  borderTop: '1px solid rgba(202, 189, 168, 0.38)',
   fontSize: '14px',
+  color: 'var(--text-main)',
 }
 
 function RiskBadge({ level }: { level: RiskLevel }) {
-  const colors: Record<RiskLevel, string> = {
-    danger: '#ef4444',
-    warning: '#f59e0b',
-    ok: '#10b981',
+  const config: Record<
+    RiskLevel,
+    {
+      label: string
+      color: string
+      background: string
+      border: string
+      Icon: typeof AlertTriangle
+    }
+  > = {
+    danger: {
+      label: 'Riesgo alto',
+      color: 'var(--text-danger)',
+      background: 'var(--bg-danger)',
+      border: 'var(--border-danger)',
+      Icon: ShieldAlert,
+    },
+    warning: {
+      label: 'Atención',
+      color: 'var(--text-warning)',
+      background: 'var(--bg-warning)',
+      border: 'var(--border-warning)',
+      Icon: AlertTriangle,
+    },
+    ok: {
+      label: 'Estable',
+      color: 'var(--text-success)',
+      background: 'var(--bg-success)',
+      border: 'var(--border-success)',
+      Icon: CheckCircle2,
+    },
   }
+
+  const { label, color, background, border, Icon } = config[level]
 
   return (
     <div
       style={{
-        width: '12px',
-        height: '12px',
-        borderRadius: '50%',
-        backgroundColor: colors[level],
-        margin: '0 auto',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '6px 10px',
+        borderRadius: '999px',
+        background,
+        border: `1px solid ${border}`,
+        color,
+        fontSize: '12px',
+        fontWeight: 700,
       }}
-      title={level === 'danger' ? 'Riesgo' : level === 'warning' ? 'Atención' : 'OK'}
-    />
+      title={label}
+    >
+      <Icon size={14} />
+      <span>{label}</span>
+    </div>
+  )
+}
+
+function TableMetaChip({
+  label,
+  value,
+  tone = 'default',
+}: {
+  label: string
+  value: string
+  tone?: 'default' | 'warning'
+}) {
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '8px 12px',
+        borderRadius: '999px',
+        border:
+          tone === 'warning'
+            ? '1px solid var(--border-warning)'
+            : '1px solid var(--shell-border)',
+        background:
+          tone === 'warning'
+            ? 'var(--bg-warning)'
+            : 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+        color: tone === 'warning' ? 'var(--text-warning)' : 'var(--text-main)',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      <span
+        style={{
+          fontSize: '11px',
+          fontWeight: 800,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: '13px', fontWeight: 700 }}>{value}</span>
+    </div>
   )
 }
 
@@ -54,93 +138,169 @@ export function MonthlySummaryTable({
   onSelectRow,
 }: MonthlySummaryTableProps) {
   const sortedData = [...data].sort((a, b) => b.totals.puntos - a.totals.puntos)
+  const attentionCount = sortedData.filter(
+    person => person.riskLevel === 'danger' || person.riskLevel === 'warning'
+  ).length
 
   return (
     <div
       style={{
-        borderRadius: '8px',
-        border: '1px solid var(--border-subtle)',
+        borderRadius: '22px',
+        border: '1px solid var(--shell-border)',
         overflow: 'hidden',
-        background: 'var(--bg-panel)',
+        background:
+          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.44) 100%)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <style jsx global>{`
         .monthly-summary-row:hover {
-          background-color: #f9fafb !important;
+          background-color: rgba(244, 238, 228, 0.72) !important;
         }
       `}</style>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead style={{ background: '#f9fafb' }}>
-          <tr>
-            <th style={headerStyle}>Representante</th>
-            <th style={{ ...headerStyle, textAlign: 'center' }}>Puntos</th>
-            <th style={{ ...headerStyle, textAlign: 'center' }}>Ausencias</th>
-            <th style={{ ...headerStyle, textAlign: 'center' }}>Tardanzas</th>
-            <th style={{ ...headerStyle, textAlign: 'center' }}>Errores</th>
-            <th style={{ ...headerStyle, textAlign: 'center' }}>Estado</th>
-            <th style={{ ...headerStyle, textAlign: 'center' }}>Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedData.map(person => (
-            <tr
-              key={person.representativeId}
-              className="monthly-summary-row"
-              style={{
-                background:
-                  person.riskLevel === 'danger'
-                    ? 'hsl(0,100%,98%)'
-                    : person.riskLevel === 'warning'
-                      ? 'hsl(45,100%,98%)'
-                      : 'white',
-              }}
-            >
-              <td style={{ ...cellStyle, fontWeight: 600, color: 'var(--text-main)' }}>
-                {person.name}
-              </td>
-              <td
+      <div
+        style={{
+          padding: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '16px',
+          flexWrap: 'wrap',
+          borderBottom: '1px solid var(--shell-border)',
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(248,242,233,0.72) 100%)',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              marginBottom: '8px',
+            }}
+          >
+            Tabla operativa
+          </div>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: '18px',
+              fontWeight: 700,
+              color: 'var(--text-main)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Ranking por incidencias del mes
+          </h3>
+          <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+            Prioriza rápido quién necesita revisión y abre el detalle desde aquí.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <TableMetaChip label="Agentes" value={String(sortedData.length)} />
+          <TableMetaChip
+            label="En atención"
+            value={String(attentionCount)}
+            tone={attentionCount > 0 ? 'warning' : 'default'}
+          />
+        </div>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', minWidth: '820px', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ ...headerStyle, width: '72px', textAlign: 'center' }}>Pos.</th>
+              <th style={headerStyle}>Representante</th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>Puntos</th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>Ausencias</th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>Tardanzas</th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>Errores</th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>Estado</th>
+              <th style={{ ...headerStyle, textAlign: 'center' }}>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedData.map((person, index) => (
+              <tr
+                key={person.representativeId}
+                className="monthly-summary-row"
                 style={{
-                  ...cellStyle,
-                  fontWeight: 700,
-                  color: person.totals.puntos > 0 ? '#b91c1c' : '#374151',
-                  textAlign: 'center',
+                  background:
+                    person.riskLevel === 'danger'
+                      ? 'rgba(255, 241, 237, 0.88)'
+                      : person.riskLevel === 'warning'
+                        ? 'rgba(255, 246, 231, 0.8)'
+                        : 'transparent',
+                  transition: 'background 160ms ease',
                 }}
               >
-                {person.totals.puntos}
-              </td>
-              <td style={{ ...cellStyle, textAlign: 'center' }}>
-                {person.totals.ausencias}
-              </td>
-              <td style={{ ...cellStyle, textAlign: 'center' }}>
-                {person.totals.tardanzas}
-              </td>
-              <td style={{ ...cellStyle, textAlign: 'center' }}>
-                {person.totals.errores}
-              </td>
-              <td style={{ ...cellStyle, textAlign: 'center' }}>
-                <RiskBadge level={person.riskLevel} />
-              </td>
-              <td style={{ ...cellStyle, textAlign: 'center' }}>
-                <button
-                  onClick={() => onSelectRow(person)}
+                <td
                   style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#2563eb',
-                    background: '#eff6ff',
-                    border: '1px solid #dbeafe',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
+                    ...cellStyle,
+                    textAlign: 'center',
+                    fontWeight: 700,
+                    color: 'var(--text-muted)',
                   }}
                 >
-                  Ver detalle
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                  #{index + 1}
+                </td>
+                <td
+                  style={{ ...cellStyle, fontWeight: 600, color: 'var(--text-main)' }}
+                >
+                  {person.name}
+                </td>
+                <td
+                  style={{
+                    ...cellStyle,
+                    fontWeight: 700,
+                    color:
+                      person.totals.puntos > 0
+                        ? 'var(--text-danger)'
+                        : 'var(--text-main)',
+                    textAlign: 'center',
+                    fontSize: '16px',
+                  }}
+                >
+                  {person.totals.puntos}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                  {person.totals.ausencias}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                  {person.totals.tardanzas}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                  {person.totals.errores}
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                  <RiskBadge level={person.riskLevel} />
+                </td>
+                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                  <button
+                    onClick={() => onSelectRow(person)}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: 'var(--accent)',
+                      background: 'rgba(var(--accent-rgb), 0.08)',
+                      border: '1px solid rgba(var(--accent-rgb), 0.16)',
+                      padding: '8px 12px',
+                      borderRadius: '999px',
+                      cursor: 'pointer',
+                      boxShadow: 'var(--shadow-sm)',
+                    }}
+                  >
+                    Ver detalle
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

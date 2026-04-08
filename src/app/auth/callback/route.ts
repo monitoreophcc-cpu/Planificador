@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { sanitizeNextPath } from '@/lib/auth/redirects'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const code = new URL(request.url).searchParams.get('code')
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+  const nextPath = sanitizeNextPath(requestUrl.searchParams.get('next'))
 
   if (!code) {
     return NextResponse.redirect(new URL('/login?error=auth', request.url))
@@ -15,5 +18,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL('/login?error=auth', request.url))
   }
 
-  return NextResponse.redirect(new URL('/', request.url))
+  return NextResponse.redirect(new URL(nextPath, request.url))
 }

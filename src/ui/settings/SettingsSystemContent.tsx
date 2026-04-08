@@ -43,41 +43,20 @@ export function SettingsSystemContent({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: '16px',
+            flexWrap: 'wrap',
           }}
         >
           <div>
-            <h3
-              style={{
-                margin: '0 0 4px 0',
-                fontSize: '16px',
-                color: 'var(--text-main)',
-              }}
-            >
-              Modo Edición Avanzada
-            </h3>
-            <p
-              style={{
-                margin: 0,
-                fontSize: '13px',
-                color: 'var(--text-muted)',
-              }}
-            >
+            <div style={settingsViewStyles.sectionEyebrow}>Edicion protegida</div>
+            <h3 style={settingsViewStyles.sectionTitle}>Modo Edición Avanzada</h3>
+            <p style={settingsViewStyles.sectionDescription}>
               Permite modificar semanas pasadas. Usar con precaución.
             </p>
           </div>
           <button
             onClick={toggleAdvancedMode}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '20px',
-              border: 'none',
-              background: isAdvancedMode ? 'var(--accent)' : '#e5e7eb',
-              color: isAdvancedMode ? 'white' : '#374151',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
+            style={settingsViewStyles.toggleButton(isAdvancedMode)}
           >
             {isAdvancedMode ? 'Activado' : 'Desactivado'}
           </button>
@@ -85,26 +64,18 @@ export function SettingsSystemContent({
       </div>
 
       <div style={settingsViewStyles.settingItem}>
-        <h3
-          style={{
-            margin: '0 0 4px 0',
-            fontSize: '16px',
-            color: 'var(--text-main)',
-          }}
-        >
-          Historial y Auditoría
-        </h3>
+        <div style={settingsViewStyles.sectionEyebrow}>Rastreo operativo</div>
+        <h3 style={settingsViewStyles.sectionTitle}>Historial y Auditoría</h3>
         <p
           style={{
-            margin: '0 0 12px 0',
-            fontSize: '13px',
-            color: 'var(--text-muted)',
+            ...settingsViewStyles.sectionDescription,
+            marginBottom: '12px',
           }}
         >
           Registro de acciones operativas y evidencia forense.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               style={{
                 ...settingsViewStyles.button,
@@ -136,7 +107,7 @@ export function SettingsSystemContent({
             <div
               style={{
                 marginTop: '16px',
-                borderTop: '1px solid var(--border-subtle)',
+                borderTop: '1px solid var(--shell-border)',
                 paddingTop: '16px',
               }}
             >
@@ -149,15 +120,18 @@ export function SettingsSystemContent({
       <div
         style={{
           ...settingsViewStyles.settingItem,
-          borderColor: '#fecaca',
-          background: '#fff5f5',
+          borderColor: 'var(--border-danger)',
+          background:
+            'linear-gradient(180deg, var(--bg-danger) 0%, rgba(255,255,255,0.56) 100%)',
         }}
       >
+        <div style={{ ...settingsViewStyles.sectionEyebrow, color: 'var(--text-danger)' }}>
+          Acciones irreversibles
+        </div>
         <h3
           style={{
-            margin: '0 0 4px 0',
-            fontSize: '16px',
-            color: '#991b1b',
+            ...settingsViewStyles.sectionTitle,
+            color: 'var(--text-danger)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -168,9 +142,9 @@ export function SettingsSystemContent({
         </h3>
         <p
           style={{
+            ...settingsViewStyles.sectionDescription,
             margin: '0 0 16px 0',
-            fontSize: '13px',
-            color: '#7f1d1d',
+            color: 'var(--text-danger)',
           }}
         >
           Estas acciones son irreversibles y pueden afectar datos importantes.

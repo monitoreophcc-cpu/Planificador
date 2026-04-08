@@ -27,6 +27,18 @@ export type SyncTable =
   | 'swaps'
   | 'coverage_rules'
 
+export type PendingTableSummary = {
+  table: SyncTable
+  rows: number
+}
+
+export type PendingQueueSummary = {
+  operations: number
+  rows: number
+  tables: SyncTable[]
+  tableBreakdown: PendingTableSummary[]
+}
+
 export type SyncableStoreState = Pick<
   PlanningBaseState,
   'representatives' | 'incidents' | 'swaps' | 'coverageRules' | 'historyEvents'
