@@ -8,12 +8,27 @@ export function ReportsView() {
       style={{
         padding: '40px',
         textAlign: 'center',
-        background: '#f9fafb',
-        borderRadius: '8px',
-        color: '#6b7280',
+        background:
+          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.42) 100%)',
+        borderRadius: '22px',
+        color: 'var(--text-muted)',
+        border: '1px solid var(--shell-border)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
-      <h2 style={{ marginTop: 0, color: '#1f2937' }}>Generador de Reportes</h2>
+      <div
+        style={{
+          fontSize: '11px',
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--accent)',
+          marginBottom: '8px',
+        }}
+      >
+        Reportes especiales
+      </div>
+      <h2 style={{ marginTop: 0, color: 'var(--text-main)' }}>Generador de Reportes</h2>
       <p>Sección en construcción.</p>
     </div>
   )
