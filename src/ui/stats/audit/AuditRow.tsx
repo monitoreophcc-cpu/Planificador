@@ -6,9 +6,9 @@ import { AuditActionBadge } from './AuditActionBadge'
 import { AuditDetail } from './AuditDetail'
 
 const cellStyle: React.CSSProperties = {
-  padding: '10px 16px',
+  padding: '12px 16px',
   fontSize: '13px',
-  borderTop: '1px solid #f3f4f6',
+  borderTop: '1px solid rgba(202, 189, 168, 0.38)',
   verticalAlign: 'top',
 }
 
@@ -17,7 +17,7 @@ export function AuditRow({ event }: { event: AuditEvent }) {
     <tr className="audit-row">
       <style jsx global>{`
         .audit-row:hover {
-          background-color: #fcfcfd;
+          background-color: rgba(244, 238, 228, 0.72);
         }
       `}</style>
       <td style={{ ...cellStyle, fontWeight: 500, whiteSpace: 'nowrap' }}>
@@ -33,7 +33,7 @@ export function AuditRow({ event }: { event: AuditEvent }) {
       <td style={{ ...cellStyle, fontWeight: 500 }}>
         {typeof event.actor === 'string' ? event.actor : event.actor.name}
         {event.repId && (
-          <div style={{ fontSize: 11, color: '#6b7280' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
             Rep: {event.repId}
           </div>
         )}
@@ -42,14 +42,14 @@ export function AuditRow({ event }: { event: AuditEvent }) {
         <AuditActionBadge action={event.type || 'UNKNOWN'} />
       </td>
       <td style={cellStyle}>
-        <div style={{ fontWeight: 500 }}>{event.type}</div>
+        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{event.type}</div>
         {event.repId && (
-          <div style={{ fontSize: 12, color: '#6b7280' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             {event.repId}
           </div>
         )}
       </td>
-      <td style={{ ...cellStyle, fontSize: 12, color: '#4b5563' }}>
+      <td style={{ ...cellStyle, fontSize: 12, color: 'var(--text-main)' }}>
         <AuditDetail event={event} />
       </td>
     </tr>

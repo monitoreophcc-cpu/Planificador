@@ -15,14 +15,15 @@ const inputStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: '8px',
-  border: '1px solid #d1d5db',
-  borderRadius: '6px',
-  padding: '8px 12px',
+  border: '1px solid var(--shell-border)',
+  borderRadius: '16px',
+  padding: '10px 12px',
   fontSize: '14px',
-  background: '#f9fafb',
-  color: '#6b7280',
+  background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+  color: 'var(--text-muted)',
   cursor: 'not-allowed',
   opacity: 0.7,
+  boxShadow: 'var(--shadow-sm)',
 }
 
 export function AuditView() {
@@ -35,24 +36,42 @@ export function AuditView() {
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
       }}
     >
       <header
         style={{
-          paddingBottom: '16px',
-          borderBottom: '1px solid #e5e7eb',
+          padding: '20px',
+          borderRadius: '22px',
+          border: '1px solid var(--shell-border)',
+          background:
+            'linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-tint) 60%, rgba(var(--accent-rgb), 0.06) 100%)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
+        <div
+          style={{
+            fontSize: '11px',
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--accent)',
+            marginBottom: '8px',
+          }}
+        >
+          Trazabilidad del sistema
+        </div>
+        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>
           Auditoría del Sistema
         </h2>
-        <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: '14px' }}>
+        <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
           Registro forense de todas las acciones y cambios en el sistema.
         </p>
       </header>
 
       {/* --- Filtros (UI only placeholder) --- */}
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={inputStyle}>
           <Calendar size={16} />
           <span>Rango de fechas</span>
@@ -76,6 +95,7 @@ export function AuditView() {
               background: 'transparent',
               outline: 'none',
               width: '100%',
+              color: 'var(--text-muted)',
               cursor: 'not-allowed',
             }}
           />
