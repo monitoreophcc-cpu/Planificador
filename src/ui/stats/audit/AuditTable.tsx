@@ -12,10 +12,12 @@ const tableHeaderStyle: React.CSSProperties = {
   padding: '12px 16px',
   textAlign: 'left',
   fontSize: '12px',
-  fontWeight: 600,
-  color: '#6b7280',
+  fontWeight: 700,
+  color: 'var(--text-muted)',
   textTransform: 'uppercase',
-  borderBottom: '1px solid #e5e7eb',
+  letterSpacing: '0.06em',
+  borderBottom: '1px solid var(--shell-border)',
+  background: 'rgba(244, 238, 228, 0.7)',
 }
 
 export function AuditTable({ events }: Props) {
@@ -25,10 +27,13 @@ export function AuditTable({ events }: Props) {
         style={{
           padding: 40,
           textAlign: 'center',
-          color: '#6b7280',
+          color: 'var(--text-muted)',
           fontStyle: 'italic',
-          background: '#f9fafb',
-          borderRadius: '8px',
+          background:
+            'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.42) 100%)',
+          borderRadius: '22px',
+          border: '1px solid var(--shell-border)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         No hay eventos de auditoría registrados.
@@ -39,13 +44,44 @@ export function AuditTable({ events }: Props) {
   return (
     <div
       style={{
-        border: '1px solid #e5e7eb',
-        borderRadius: '8px',
+        border: '1px solid var(--shell-border)',
+        borderRadius: '22px',
         overflow: 'hidden',
+        background:
+          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.42) 100%)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead style={{ background: '#f9fafb' }}>
+      <div
+        style={{
+          padding: '18px 20px',
+          borderBottom: '1px solid var(--shell-border)',
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(248,242,233,0.72) 100%)',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '11px',
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--accent)',
+            marginBottom: '8px',
+          }}
+        >
+          Bitácora forense
+        </div>
+        <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
+          Eventos recientes del sistema
+        </div>
+        <div style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
+          {events.length} evento(s) registrados para consulta histórica.
+        </div>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', minWidth: '860px', borderCollapse: 'collapse' }}>
+        <thead>
           <tr>
             <th style={tableHeaderStyle}>Fecha</th>
             <th style={tableHeaderStyle}>Actor</th>
@@ -60,6 +96,7 @@ export function AuditTable({ events }: Props) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }
