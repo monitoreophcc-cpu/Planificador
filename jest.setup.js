@@ -1,4 +1,19 @@
+const { TextDecoder, TextEncoder } = require('util')
+const { MessageChannel } = require('worker_threads')
+
 global.IS_REACT_ACT_ENVIRONMENT = true
+
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = TextEncoder
+}
+
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = TextDecoder
+}
+
+if (typeof global.MessageChannel === 'undefined') {
+  global.MessageChannel = MessageChannel
+}
 
 // Polyfill for structuredClone in test environment
 if (typeof global.structuredClone === 'undefined') {

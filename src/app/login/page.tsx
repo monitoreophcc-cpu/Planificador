@@ -2,13 +2,14 @@ import styles from './page.module.css'
 import { LoginButton } from './LoginButton'
 
 type LoginPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     error?: string
-  }
+  }>
 }
 
-export default function LoginPage({ searchParams }: LoginPageProps) {
-  const error = searchParams?.error
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined
+  const error = resolvedSearchParams?.error
 
   return (
     <main className={styles.wrapper}>

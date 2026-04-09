@@ -47,7 +47,7 @@ export default function FileLoadButtons() {
     const abandonedInputRef = useRef<HTMLInputElement>(null);
     const transactionsInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (type: keyof typeof files, ref: React.RefObject<HTMLInputElement>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (type: keyof typeof files, ref: React.RefObject<HTMLInputElement | null>) => (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -233,7 +233,7 @@ export default function FileLoadButtons() {
 
 interface UploadButtonProps {
     label: string;
-    inputRef: React.RefObject<HTMLInputElement>;
+    inputRef: React.RefObject<HTMLInputElement | null>;
     file: File | null;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     accept: string;
