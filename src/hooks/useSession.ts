@@ -12,21 +12,48 @@ type UseSessionResult = {
   signOut: () => Promise<void>
 }
 
+function createClientSafely() {
+  try {
+    return createClient()
+  } catch (error) {
+    console.warn(
+      '[Auth] Supabase no esta configurado en este entorno; se omite la inicializacion de sesion.',
+      error
+    )
+
+    return null
+  }
+}
+
 export function useSession(): UseSessionResult {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const [supabase] = useState(() => createClient())
 
   useEffect(() => {
     let isMounted = true
+    const supabase = createClientSafely()
 
-    void supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) return
-
-      setSession(data.session)
+    if (!supabase) {
       setLoading(false)
-    })
+      return () => {
+        isMounted = false
+      }
+    }
+
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!isMounted) return
+
+        setSession(data.session)
+        setLoading(false)
+      })
+      .catch(error => {
+        console.error('[Auth] No se pudo recuperar la sesion actual.', error)
+        if (!isMounted) return
+        setLoading(false)
+      })
 
     const {
       data: { subscription },
@@ -39,11 +66,18 @@ export function useSession(): UseSessionResult {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [])
 
   const signOut = async (): Promise<void> => {
-    await supabase.auth.signOut()
-    router.push('/login')
+    try {
+      const supabase = createClientSafely()
+
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
+    } finally {
+      router.push('/login')
+    }
   }
 
   return {
