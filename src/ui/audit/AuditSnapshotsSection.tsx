@@ -29,7 +29,7 @@ export function AuditSnapshotsSection({
         }}
       >
         <h3 style={{ fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
-          Snapshots Semanales (Blockchain-lite)
+          Semanas guardadas
         </h3>
         <button
           onClick={() => void onCreateSnapshot()}
@@ -45,13 +45,13 @@ export function AuditSnapshotsSection({
             fontWeight: 600,
           }}
         >
-          {isSnapshotting ? 'Generando...' : 'Sellar Semana Actual'}
+          {isSnapshotting ? 'Guardando...' : 'Guardar semana actual'}
         </button>
       </div>
 
       {orderedSnapshots.length === 0 && (
         <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-          No hay snapshots registrados.
+          No hay semanas guardadas todavía.
         </p>
       )}
 

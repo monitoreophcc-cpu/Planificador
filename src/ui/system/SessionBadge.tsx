@@ -7,7 +7,7 @@ import type { CloudSyncStatus } from '@/store/useCloudSyncStore'
 
 function syncText(status: CloudSyncStatus, online: boolean): string {
   if (!online || status === 'offline') return '🔴 Sin conexión'
-  if (status === 'error') return '🔴 Error de sync'
+  if (status === 'error') return '🔴 Error de sincronización'
   if (status === 'unauthenticated') return '⚪ Inicia sesión'
   if (status === 'checking') return '⚪ Verificando...'
   if (status === 'syncing') return '🟡 Sincronizando...'

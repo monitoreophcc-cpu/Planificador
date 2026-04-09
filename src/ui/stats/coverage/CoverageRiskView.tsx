@@ -51,10 +51,10 @@ const RiskHeader = ({
           letterSpacing: '-0.02em',
         }}
       >
-        Análisis de Riesgo y Cobertura
+        Cobertura y días a reforzar
       </h2>
       <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-        Detecta huecos críticos y días que requieren refuerzo operativo.
+        Detecta huecos importantes y días que necesitan apoyo.
       </p>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -109,7 +109,7 @@ export function CoverageRiskView() {
     useCoverageRiskViewData()
 
   if (!riskSummary) {
-    return <div style={{ padding: '24px' }}>Cargando resumen de riesgo...</div>
+    return <div style={{ padding: '24px' }}>Cargando resumen de cobertura...</div>
   }
 
   const {

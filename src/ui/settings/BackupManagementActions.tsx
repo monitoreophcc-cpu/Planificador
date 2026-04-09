@@ -40,7 +40,7 @@ export function BackupManagementActions({
           }}
         >
           <Download size={16} />
-          Exportar backup
+          Exportar respaldo
         </button>
       ),
     },
@@ -70,7 +70,7 @@ export function BackupManagementActions({
           }}
         >
           <Upload size={16} />
-          Importar backup
+          Importar respaldo
           <input
             type="file"
             accept=".json"
@@ -107,7 +107,7 @@ export function BackupManagementActions({
           }}
         >
           <Save size={16} />
-          Guardar backup local
+          Guardar respaldo local
         </button>
       ),
     },

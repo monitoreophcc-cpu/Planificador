@@ -51,7 +51,7 @@ function buildAttentionItems(rows: DailyLogRepresentativeRow[]): AttentionItem[]
           {
             id: row.id,
             label: row.name,
-            note: `Cubre a ${row.coveringName ?? 'otro agente'}`,
+            note: `Cubre a ${row.coveringName ?? 'otro representante'}`,
             priority: 1,
             tone: {
               accent: '#6d28d9',
@@ -67,7 +67,7 @@ function buildAttentionItems(rows: DailyLogRepresentativeRow[]): AttentionItem[]
           {
             id: row.id,
             label: row.name,
-            note: `Cubierto por ${row.coveredByName ?? 'otro agente'}`,
+            note: `Cubierto por ${row.coveredByName ?? 'otro representante'}`,
             priority: 2,
             suggestedIncidentType: 'AUSENCIA',
             tone: {

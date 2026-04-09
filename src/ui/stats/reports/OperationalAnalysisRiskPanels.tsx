@@ -35,7 +35,7 @@ export function OperationalAnalysisRiskPanels({
         >
           <AlertTriangle size={18} color="var(--text-danger)" />
           <h5 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>
-            Mayor Riesgo ({analysis.risk.needsAttention.length})
+            Representantes a revisar ({analysis.risk.needsAttention.length})
           </h5>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -83,7 +83,7 @@ export function OperationalAnalysisRiskPanels({
         >
           <Award size={18} color="var(--text-success)" />
           <h5 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>
-            Mejor Desempeño ({analysis.risk.topPerformers.length})
+            Representantes con mejor resultado ({analysis.risk.topPerformers.length})
           </h5>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

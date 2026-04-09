@@ -58,7 +58,7 @@ export function OperationalReportModeToggle({
           boxShadow: mode === 'ANALYSIS' ? 'var(--shadow-sm)' : 'none',
         }}
       >
-        ○ Análisis de Períodos
+        ○ Comparar períodos
       </button>
     </div>
   )

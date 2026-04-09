@@ -46,7 +46,7 @@ export function describeQueueState(
 
   if (!hasPending) {
     return {
-      title: 'Cola vacia',
+      title: 'Cola vacía',
       description: 'No hay cambios pendientes por subir a la nube.',
       tone: 'success',
     }
@@ -56,7 +56,7 @@ export function describeQueueState(
     return {
       title: 'Procesando cola',
       description:
-        'La app esta enviando los cambios pendientes a Supabase en este momento.',
+        'La app está subiendo los cambios pendientes a la nube en este momento.',
       tone: 'warning',
     }
   }
@@ -65,7 +65,7 @@ export function describeQueueState(
     return {
       title: 'Cola en espera',
       description:
-        'Los cambios quedan seguros en este dispositivo y se subiran cuando vuelva la conexion.',
+        'Los cambios quedan seguros en este dispositivo y se subirán cuando vuelva la conexión.',
       tone: 'warning',
     }
   }
@@ -75,7 +75,7 @@ export function describeQueueState(
       title: 'Cola atascada',
       description:
         queue.error?.trim() ??
-        'El ultimo intento fallo y la cola sigue pendiente hasta que se reintente.',
+        'El último intento falló y la cola sigue pendiente hasta que se reintente.',
       tone: 'danger',
     }
   }
@@ -84,7 +84,7 @@ export function describeQueueState(
     return {
       title: 'Cola pausada',
       description:
-        'Hay cambios preparados, pero hace falta una sesion activa para enviarlos a la nube.',
+        'Hay cambios preparados, pero hace falta una sesión activa para enviarlos a la nube.',
       tone: 'neutral',
     }
   }
@@ -92,7 +92,7 @@ export function describeQueueState(
   return {
     title: 'Cola pendiente',
     description:
-      'Hay cambios listos para subirse en cuanto termine el siguiente intento de sincronizacion.',
+      'Hay cambios listos para subirse en cuanto termine el siguiente intento de sincronización.',
     tone: 'warning',
   }
 }

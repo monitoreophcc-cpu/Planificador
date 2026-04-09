@@ -33,7 +33,7 @@ export function SettingsMenu() {
   }
 
   const placeholderClick = (feature: string) => {
-    alert(`Placeholder para la función: ${feature}`)
+    alert(`Esta acción todavía está en preparación: ${feature}`)
     setIsOpen(false)
   }
 
@@ -44,11 +44,11 @@ export function SettingsMenu() {
 
   const handleReset = async () => {
     const confirmed = await showConfirm({
-      title: '⚠️ ¿Reiniciar la planificación?',
+      title: '⚠️ ¿Borrar cambios de la planificación?',
       description: (
         <>
           <p>
-            Esta acción eliminará todas las incidencias y ajustes manuales
+            Esta acción eliminará todas las incidencias y cambios manuales
             (ausencias, tardanzas, cambios de turno, etc.).
           </p>
           <p style={{ marginTop: '10px', fontWeight: 500 }}>
@@ -66,13 +66,13 @@ export function SettingsMenu() {
         </>
       ),
       intent: 'danger',
-      confirmLabel: 'Sí, reiniciar',
-    });
+      confirmLabel: 'Sí, borrar cambios',
+    })
 
     if (confirmed) {
-      resetState(true); // pass true to keep formal incidents
+      resetState(true)
     }
-    setIsOpen(false);
+    setIsOpen(false)
   }
 
   return (
@@ -108,11 +108,11 @@ export function SettingsMenu() {
               fontWeight: mode === 'ADMIN_OVERRIDE' ? 600 : 400,
             }}
             onClick={handleToggleEditMode}
-            title="Permite modificar semanas pasadas. Usar con precaución."
+            title="Permite hacer cambios en semanas pasadas. Úsalo con cuidado."
           >
             {mode === 'ADMIN_OVERRIDE'
-              ? '✓ Modo Edición Avanzada'
-              : 'Modo Edición Avanzada'}
+              ? '✓ Permitir cambios en semanas pasadas'
+              : 'Permitir cambios en semanas pasadas'}
           </button>
           <div
             style={{
@@ -125,13 +125,13 @@ export function SettingsMenu() {
             style={dropdownItemStyle}
             onClick={() => placeholderClick('Importar')}
           >
-            Importar
+            Importar respaldo
           </button>
           <button
             style={dropdownItemStyle}
             onClick={() => placeholderClick('Exportar')}
           >
-            Exportar
+            Exportar respaldo
           </button>
           <div
             style={{
@@ -168,7 +168,7 @@ export function SettingsMenu() {
             }}
             onClick={handleReset}
           >
-            Resetear Planificación
+            Borrar cambios de planificación
           </button>
         </div>
       )}

@@ -61,7 +61,7 @@ export function BackupManagementHeader({
             fontSize: '0.96rem',
           }}
         >
-          Aquí ves si la app está guardando en este dispositivo, si Supabase ya
+          Aquí ves si la app está guardando en este dispositivo, si la nube ya
           recibió los cambios y qué respaldo puedes restaurar si algo sale mal.
         </p>
 
@@ -74,13 +74,13 @@ export function BackupManagementHeader({
           }}
         >
           {[
-            `Backups guardados: ${savedBackupsCount}`,
+            `Respaldos guardados: ${savedBackupsCount}`,
             latestManualBackupAt
-              ? `Último manual: ${formatBackupDate(latestManualBackupAt)}`
-              : 'Aún no hay backup manual',
+              ? `Último respaldo manual: ${formatBackupDate(latestManualBackupAt)}`
+              : 'Aún no hay respaldo manual',
             autoBackup
-              ? `Auto-backup activo`
-              : 'Auto-backup pendiente',
+              ? 'Respaldo automático activo'
+              : 'Respaldo automático pendiente',
           ].map(item => (
             <span
               key={item}
@@ -116,16 +116,16 @@ export function BackupManagementHeader({
             timestamp: latestManualBackupAt,
             body: latestManualBackupAt
               ? 'Conviene antes de cambios grandes, importaciones o ajustes operativos delicados.'
-              : 'Todavia no hay uno guardado. Crea uno si vas a tocar algo sensible.',
+              : 'Todavía no hay uno guardado. Crea uno si vas a tocar algo sensible.',
           },
           {
-            title: 'Respaldo automatico',
+            title: 'Respaldo automático',
             accent: '#166534',
             border: '1px solid rgba(134, 239, 172, 0.7)',
             timestamp: autoBackup?.timestamp ?? null,
             body: autoBackup
-              ? 'Sirve para volver al ultimo punto seguro automatico de este navegador.'
-              : 'El sistema generara una copia automatica cuando corresponda.',
+              ? 'Sirve para volver al último punto seguro automático de este navegador.'
+              : 'El sistema generará una copia automática cuando corresponda.',
           },
         ].map(item => (
           <div
@@ -159,7 +159,7 @@ export function BackupManagementHeader({
             >
               {item.timestamp
                 ? formatBackupDate(item.timestamp)
-                : 'Aun sin registro'}
+                : 'Aún sin registro'}
             </div>
             <div
               style={{
@@ -185,9 +185,9 @@ export function BackupManagementHeader({
               color: '#0f766e',
               fontWeight: 700,
             }}
-            title="Restaurar copia de seguridad automática"
+            title="Restaurar respaldo automático"
           >
-            Restaurar auto-backup
+            Restaurar respaldo automático
           </button>
         ) : null}
       </div>

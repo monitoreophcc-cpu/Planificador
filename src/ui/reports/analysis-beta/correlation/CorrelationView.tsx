@@ -102,11 +102,11 @@ export default function CorrelationView() {
                     <div>
                         <h4 className="font-semibold mb-1">¿Cómo se calcula esto?</h4>
                         <p>
-                            La métrica principal es <strong>CPA (Llamadas Por Agente)</strong>.<br />
-                            <code className="text-xs bg-blue-100 px-1 py-0.5 rounded">CPA = Llamadas Recibidas / Agentes Planificados (Netos)</code>
+                            La métrica principal es <strong>CPA (Llamadas por Representante)</strong>.<br />
+                            <code className="text-xs bg-blue-100 px-1 py-0.5 rounded">CPA = Llamadas recibidas / representantes planificados (netos)</code>
                         </p>
                         <p className="mt-1 text-[10px] text-blue-600">
-                            * Agentes Planificados descuenta automáticamente vacaciones, licencias y días libres.
+                            * Representantes planificados descuenta automáticamente vacaciones, licencias y días libres.
                         </p>
                     </div>
                     {data?.predictedLoad && data.predictedLoad.length > 0 && (
@@ -181,11 +181,11 @@ export default function CorrelationView() {
                                                 {r.flags.includes('NO_PLANNED_AGENTS') ? (
                                                     <span className="text-xs text-red-600 font-medium flex items-center gap-1">
                                                         <AlertTriangle className="h-3 w-3" />
-                                                        Sin Agentes Planificados
+                                                        Sin representantes planificados
                                                     </span>
                                                 ) : (
                                                     <span className="text-xs text-muted-foreground">
-                                                        Operando con {r.expectation.plannedAgents} agentes para {r.reality.receivedCalls} llamadas.
+                                                        Operando con {r.expectation.plannedAgents} representantes para {r.reality.receivedCalls} llamadas.
                                                     </span>
                                                 )}
 

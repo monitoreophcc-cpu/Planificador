@@ -44,7 +44,7 @@ export function BackupManagementList({
             Respaldo y recuperación
           </div>
           <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.12rem' }}>
-            Backups guardados ({backups.length})
+            Respaldos guardados ({backups.length})
           </h3>
           <p
             style={{
@@ -55,7 +55,7 @@ export function BackupManagementList({
               maxWidth: '58ch',
             }}
           >
-            Cada backup es un punto de restauración independiente. Úsalos para volver
+            Cada respaldo es un punto de restauración independiente. Úsalos para volver
             atrás si una importación, cambio masivo o ajuste operativo no sale como esperabas.
           </p>
         </div>
@@ -87,7 +87,7 @@ export function BackupManagementList({
             border: '1px dashed rgba(148, 163, 184, 0.4)',
           }}
         >
-          No hay backups guardados en el navegador. Crea uno manual para tener un
+          No hay respaldos guardados en el navegador. Crea uno manual para tener un
           punto de restauración explícito.
         </div>
       ) : (

@@ -1,9 +1,16 @@
 'use client'
 
-import type { Dispatch, MouseEvent, SetStateAction } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import React, {
+  useDeferredValue,
+  useMemo,
+  useState,
+  type Dispatch,
+  type MouseEvent,
+  type SetStateAction,
+} from 'react'
 import type {
   DayInfo,
+  Incident,
   ISODate,
   Representative,
   ShiftType,
@@ -11,16 +18,22 @@ import type {
 } from '@/domain/types'
 import type { EffectiveCoverageResult } from '@/application/ui-adapters/getEffectiveDailyCoverage'
 import type { PlannerAssignmentsMap } from '@/application/ui-adapters/getEffectiveAssignmentsForPlanner'
-import { CoverageChart } from '../coverage/CoverageChart'
-import { CoverageRulesPanel } from '../coverage/CoverageRulesPanel'
+import { PLANNER_THEME } from '@/ui/theme/plannerTheme'
 import { PlanView } from './PlanView'
+import { PlanningCoverageChart } from './PlanningCoverageChart'
+import { getPlannerOperationalMetrics } from './planningOperationalMetrics'
+import { UI_GLOSSARY } from '@/ui/copy/glossary'
 
 interface PlanningOperationalPanelProps {
   activeShift: ShiftType
   assignmentsMap: PlannerAssignmentsMap
   coverageData: Record<ISODate, EffectiveCoverageResult>
   agents: Representative[]
+  incidents: Incident[]
+  isCurrentWeek: boolean
+  representatives: Representative[]
   weekDays: DayInfo[]
+  weekLabel: string
   weeklyPlan: WeeklyPlan | null
   onCellClick: (repId: string, date: ISODate) => Promise<void>
   onCellContextMenu: (
@@ -29,117 +42,397 @@ interface PlanningOperationalPanelProps {
     event: MouseEvent
   ) => void
   onEditDay: Dispatch<SetStateAction<DayInfo | null>>
+  onGoToday: () => void
+  onNextWeek: () => void
   onNavigateToSettings: () => void
+  onPrevWeek: () => void
 }
+
+type PlannerQuickFilter = 'ALL' | 'ABSENCE_WEEK' | 'OFF_TODAY' | 'ACTIVE_TODAY'
 
 export function PlanningOperationalPanel({
   activeShift,
   assignmentsMap,
   coverageData,
   agents,
+  incidents,
+  isCurrentWeek,
+  representatives,
   weekDays,
+  weekLabel,
   weeklyPlan,
   onCellClick,
   onCellContextMenu,
   onEditDay,
+  onGoToday,
+  onNextWeek,
   onNavigateToSettings,
+  onPrevWeek,
 }: PlanningOperationalPanelProps) {
-  const hasAnyCoverageRule = Object.values(coverageData).some(
-    coverage => coverage.required > 0
-  )
+  const [searchQuery, setSearchQuery] = useState('')
+  const [quickFilter, setQuickFilter] = useState<PlannerQuickFilter>('ALL')
+  const deferredSearchQuery = useDeferredValue(searchQuery)
+  const metrics = getPlannerOperationalMetrics({
+    activeShift,
+    assignmentsMap,
+    coverageData,
+    incidents,
+    isCurrentWeek,
+    representatives,
+    weekDays,
+  })
+
+  const kpiToneColor = {
+    success: PLANNER_THEME.shellAccent,
+    warning: PLANNER_THEME.shellWarm,
+    danger: PLANNER_THEME.shellDanger,
+    neutral: PLANNER_THEME.shellTextMuted,
+  }[metrics.weeklyStatusTone]
+  const filterDate = metrics.focusDate
+
+  const filteredAgents = useMemo(() => {
+    const normalizedSearch = deferredSearchQuery.trim().toLowerCase()
+
+    return agents.filter(agent => {
+      if (normalizedSearch && !agent.name.toLowerCase().includes(normalizedSearch)) {
+        return false
+      }
+
+      if (quickFilter === 'ALL') {
+        return true
+      }
+
+      if (quickFilter === 'ABSENCE_WEEK') {
+        return weekDays.some(day => {
+          const duty = assignmentsMap[agent.id]?.[day.date]?.[activeShift]
+          return duty?.reason === 'AUSENCIA'
+        })
+      }
+
+      if (!filterDate) {
+        return true
+      }
+
+      const focusDuty = assignmentsMap[agent.id]?.[filterDate]?.[activeShift]
+
+      if (!focusDuty) {
+        return false
+      }
+
+      if (quickFilter === 'OFF_TODAY') {
+        return (
+          focusDuty.shouldWork === false &&
+          !focusDuty.reason
+        )
+      }
+
+      if (quickFilter === 'ACTIVE_TODAY') {
+        return focusDuty.shouldWork === true
+      }
+
+      return true
+    })
+  }, [
+    activeShift,
+    agents,
+    assignmentsMap,
+    deferredSearchQuery,
+    filterDate,
+    quickFilter,
+    weekDays,
+  ])
+
+  const filterLabelMap: Record<PlannerQuickFilter, string> = {
+    ALL: 'Todos',
+    ABSENCE_WEEK: 'Con AUS esta semana',
+    OFF_TODAY: 'OFF hoy',
+    ACTIVE_TODAY: 'Activos hoy',
+  }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={weeklyPlan ? weeklyPlan.weekStart + activeShift : activeShift}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
-      >
+    <>
         {weeklyPlan ? (
           <div
             style={{
               display: 'flex',
-              overflowX: 'hidden',
-              gap: 'var(--space-xl)',
-              alignItems: 'start',
+              flexDirection: 'column',
+              gap: '16px',
             }}
           >
             <div
               style={{
-                flex: 1,
-                minWidth: 0,
-                borderRadius: '24px',
-                border: '1px solid var(--shell-border)',
-                background:
-                  'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.32) 100%)',
-                boxShadow: 'var(--shadow-sm)',
-                padding: '18px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+                gap: '10px',
               }}
             >
-              <PlanView
-                weeklyPlan={weeklyPlan}
-                weekDays={weekDays}
-                agents={agents}
-                activeShift={activeShift}
-                assignmentsMap={assignmentsMap}
-                onCellClick={onCellClick}
-                onCellContextMenu={onCellContextMenu}
-                onEditDay={onEditDay}
-              />
+              {[
+                {
+                  key: 'week',
+                  title: 'SEMANA ACTUAL',
+                  value: metrics.weeklyStatusLabel,
+                  caption: metrics.weeklyStatusDetail,
+                  tone: kpiToneColor,
+                },
+                {
+                  key: 'current',
+                  title: metrics.focusCoverageTitle,
+                  value: `${metrics.focusCoverageActual}`,
+                  caption: metrics.focusCoverageCaption,
+                  tone:
+                    metrics.focusCoverageRequired === 0
+                      ? PLANNER_THEME.shellText
+                      : metrics.focusCoverageActual < metrics.focusCoverageRequired
+                        ? PLANNER_THEME.shellDanger
+                        : metrics.focusCoverageActual === metrics.focusCoverageRequired
+                          ? PLANNER_THEME.shellWarm
+                          : PLANNER_THEME.shellAccent,
+                },
+                {
+                  key: 'absences',
+                  title: 'AUSENCIAS ESTA SEMANA',
+                  value: `${metrics.weeklyAbsences}`,
+                  caption: `${metrics.weeklyAbsences} AUS · ${metrics.justifiedAbsences} justificadas`,
+                  tone:
+                    metrics.unjustifiedAbsences > 0
+                      ? PLANNER_THEME.shellDanger
+                      : metrics.weeklyAbsences > 0
+                        ? PLANNER_THEME.shellWarm
+                        : PLANNER_THEME.shellText,
+                },
+                {
+                  key: 'availability',
+                  title: metrics.focusAvailabilityTitle,
+                  value: `${metrics.availableAgents}`,
+                  caption: metrics.availabilityCaption,
+                  tone:
+                    metrics.unavailableAgents > 0
+                      ? PLANNER_THEME.shellWarm
+                      : PLANNER_THEME.shellAccent,
+                },
+              ].map(card => (
+                <section
+                  key={card.key}
+                  style={{
+                    background:
+                      card.key === 'week'
+                        ? PLANNER_THEME.shellSurfaceTinted
+                        : card.key === 'absences'
+                          ? PLANNER_THEME.shellSurfaceWarm
+                          : PLANNER_THEME.shellSurface,
+                    borderRadius: '16px',
+                    border: `1px solid ${
+                      card.key === 'absences'
+                        ? PLANNER_THEME.shellBorderWarm
+                        : PLANNER_THEME.shellBorder
+                    }`,
+                    padding: '14px 16px',
+                    minHeight: '104px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    boxShadow: PLANNER_THEME.shellShadow,
+                  }}
+                >
+                  <div
+                    style={{
+                      color: PLANNER_THEME.shellTextMuted,
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    {card.title}
+                  </div>
+                  <div
+                    style={{
+                      color: card.tone,
+                      fontSize: card.key === 'week' ? '1.48rem' : '1.72rem',
+                      lineHeight: 1,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {card.value}
+                  </div>
+                  <div
+                    style={{
+                      color: PLANNER_THEME.shellTextMuted,
+                      fontSize: '0.8rem',
+                      lineHeight: 1.35,
+                      marginTop: 'auto',
+                    }}
+                  >
+                    {card.caption}
+                    {card.key === 'absences' && metrics.unjustifiedAbsences > 0
+                      ? ` · ${metrics.unjustifiedAbsences} no justificadas`
+                      : ''}
+                  </div>
+                </section>
+              ))}
             </div>
 
-            <aside
+            <section
               style={{
-                position: 'sticky',
-                top: '20px',
-                width: '340px',
-                flexShrink: 0,
-                padding: '18px',
-                borderRadius: '24px',
-                border: '1px solid var(--shell-border)',
-                background:
-                  'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-tint) 100%)',
-                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                flexWrap: 'wrap',
+                padding: '10px 14px',
+                background: PLANNER_THEME.shellSurfaceTinted,
+                borderRadius: '16px',
+                border: `1px solid ${PLANNER_THEME.shellBorderStrong}`,
+                boxShadow: PLANNER_THEME.shellShadow,
               }}
             >
               <div
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--space-lg)',
+                  alignItems: 'center',
+                  gap: '10px',
+                  flexWrap: 'wrap',
+                  flex: '1 1 480px',
                 }}
               >
-                {hasAnyCoverageRule ? (
-                  <CoverageChart data={coverageData} />
-                ) : (
-                  <div
-                    style={{
-                      marginBottom: 'var(--space-md)',
-                      padding: 'var(--space-md)',
-                      background: 'linear-gradient(180deg, var(--bg-subtle) 0%, var(--surface-veil) 100%)',
-                      borderRadius: '18px',
-                      border: '1px dashed var(--border-strong)',
-                      textAlign: 'center',
-                      color: 'var(--text-muted)',
-                      fontSize: 'var(--font-size-sm)',
-                    }}
-                  >
-                    Sin reglas de cobertura activas.
-                  </div>
-                )}
-
-                <CoverageRulesPanel
-                  onNavigateToSettings={onNavigateToSettings}
+                <input
+                  className="planner-search-input"
+                  value={searchQuery}
+                  onChange={event => setSearchQuery(event.target.value)}
+                  placeholder={`Buscar ${UI_GLOSSARY.representative.singular.toLowerCase()}`}
+                  aria-label={`Buscar ${UI_GLOSSARY.representative.singular.toLowerCase()}`}
+                  style={{
+                    minWidth: '220px',
+                    flex: '1 1 260px',
+                    padding: '8px 10px',
+                    borderRadius: '12px',
+                    border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+                    background: PLANNER_THEME.controlBg,
+                    color: PLANNER_THEME.controlText,
+                    outline: 'none',
+                    fontSize: '0.9rem',
+                  }}
                 />
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {(['ALL', 'ABSENCE_WEEK', 'OFF_TODAY', 'ACTIVE_TODAY'] as PlannerQuickFilter[]).map(filter => (
+                    <button
+                      key={filter}
+                      onClick={() => setQuickFilter(filter)}
+                      style={{
+                        border: `1px solid ${
+                          quickFilter === filter
+                            ? PLANNER_THEME.controlBorderStrong
+                            : PLANNER_THEME.controlBorder
+                        }`,
+                        background:
+                          quickFilter === filter
+                            ? PLANNER_THEME.controlBgActive
+                            : PLANNER_THEME.controlBg,
+                        color:
+                          quickFilter === filter
+                            ? PLANNER_THEME.controlText
+                            : PLANNER_THEME.controlTextMuted,
+                        borderRadius: '999px',
+                        padding: '7px 10px',
+                        cursor: 'pointer',
+                        fontWeight: quickFilter === filter ? 700 : 500,
+                        fontSize: '0.8rem',
+                      }}
+                    >
+                      {filterLabelMap[filter]}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </aside>
+
+              <div
+                style={{
+                  color: PLANNER_THEME.shellTextMuted,
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Mostrando {filteredAgents.length} de {agents.length}
+              </div>
+            </section>
+
+            {filteredAgents.length > 0 ? (
+              <PlanView
+                weeklyPlan={weeklyPlan}
+                weekDays={weekDays}
+                agents={filteredAgents}
+                activeShift={activeShift}
+                assignmentsMap={assignmentsMap}
+                coverageData={coverageData}
+                isCurrentWeek={isCurrentWeek}
+                weekLabel={weekLabel}
+                onCellClick={onCellClick}
+                onCellContextMenu={onCellContextMenu}
+                onEditDay={onEditDay}
+                onGoToday={onGoToday}
+                onPrevWeek={onPrevWeek}
+                onNextWeek={onNextWeek}
+              />
+            ) : (
+              <section
+                style={{
+                  padding: '24px',
+                  background: PLANNER_THEME.shellSurfaceTinted,
+                  borderRadius: '16px',
+                  border: `1px solid ${PLANNER_THEME.shellBorderStrong}`,
+                  color: PLANNER_THEME.shellTextMuted,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div>
+                  No hay representantes para el filtro actual.
+                </div>
+                <button
+                  onClick={() => {
+                    setSearchQuery('')
+                    setQuickFilter('ALL')
+                  }}
+                  style={{
+                    border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+                    background: PLANNER_THEME.controlBg,
+                    color: PLANNER_THEME.controlText,
+                    borderRadius: '999px',
+                    padding: '10px 14px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Limpiar filtros
+                </button>
+              </section>
+            )}
+
+            <PlanningCoverageChart
+              coverageData={coverageData}
+              onNavigateToSettings={onNavigateToSettings}
+              weekDays={weekDays}
+            />
           </div>
         ) : (
           <div>Cargando plan...</div>
         )}
-      </motion.div>
-    </AnimatePresence>
+      <style jsx>{`
+        .planner-search-input::placeholder {
+          color: rgba(247, 241, 232, 0.78);
+        }
+      `}</style>
+    </>
   )
 }

@@ -32,7 +32,7 @@ export default function SalesByAgentTable() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="h-8 text-[11px]">Agente</TableHead>
+                            <TableHead className="h-8 text-[11px]">Representante</TableHead>
                             <TableHead className="h-8 text-[11px] text-right">Trx</TableHead>
                             <TableHead className="h-8 text-[11px] text-right">Ventas</TableHead>
                         </TableRow>
@@ -57,7 +57,7 @@ export default function SalesByAgentTable() {
                             <span className="font-bold">{formatCurrency(attribution.unattributedValue)}</span>
                         </div>
                         <p className="text-[9px] text-muted-foreground leading-tight italic">
-                            * App, Web y Agregadores se contabilizan únicamente a nivel global para evitar inflación en el desempeño individual.
+                            * App, Web y Agregadores se contabilizan únicamente a nivel global para evitar inflación en el desempeño individual del representante.
                         </p>
                     </div>
                 )}

@@ -139,7 +139,7 @@ export function ReorderAgentsModal({ shift, isOpen, onClose }: ReorderAgentsModa
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
                 <header style={{ marginBottom: '16px' }}>
                     <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
-                        Reordenar Agentes ({shift === 'DAY' ? 'Día' : 'Noche'})
+                        Reordenar Representantes ({shift === 'DAY' ? 'Día' : 'Noche'})
                     </h2>
                     <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-muted)' }}>
                         Arrastra y suelta para cambiar el orden en reportes y listas.

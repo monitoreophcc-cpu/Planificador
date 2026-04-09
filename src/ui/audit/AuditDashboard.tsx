@@ -30,7 +30,7 @@ export function AuditDashboard() {
             color: 'var(--text-main)',
           }}
         >
-          Timeline de eventos
+          Línea de tiempo
         </h3>
         <AuditTimeline items={timelineItems} />
       </section>

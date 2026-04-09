@@ -29,7 +29,7 @@ type TrustTone = {
 
 function formatTimestamp(value: string | null): string {
   if (!value) {
-    return 'Aun sin registro'
+    return 'Aún sin registro'
   }
 
   return new Intl.DateTimeFormat('es-BO', {
@@ -97,7 +97,7 @@ function localLabel(status: string): string {
     case 'saving':
       return 'Guardando en este dispositivo'
     case 'saved':
-      return 'Guardado local al dia'
+      return 'Guardado local al día'
     case 'error':
       return 'Error al guardar localmente'
     default:
@@ -111,20 +111,20 @@ function cloudLabel(status: string, pendingRows: number): string {
       return 'Verificando nube'
     case 'unauthenticated':
       return pendingRows > 0
-        ? `Pendiente sin sesion (${pendingRows})`
-        : 'Sin sesion en nube'
+        ? `Pendiente sin sesión (${pendingRows})`
+        : 'Sin sesión en la nube'
     case 'syncing':
       return pendingRows > 0
         ? `Sincronizando (${pendingRows})`
         : 'Sincronizando'
     case 'offline':
       return pendingRows > 0
-        ? `Sin conexion (${pendingRows} pendientes)`
-        : 'Sin conexion'
+        ? `Sin conexión (${pendingRows} pendientes)`
+        : 'Sin conexión'
     case 'error':
       return pendingRows > 0
         ? `Error (${pendingRows} pendientes)`
-        : 'Error de sync'
+        : 'Error de sincronización'
     case 'synced':
       return 'Sincronizado con la nube'
     default:
@@ -134,10 +134,10 @@ function cloudLabel(status: string, pendingRows: number): string {
 
 function sessionLabel(loading: boolean, hasUser: boolean): string {
   if (loading) {
-    return 'Verificando sesion'
+    return 'Verificando sesión'
   }
 
-  return hasUser ? 'Sesion conectada' : 'Sesion requerida'
+  return hasUser ? 'Sesión conectada' : 'Hace falta iniciar sesión'
 }
 
 export function SystemTrustOverview({
@@ -176,11 +176,13 @@ export function SystemTrustOverview({
     {
       key: 'session',
       icon: ShieldCheck,
-      title: 'Sesion',
+      title: 'Sesión',
       label: sessionLabel(loading, Boolean(user)),
       tone: sessionTone,
-      detail: user?.email ?? 'La sincronizacion en nube requiere una sesion activa.',
-      meta: loading ? 'Esperando respuesta de Supabase Auth' : null,
+      detail:
+        user?.email ??
+        'La nube necesita una sesión activa para guardar y recuperar tus cambios.',
+      meta: loading ? 'Comprobando acceso a la nube.' : null,
       action:
         user && !loading ? (
           <button
@@ -211,16 +213,16 @@ export function SystemTrustOverview({
       detail:
         local.status === 'error' && local.error
           ? local.error
-          : 'IndexedDB sigue siendo la base operativa local.',
+          : 'Este dispositivo guarda la base operativa y conserva una copia reciente del trabajo.',
       meta:
         local.lastSavedAt || latestLocalBackupAt
           ? [
-              `Ultimo guardado operativo: ${formatTimestamp(local.lastSavedAt)}`,
-              `Ultimo respaldo local: ${formatTimestamp(latestLocalBackupAt)}`,
+              `Último guardado operativo: ${formatTimestamp(local.lastSavedAt)}`,
+              `Último respaldo local: ${formatTimestamp(latestLocalBackupAt)}`,
             ]
-              .filter(line => !line.endsWith('Aun sin registro'))
+              .filter(line => !line.endsWith('Aún sin registro'))
               .join(' | ')
-          : 'Ultimo guardado: Aun sin registro',
+          : 'Último guardado: Aún sin registro',
       action: null,
     },
     {
@@ -233,12 +235,12 @@ export function SystemTrustOverview({
         cloud.status === 'error' && cloud.error
           ? cloud.error
           : user
-            ? 'Supabase replica y respalda tus cambios por usuario.'
-            : 'Inicia sesion para sincronizar con Supabase.',
+            ? 'La nube guarda una copia por usuario y mantiene tus cambios disponibles.'
+            : 'Inicia sesión para subir tus cambios a la nube.',
       meta:
         cloud.lastSyncedAt
-          ? `Ultima sync correcta: ${formatTimestamp(cloud.lastSyncedAt)}`
-          : `Ultimo intento: ${formatTimestamp(cloud.lastAttemptAt)}`,
+          ? `Última sincronización correcta: ${formatTimestamp(cloud.lastSyncedAt)}`
+          : `Último intento: ${formatTimestamp(cloud.lastAttemptAt)}`,
       action: null,
     },
   ]
@@ -355,9 +357,9 @@ export function SystemTrustOverview({
                 color: queueTone.text,
                 fontWeight: 700,
               }}
-            >
+              >
               <QueueStateIcon size={16} />
-              Cola de sincronizacion
+              Cola de sincronización
             </div>
             <div
               style={{
@@ -404,12 +406,14 @@ export function SystemTrustOverview({
             }}
             title={
               user
-                ? 'Forzar un nuevo intento de sincronizacion'
-                : 'Necesitas una sesion activa para subir la cola'
+                ? 'Forzar un nuevo intento de sincronización'
+                : 'Necesitas una sesión activa para subir la cola'
             }
           >
             <RefreshCcw size={14} />
-            {cloud.status === 'syncing' ? 'Reintentando...' : 'Reintentar sync'}
+            {cloud.status === 'syncing'
+              ? 'Reintentando...'
+              : 'Reintentar sincronización'}
           </button>
         </div>
 
@@ -430,11 +434,11 @@ export function SystemTrustOverview({
               value: String(cloud.pendingRows),
             },
             {
-              label: 'Ultimo intento',
+              label: 'Último intento',
               value: formatTimestamp(cloud.lastAttemptAt),
             },
             {
-              label: 'Ultima sync correcta',
+              label: 'Última sincronización correcta',
               value: formatTimestamp(cloud.lastSyncedAt),
             },
           ].map(item => (
@@ -528,8 +532,8 @@ export function SystemTrustOverview({
               }}
             >
               {hasPendingQueue
-                ? 'La cola sigue pendiente, pero todavia no hay desglose por tabla disponible.'
-                : 'La cola esta vacia; no hay tablas pendientes ahora mismo.'}
+                ? 'La cola sigue pendiente, pero todavía no hay desglose por tabla disponible.'
+                : 'La cola está vacía; no hay tablas pendientes ahora mismo.'}
             </div>
           )}
 

@@ -31,7 +31,7 @@ export function StatsOverviewCards({ stats }: StatsOverviewCardsProps) {
         tooltipContent={statsOverviewTooltips.totalIncidents}
       />
       <StatCard
-        label="Personas en Riesgo"
+        label="Personas a revisar"
         value={stats.peopleAtRisk}
         Icon={Users}
         variant={stats.peopleAtRisk > 0 ? 'danger' : 'neutral'}

@@ -18,6 +18,15 @@ const categoryStyles: Record<
   SETTINGS: { bg: '#f3f4f6', text: '#374151' },
 }
 
+const categoryLabels: Record<HistoryEvent['category'], string> = {
+  INCIDENT: 'Incidencias',
+  RULE: 'Reglas',
+  CALENDAR: 'Calendario',
+  PLANNING: 'Planificación',
+  SYSTEM: 'Sistema',
+  SETTINGS: 'Ajustes',
+}
+
 const HistoryEventCard = ({ event }: { event: HistoryEvent }) => {
   const categoryStyle = categoryStyles[event.category] || categoryStyles.SYSTEM
 
@@ -84,11 +93,11 @@ const HistoryEventCard = ({ event }: { event: HistoryEvent }) => {
             background: categoryStyle.bg,
             color: categoryStyle.text,
           }}
-        >
-          {event.category}
-        </span>
+          >
+            {categoryLabels[event.category] ?? event.category}
+          </span>
+        </div>
       </div>
-    </div>
   )
 }
 
@@ -132,15 +141,15 @@ export function HistoryView() {
       >
         <div>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
-            Historial de Actividad
+            Historial de cambios
           </h2>
           <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-            Bitácora de eventos relevantes del sistema.
+            Cambios importantes registrados por la aplicación.
           </p>
         </div>
         <input
           type="text"
-          placeholder="Buscar evento o persona..."
+          placeholder="Buscar cambio o persona..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{
@@ -165,7 +174,7 @@ export function HistoryView() {
         <div
           style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}
         >
-          No hay eventos para mostrar.
+          No hay cambios para mostrar.
         </div>
       )}
     </div>

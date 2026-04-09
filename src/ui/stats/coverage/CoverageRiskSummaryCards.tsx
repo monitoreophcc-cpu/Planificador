@@ -44,11 +44,11 @@ export function CoverageRiskSummaryCards({
         tooltipContent={`${daysWithDeficit} de ${totalDays} días tuvieron menos personal del requerido en al menos un turno.`}
       />
       <StatCard
-        label="Días Críticos (>2)"
+        label="Días exigidos (>2)"
         value={criticalDeficitDays}
         Icon={TrendingDown}
         variant={criticalDeficitDays > 0 ? 'danger' : 'neutral'}
-        tooltipContent={`${criticalDeficitDays} días tuvieron un déficit de más de 2 personas, representando un riesgo operativo alto.`}
+        tooltipContent={`${criticalDeficitDays} días tuvieron un déficit de más de 2 personas y necesitaron refuerzo importante.`}
       />
       <StatCard
         label="Déficit Total"
@@ -58,7 +58,7 @@ export function CoverageRiskSummaryCards({
         tooltipContent="Suma total de puestos no cubiertos durante todo el mes. Un déficit de 2 en un día suma 2 a este total."
       />
       <StatCard
-        label="Turno Más Débil"
+        label="Turno más exigido"
         value={
           worstShift.shift
             ? `${worstShift.shift === 'DAY' ? 'Día' : 'Noche'} (-${worstShift.deficit})`
@@ -72,7 +72,7 @@ export function CoverageRiskSummaryCards({
               : CalendarCheck
         }
         variant={worstShift.deficit > 0 ? 'warning' : 'neutral'}
-        tooltipContent={`El turno ${worstShift.shift || ''} acumuló el mayor déficit de personal durante el mes.`}
+        tooltipContent={`El turno ${worstShift.shift || ''} acumuló la mayor falta de personal durante el mes.`}
       />
     </div>
   )

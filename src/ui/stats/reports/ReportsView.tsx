@@ -26,10 +26,10 @@ export function ReportsView() {
           marginBottom: '8px',
         }}
       >
-        Reportes especiales
+        Próximamente
       </div>
-      <h2 style={{ marginTop: 0, color: 'var(--text-main)' }}>Generador de Reportes</h2>
-      <p>Sección en construcción.</p>
+      <h2 style={{ marginTop: 0, color: 'var(--text-main)' }}>Más comparativos</h2>
+      <p>Esta sección todavía se está preparando.</p>
     </div>
   )
 }

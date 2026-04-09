@@ -27,7 +27,7 @@ export function AuditTimeline({ items }: { items: AuditTimelineItem[] }) {
                     <div style={{ fontWeight: 600 }}>{e.summary}</div>
 
                     <div style={{ fontSize: '12px', color: '#374151' }}>
-                        Actor: {e.actor}
+                        Hecho por: {e.actor}
                     </div>
                 </div>
             ))}

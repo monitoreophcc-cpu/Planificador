@@ -123,7 +123,7 @@ export function BackupManagement() {
               {
                 title: 'Si algo salió mal hoy',
                 description:
-                  'Prueba primero el auto-backup. Guarda el último estado automático estable de este navegador.',
+                  'Prueba primero el respaldo automático. Guarda el último estado automático estable de este navegador.',
               },
               {
                 title: 'Si viene de otro equipo o archivo',

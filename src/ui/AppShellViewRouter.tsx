@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import type { AppShellView } from './appShellTypes'
+import { UI_GLOSSARY } from './copy/glossary'
 
 function ViewLoading() {
   return <div className="app-shell-loading">Cargando vista...</div>
@@ -34,32 +35,32 @@ const VIEW_META: Record<
   { eyebrow: string; title: string; description: string; context: string }
 > = {
   DAILY_LOG: {
-    eyebrow: 'Operacion diaria',
-    title: 'Registro y seguimiento del dia',
+    eyebrow: 'Operación diaria',
+    title: 'Registro y seguimiento del día',
     description:
-      'Incidencias activas, coberturas y movimientos del equipo en una vista pensada para decidir rapido.',
+      'Incidencias activas, coberturas y movimientos del equipo en una vista pensada para decidir rápido.',
     context: 'Foco operativo',
   },
   PLANNING: {
-    eyebrow: 'Planificacion',
+    eyebrow: 'Planificación',
     title: 'Armado y ajuste de semanas',
     description:
-      'Calendario, reglas y escenarios para preparar el equipo antes de que el dia empiece.',
-    context: 'Vista de preparacion',
+      'Calendario, reglas y escenarios para preparar el equipo antes de que el día empiece.',
+    context: 'Vista de preparación',
   },
   STATS: {
     eyebrow: 'Lectura operativa',
     title: 'Reportes y tendencias',
     description:
-      'Resumenes mensuales, alertas historicas y señales para entender donde se tensiona la operacion.',
-    context: 'Analisis',
+      'Resúmenes mensuales, alertas históricas y señales para entender dónde se tensiona la operación.',
+    context: 'Análisis',
   },
   SETTINGS: {
     eyebrow: 'Base del sistema',
-    title: 'Configuracion y estructura',
+    title: `${UI_GLOSSARY.settingsSection} y estructura`,
     description:
-      'Representantes, reglas, calendario y confianza del sistema en un espacio mas ordenado y guiado.',
-    context: 'Espacio de control',
+      'Representantes, reglas, calendario, respaldos e historial del sistema en un espacio más claro y guiado.',
+    context: 'Centro de control',
   },
 }
 

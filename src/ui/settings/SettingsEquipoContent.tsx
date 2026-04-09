@@ -36,7 +36,7 @@ export function SettingsEquipoContent({
         }}
       >
         <div>
-          <div style={settingsViewStyles.sectionEyebrow}>Configuración operativa</div>
+          <div style={settingsViewStyles.sectionEyebrow}>Ajustes operativos</div>
           <h2
             style={{
               margin: 0,
@@ -44,7 +44,7 @@ export function SettingsEquipoContent({
               color: 'var(--text-main)',
             }}
           >
-            Equipo y Reglas
+            Equipo y reglas
           </h2>
           <p
             style={{

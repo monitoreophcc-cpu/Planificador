@@ -60,13 +60,13 @@ export function AuditView() {
             marginBottom: '8px',
           }}
         >
-          Trazabilidad del sistema
+          Registro del sistema
         </div>
         <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>
-          Auditoría del Sistema
+          Cambios guardados automáticamente
         </h2>
         <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-          Registro forense de todas las acciones y cambios en el sistema.
+          Consulta acciones y cambios registrados por la aplicación.
         </p>
       </header>
 
@@ -88,7 +88,7 @@ export function AuditView() {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Buscar por entidad o detalle..."
+            placeholder="Buscar por acción, registro o detalle..."
             disabled
             style={{
               border: 'none',

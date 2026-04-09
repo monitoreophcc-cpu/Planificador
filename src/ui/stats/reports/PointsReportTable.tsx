@@ -2,6 +2,7 @@ import { Download } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import type { PayrollRow } from '@/application/stats/getMonthlyPointsSummary'
 import type { CSSProperties } from 'react'
+import { UI_GLOSSARY } from '@/ui/copy/glossary'
 
 interface PointsReportTableProps {
   data: PayrollRow[]
@@ -142,7 +143,7 @@ export function PointsReportTable({
                 color: 'var(--text-muted)',
               }}
             >
-              Agentes
+              {UI_GLOSSARY.representative.plural}
             </span>
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>
               {data.length}
@@ -173,7 +174,7 @@ export function PointsReportTable({
         <table style={{ width: '100%', minWidth: '860px', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={tableHeaderStyle}>Empleado</th>
+              <th style={tableHeaderStyle}>{UI_GLOSSARY.representative.singular}</th>
               <th style={{ ...tableHeaderStyle, textAlign: 'right' }}>
                 Tardanza
               </th>

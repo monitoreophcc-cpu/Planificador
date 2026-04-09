@@ -88,7 +88,7 @@ export function TransactionLeaderboard({ transactions }: Props) {
                     <div className="relative w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar agente..."
+                            placeholder="Buscar representante..."
                             value={searchTerm}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                             className="pl-8"
@@ -136,7 +136,7 @@ export function TransactionLeaderboard({ transactions }: Props) {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[50px]">#</TableHead>
-                            <TableHead>Agente / Usuario</TableHead>
+                            <TableHead>Representante / Usuario</TableHead>
                             <TableHead className="text-right">Transacciones</TableHead>
                             <TableHead className="text-right">Venta Total</TableHead>
                             <TableHead className="text-right">Ticket Promedio</TableHead>

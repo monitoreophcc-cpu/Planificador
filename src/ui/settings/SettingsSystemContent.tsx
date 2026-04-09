@@ -1,7 +1,7 @@
 'use client'
 
-import { History, RotateCcw, Shield } from 'lucide-react'
-import { AuditPanel } from '@/ui/audit/AuditPanel'
+import { RotateCcw, Shield } from 'lucide-react'
+import { TraceabilityWorkbench } from '@/ui/audit/TraceabilityWorkbench'
 import { BackupManagement } from './BackupManagement'
 import { QuickGuide } from './QuickGuide'
 import { settingsViewStyles } from './settingsViewStyles'
@@ -9,18 +9,12 @@ import { settingsViewStyles } from './settingsViewStyles'
 type SettingsSystemContentProps = {
   handleReset: () => void
   isAdvancedMode: boolean
-  onShowAuditChange: (updater: (previous: boolean) => boolean) => void
-  onShowHistory: () => void
-  showAudit: boolean
   toggleAdvancedMode: () => void
 }
 
 export function SettingsSystemContent({
   handleReset,
   isAdvancedMode,
-  onShowAuditChange,
-  onShowHistory,
-  showAudit,
   toggleAdvancedMode,
 }: SettingsSystemContentProps) {
   return (
@@ -55,17 +49,17 @@ export function SettingsSystemContent({
           }}
         >
           <div>
-            <div style={settingsViewStyles.sectionEyebrow}>Edicion protegida</div>
-            <h3 style={settingsViewStyles.sectionTitle}>Modo Edición Avanzada</h3>
+            <div style={settingsViewStyles.sectionEyebrow}>Cambios delicados</div>
+            <h3 style={settingsViewStyles.sectionTitle}>Permitir cambios en semanas pasadas</h3>
             <p style={settingsViewStyles.sectionDescription}>
-              Permite modificar semanas pasadas. Usar con precaución.
+              Activa esta opción solo si necesitas corregir semanas ya cerradas.
             </p>
           </div>
           <button
             onClick={toggleAdvancedMode}
             style={settingsViewStyles.toggleButton(isAdvancedMode)}
           >
-            {isAdvancedMode ? 'Activado' : 'Desactivado'}
+            {isAdvancedMode ? 'Permitido' : 'Bloqueado'}
           </button>
         </div>
       </div>
@@ -74,56 +68,36 @@ export function SettingsSystemContent({
         className="settings-system-grid__history"
         style={{ ...settingsViewStyles.settingItem, marginBottom: 0 }}
       >
-        <div style={settingsViewStyles.sectionEyebrow}>Rastreo operativo</div>
+        <div style={settingsViewStyles.sectionEyebrow}>Seguimiento operativo</div>
         <h3 style={settingsViewStyles.sectionTitle}>Historial y Auditoría</h3>
         <p
           style={{
             ...settingsViewStyles.sectionDescription,
-            marginBottom: '12px',
+            marginBottom: '18px',
           }}
         >
-          Registro de acciones operativas y evidencia forense.
+          Una sola vista para revisar cambios, consultar el registro del sistema y guardar semanas
+          de referencia sin abrir modales ni cambiar de contexto.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              style={{
-                ...settingsViewStyles.button,
-                opacity: isAdvancedMode ? 1 : 0.5,
-                cursor: isAdvancedMode ? 'pointer' : 'not-allowed',
-              }}
-              onClick={() => isAdvancedMode && onShowHistory()}
-            >
-              <History size={16} />
-              Historial Operativo
-            </button>
-
-            <button
-              style={{
-                ...settingsViewStyles.button,
-                opacity: isAdvancedMode ? 1 : 0.5,
-                cursor: isAdvancedMode ? 'pointer' : 'not-allowed',
-              }}
-              onClick={() =>
-                isAdvancedMode && onShowAuditChange(previous => !previous)
-              }
-            >
-              <Shield size={16} />
-              {showAudit ? 'Ocultar Auditoría Forense' : 'Auditoría Forense'}
-            </button>
+        {!isAdvancedMode && (
+          <div
+            style={{
+              marginBottom: '16px',
+              padding: '14px 16px',
+              borderRadius: '16px',
+              border: '1px solid rgba(var(--accent-rgb), 0.12)',
+              background: 'rgba(var(--accent-rgb), 0.07)',
+              color: 'var(--text-muted)',
+              fontSize: '13px',
+              lineHeight: 1.6,
+            }}
+          >
+            La consulta está disponible en todo momento. Si permites cambios en semanas pasadas, podrás
+            intervenir semanas pasadas con todo el historial y el detalle a la vista.
           </div>
-
-          {isAdvancedMode && showAudit && (
-            <div
-              style={{
-                marginTop: '16px',
-                borderTop: '1px solid var(--shell-border)',
-                paddingTop: '16px',
-              }}
-            >
-              <AuditPanel embedded />
-            </div>
-          )}
+        )}
+        <div style={{ marginTop: '4px' }}>
+          <TraceabilityWorkbench />
         </div>
       </div>
 
@@ -138,7 +112,7 @@ export function SettingsSystemContent({
         }}
       >
         <div style={{ ...settingsViewStyles.sectionEyebrow, color: 'var(--text-danger)' }}>
-          Acciones irreversibles
+          Acciones delicadas
         </div>
         <h3
           style={{
@@ -150,7 +124,7 @@ export function SettingsSystemContent({
           }}
         >
           <Shield size={18} />
-          Zona de Peligro
+          Borrar cambios de la planificación
         </h3>
         <p
           style={{
@@ -159,11 +133,11 @@ export function SettingsSystemContent({
             color: 'var(--text-danger)',
           }}
         >
-          Estas acciones son irreversibles y pueden afectar datos importantes.
+          Esta acción no se puede deshacer y puede afectar información importante.
         </p>
         <button style={settingsViewStyles.dangerButton} onClick={handleReset}>
           <RotateCcw size={16} />
-          Resetear Planificación
+          Borrar cambios de planificación
         </button>
       </div>
 

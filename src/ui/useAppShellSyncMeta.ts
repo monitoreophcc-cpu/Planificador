@@ -83,7 +83,7 @@ export function useAppShellSyncMeta(): AppShellSyncMeta {
 
     if (cloudSyncStatus === 'error') {
       return {
-        label: 'Error de sync',
+        label: 'Error de sincronización',
         tone: '#dc2626',
         surface: 'rgba(220, 38, 38, 0.12)',
       }

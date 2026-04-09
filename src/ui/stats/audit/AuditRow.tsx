@@ -34,7 +34,7 @@ export function AuditRow({ event }: { event: AuditEvent }) {
         {typeof event.actor === 'string' ? event.actor : event.actor.name}
         {event.repId && (
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-            Rep: {event.repId}
+            Representante: {event.repId}
           </div>
         )}
       </td>

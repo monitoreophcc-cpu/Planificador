@@ -5,7 +5,7 @@ export const statsOverviewTooltips: Record<string, ReactNode> = {
     'Suma de todas las incidencias registradas, excluyendo Licencias y Vacaciones.',
   peopleAtRisk: (
     <div style={{ maxWidth: '250px', lineHeight: 1.4 }}>
-      Cantidad de personas que superaron los límites definidos:
+      Cantidad de personas que conviene revisar porque superaron estos límites:
       <ul style={{ paddingLeft: '20px', margin: '4px 0 0' }}>
         <li>≥ 3 tardanzas</li>
         <li>≥ 2 errores</li>

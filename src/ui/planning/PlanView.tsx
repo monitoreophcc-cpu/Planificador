@@ -1,10 +1,10 @@
 'use client'
 
 import React, { Dispatch, SetStateAction } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import type {
   WeeklyPlan,
   Representative,
-  RepresentativeId,
   DayInfo,
   ShiftType,
   ISODate,
@@ -12,13 +12,12 @@ import type {
 import { VariableSizeList as List } from 'react-window'
 import { PlanRow } from './PlanRow'
 import { PlannerAssignmentsMap } from '@/application/ui-adapters/getEffectiveAssignmentsForPlanner'
-import {
-  HEADER_HEIGHT,
-  ROW_HEIGHT,
-  PLANNER_WIDTHS,
-} from './constants'
-
-
+import { ROW_HEIGHT, PLANNER_WIDTHS } from './constants'
+import type { EffectiveCoverageResult } from '@/application/ui-adapters/getEffectiveDailyCoverage'
+import { format } from 'date-fns'
+import { PLANNER_THEME } from '@/ui/theme/plannerTheme'
+import { getCoverageTone } from './planningOperationalMetrics'
+import { UI_GLOSSARY } from '@/ui/copy/glossary'
 
 interface PlanViewProps {
   weeklyPlan: WeeklyPlan
@@ -26,9 +25,15 @@ interface PlanViewProps {
   agents: Representative[]
   activeShift: ShiftType
   assignmentsMap: PlannerAssignmentsMap
+  coverageData: Record<ISODate, EffectiveCoverageResult>
+  isCurrentWeek: boolean
+  weekLabel: string
   onCellClick: (repId: string, date: ISODate) => Promise<void>
   onCellContextMenu: (repId: string, date: ISODate, e: React.MouseEvent) => void
   onEditDay: Dispatch<SetStateAction<DayInfo | null>>
+  onGoToday: () => void
+  onPrevWeek: () => void
+  onNextWeek: () => void
 }
 
 function Row({
@@ -76,9 +81,15 @@ export function PlanView({
   agents,
   activeShift,
   assignmentsMap,
+  coverageData,
+  isCurrentWeek,
+  weekLabel,
   onCellClick,
   onCellContextMenu,
   onEditDay,
+  onGoToday,
+  onPrevWeek,
+  onNextWeek,
 }: PlanViewProps) {
   const itemData = React.useMemo(
     () => ({
@@ -92,47 +103,189 @@ export function PlanView({
     }),
     [agents, weeklyPlan, weekDays, activeShift, assignmentsMap, onCellClick, onCellContextMenu]
   )
+  const todayIso = format(new Date(), 'yyyy-MM-dd') as ISODate
+  const tableBodyHeight =
+    typeof window !== 'undefined'
+      ? Math.max(340, Math.min(600, window.innerHeight - 400))
+      : 400
+
+  const coverageColor = (date: ISODate) => {
+    const tone = getCoverageTone(coverageData[date])
+
+    if (tone === 'success') return PLANNER_THEME.success
+    if (tone === 'warning') return PLANNER_THEME.warning
+    if (tone === 'danger') return PLANNER_THEME.danger
+    return PLANNER_THEME.textFaint
+  }
 
   return (
-    <div style={{ height: 'calc(100vh - 280px)', width: '100%' }}>
+    <div
+      style={{
+        width: '100%',
+        background: PLANNER_THEME.surfaceRaised,
+        borderRadius: '20px',
+        border: `1px solid ${PLANNER_THEME.borderStrong}`,
+        boxShadow: '0 24px 48px rgba(10, 8, 6, 0.26)',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          padding: '14px 18px',
+          background: PLANNER_THEME.shellSurfacePaper,
+          borderBottom: `1px solid ${PLANNER_THEME.shellBorderSoftAccent}`,
+          boxShadow: 'inset 0 -1px 0 rgba(var(--accent-rgb), 0.08)',
+          flexWrap: 'wrap',
+        }}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={weekLabel}
+            initial={{ opacity: 0, y: 3 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -3 }}
+            transition={{ duration: 0.12, ease: 'easeOut' }}
+            style={{
+              color: PLANNER_THEME.shellText,
+              fontWeight: 800,
+              fontSize: '1rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {weekLabel}
+          </motion.div>
+        </AnimatePresence>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {!isCurrentWeek && (
+            <button
+              onClick={onGoToday}
+              style={{
+                border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+                background: PLANNER_THEME.controlBg,
+                color: PLANNER_THEME.controlTextMuted,
+                borderRadius: '999px',
+                padding: '7px 12px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.84rem',
+              }}
+            >
+              Hoy
+            </button>
+          )}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: `1px solid ${PLANNER_THEME.controlBorder}`,
+              borderRadius: '999px',
+              padding: '4px',
+              background: PLANNER_THEME.controlBg,
+            }}
+          >
+            <button
+              onClick={onPrevWeek}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: PLANNER_THEME.controlText,
+                cursor: 'pointer',
+                padding: '6px 9px',
+                borderRadius: '999px',
+              }}
+            >
+              &lt;
+            </button>
+            <span
+              style={{
+                color: PLANNER_THEME.controlTextMuted,
+                fontSize: '0.86rem',
+                minWidth: '158px',
+                textAlign: 'center',
+              }}
+            >
+              {activeShift === 'DAY' ? 'Turno Día' : 'Turno Noche'}
+            </span>
+            <button
+              onClick={onNextWeek}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: PLANNER_THEME.controlText,
+                cursor: 'pointer',
+                padding: '6px 9px',
+                borderRadius: '999px',
+              }}
+            >
+              &gt;
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: `${PLANNER_WIDTHS.AGENT_NAME}px repeat(7, 1fr)`,
-          borderBottom: '1px solid #e5e7eb',
-          paddingBottom: '10px',
+          borderBottom: `1px solid ${PLANNER_THEME.border}`,
+          padding: '12px 0 10px',
           fontWeight: 600,
-          background: '#f9fafb',
-          color: '#374151',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
+          background: PLANNER_THEME.surfacePanelSoft,
+          color: PLANNER_THEME.textMuted,
         }}
       >
-        <div style={{ paddingLeft: '16px' }}>Agente</div>
+        <div
+          style={{
+            paddingLeft: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.9rem',
+          }}
+        >
+          {UI_GLOSSARY.representative.singular}
+        </div>
         {weekDays.map(day => (
           <div
             key={day.date}
             style={{
               textAlign: 'center',
               cursor: 'pointer',
-              color: day.kind === 'HOLIDAY' ? '#b45309' : 'inherit',
-              position: 'relative', // Relative positioning for the absolute dot
+              color: day.date === todayIso ? PLANNER_THEME.info : PLANNER_THEME.textMuted,
+              position: 'relative',
+              padding: '0 4px',
             }}
             title={day.label}
             onClick={() => onEditDay(day)}
           >
-            <div>{new Date(day.date + 'T12:00:00Z').toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase()}</div>
-            <div style={{ fontSize: '12px', fontWeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+            <div style={{ fontSize: '0.9rem', letterSpacing: '0.01em' }}>
+              {new Date(day.date + 'T12:00:00Z')
+                .toLocaleDateString('es-ES', { weekday: 'short' })
+                .replace('.', '')}
+            </div>
+            <div
+              style={{
+                fontSize: '12px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                color: day.date === todayIso ? PLANNER_THEME.info : PLANNER_THEME.textMuted,
+              }}
+            >
               {day.date.split('-')[2]}
-              {/* Visual indicator for labeled days that are NOT holidays */}
-              {day.label && day.kind !== 'HOLIDAY' && (
+              {day.date === todayIso && (
                 <div
                   style={{
-                    width: '4px',
-                    height: '4px',
+                    width: '8px',
+                    height: '8px',
                     borderRadius: '50%',
-                    backgroundColor: '#3b82f6', // subtle blue dot
+                    backgroundColor: PLANNER_THEME.info,
                   }}
                 />
               )}
@@ -141,9 +294,16 @@ export function PlanView({
         ))}
       </div>
 
-      <div style={{ height: 'calc(100% - ${HEADER_HEIGHT}px)', width: '100%', overflow: 'auto' }}>
+      <div
+        style={{
+          height: `${tableBodyHeight}px`,
+          width: '100%',
+          overflow: 'auto',
+          background: PLANNER_THEME.surfaceInset,
+        }}
+      >
         <List
-          height={typeof window !== 'undefined' ? window.innerHeight - 280 - HEADER_HEIGHT : 600}
+          height={tableBodyHeight}
           itemCount={agents.length}
           itemSize={() => ROW_HEIGHT}
           width={'100%'}
@@ -151,6 +311,49 @@ export function PlanView({
         >
           {Row}
         </List>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `${PLANNER_WIDTHS.AGENT_NAME}px repeat(7, 1fr)`,
+          alignItems: 'center',
+          minHeight: '44px',
+          background: PLANNER_THEME.surfacePanel,
+          borderTop: `1px solid ${PLANNER_THEME.borderStrong}`,
+        }}
+      >
+        <div
+          style={{
+            paddingLeft: '18px',
+            color: PLANNER_THEME.textMuted,
+            fontSize: '0.88rem',
+          }}
+        >
+          Cobertura
+        </div>
+        {weekDays.map(day => {
+          const coverage = coverageData[day.date]
+
+          return (
+            <div
+              key={day.date}
+              title={
+                coverage
+                  ? `${coverage.actual} en turno · mínimo ${coverage.required}`
+                  : 'Sin cobertura'
+              }
+              style={{
+                textAlign: 'center',
+                color: coverage ? coverageColor(day.date) : PLANNER_THEME.textFaint,
+                fontWeight: 700,
+                fontSize: '0.98rem',
+              }}
+            >
+              {coverage?.actual ?? '—'}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

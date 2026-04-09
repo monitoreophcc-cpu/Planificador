@@ -47,16 +47,16 @@ export function AuditSnapshotCard({
         }}
       >
         {isValid === true && (
-          <span title="Cadena válida" style={{ fontSize: '16px' }}>
+          <span title="Verificación correcta" style={{ fontSize: '16px' }}>
             🔗✅
           </span>
         )}
         {isValid === false && (
-          <span title="Cadena rota" style={{ fontSize: '16px' }}>
+          <span title="Problema de verificación" style={{ fontSize: '16px' }}>
             🔗⛔
           </span>
         )}
-        {isValid === null && <span style={{ fontSize: '16px' }}>⏳</span>}
+        {isValid === null && <span title="Verificación pendiente" style={{ fontSize: '16px' }}>⏳</span>}
       </div>
 
       <strong
@@ -82,7 +82,7 @@ export function AuditSnapshotCard({
               borderRadius: 'var(--radius-sm)',
             }}
           >
-            SELLADO
+            VERIFICADA
           </span>
         )}
       </strong>
@@ -94,7 +94,7 @@ export function AuditSnapshotCard({
           lineHeight: '1.5',
         }}
       >
-        Slots Planificados: <strong>{snapshot.snapshot.totals.plannedSlots}</strong>{' '}
+        Turnos planificados: <strong>{snapshot.snapshot.totals.plannedSlots}</strong>{' '}
         · Ejecutados: <strong>{snapshot.snapshot.totals.executedSlots}</strong> ·
         Ausencias: <strong>{snapshot.snapshot.totals.absenceSlots}</strong> ·
         Coberturas: <strong>{snapshot.snapshot.totals.coverageSlots}</strong> ·{' '}
@@ -104,7 +104,7 @@ export function AuditSnapshotCard({
             fontWeight: uncoveredSlots > 0 ? 700 : 400,
           }}
         >
-          Sin Cubrir: {uncoveredSlots}
+          Sin cubrir: {uncoveredSlots}
         </span>
       </div>
 
@@ -117,9 +117,9 @@ export function AuditSnapshotCard({
           wordBreak: 'break-all',
         }}
       >
-        SIG: {snapshot.signature.slice(0, 16)}...
+        Código: {snapshot.signature.slice(0, 16)}...
         {snapshot.previousSignature && (
-          <div>PREV: {snapshot.previousSignature.slice(0, 16)}...</div>
+          <div>Anterior: {snapshot.previousSignature.slice(0, 16)}...</div>
         )}
       </div>
     </article>

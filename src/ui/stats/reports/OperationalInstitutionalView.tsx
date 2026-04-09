@@ -42,13 +42,13 @@ export function OperationalInstitutionalView({
         }}
       >
         <OperationalReportPersonList
-          title="Mayor Riesgo Operativo"
+          title="Representantes a revisar"
           data={report.risk.needsAttention}
           icon={AlertTriangle}
           variant="danger"
         />
         <OperationalReportPersonList
-          title="Mejor Desempeño del Período"
+          title="Representantes con mejor resultado"
           data={report.risk.topPerformers}
           icon={Award}
           variant="success"

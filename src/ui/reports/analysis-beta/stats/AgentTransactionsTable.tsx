@@ -95,7 +95,7 @@ export default function AgentTransactionsTable({ className = '' }: AgentTransact
             <div className={`bg-white p-6 rounded-lg border border-gray-300 ${className}`}>
                 <div className="text-center">
                     <p className="text-gray-600 mb-2">
-                        No hay transacciones vinculadas a agentes confirmados.
+                        No hay transacciones vinculadas a representantes confirmados.
                     </p>
                     <p className="text-sm text-gray-500 mb-4">
                         Revisa Gestión de Identidad para asociar nombres.
@@ -117,10 +117,10 @@ export default function AgentTransactionsTable({ className = '' }: AgentTransact
             <div className={`bg-white p-6 rounded-lg border border-gray-300 ${className}`}>
                 <div className="text-center text-gray-500">
                     <p className="mb-2">
-                        No hay transacciones para los agentes confirmados.
+                        No hay transacciones para los representantes confirmados.
                     </p>
                     <p className="text-sm text-gray-400">
-                        Algunas transacciones no están vinculadas a agentes confirmados.
+                        Algunas transacciones no están vinculadas a representantes confirmados.
                         Estas no se muestran aquí.
                     </p>
                 </div>
@@ -178,7 +178,7 @@ export default function AgentTransactionsTable({ className = '' }: AgentTransact
             {/* Unmatched transactions note (if any) */}
             {stats.pendientes > 0 && (
                 <div className="mt-4 text-sm text-gray-500 text-center">
-                    Algunas transacciones no están vinculadas a agentes confirmados.
+                    Algunas transacciones no están vinculadas a representantes confirmados.
                 </div>
             )}
         </div>

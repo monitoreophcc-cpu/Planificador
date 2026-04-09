@@ -10,60 +10,60 @@ const ACTION_STYLES: Record<
 > = {
   // Incident Actions (Amber/Yellow)
   INCIDENT_CREATED: {
-    label: 'Incidencia Creada',
+    label: 'Incidencia creada',
     bg: '#fefce8',
     text: '#a16207',
   },
   INCIDENT_DELETED: {
-    label: 'Incidencia Eliminada',
+    label: 'Incidencia eliminada',
     bg: '#fff7ed',
     text: '#c2410c',
   },
 
   // Planning Actions (Blue)
   OVERRIDE_APPLIED: {
-    label: 'Cambio de Turno',
+    label: 'Cambio manual',
     bg: '#eff6ff',
     text: '#1d4ed8',
   },
   OVERRIDE_REVERTED: {
-    label: 'Cambio Revertido',
+    label: 'Cambio deshecho',
     bg: '#e0e7ff',
     text: '#312e81',
   },
 
   // Rule Actions (Green)
   COVERAGE_RULE_CREATED: {
-    label: 'Regla Creada',
+    label: 'Regla creada',
     bg: '#f0fdf4',
     text: '#15803d',
   },
   COVERAGE_RULE_UPDATED: {
-    label: 'Regla Actualizada',
+    label: 'Regla actualizada',
     bg: '#dcfce7',
     text: '#166534',
   },
   COVERAGE_RULE_DELETED: {
-    label: 'Regla Eliminada',
+    label: 'Regla eliminada',
     bg: '#f0fdf4',
     text: '#15803d',
   },
 
   // Calendar Actions (Amber/Yellow)
   SPECIAL_DAY_SET: {
-    label: 'Día Especial',
+    label: 'Día especial',
     bg: '#fef9c3',
     text: '#854d0e',
   },
   SPECIAL_DAY_CLEARED: {
-    label: 'Día Normalizado',
+    label: 'Día normal',
     bg: '#fefce8',
     text: '#a16207',
   },
 
   // System Actions (Red/Gray)
   APP_STATE_RESET: {
-    label: 'Reset de Sistema',
+    label: 'Borrado general',
     bg: '#fee2e2',
     text: '#991b1b',
   },

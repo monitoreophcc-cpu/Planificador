@@ -5,12 +5,9 @@ import type {
   DayInfo,
   ShiftType,
 } from '@/domain/types'
-import { ManagerScheduleManagement } from '../settings/ManagerScheduleManagement'
 import { useAppStore } from '@/store/useAppStore'
-import { useEditMode } from '@/hooks/useEditMode'
 import { useWeekNavigator } from '@/hooks/useWeekNavigator'
 import { useWeeklyPlan } from '@/hooks/useWeeklyPlan'
-import { PlanningSectionHeader } from './PlanningSectionHeader'
 import {
   PlanningSectionViewTabs,
   type PlanningSectionViewMode,
@@ -54,8 +51,6 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     specialSchedules: s.specialSchedules,
     showConfirm: s.showConfirm,
   }))
-
-  const { mode } = useEditMode()
 
   const {
     weekDays,
@@ -120,24 +115,9 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '18px',
-        padding: 'var(--space-lg)',
-        borderRadius: '28px',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)',
-        border: '1px solid rgba(255,255,255,0.18)',
+        gap: '20px',
       }}
     >
-      <PlanningSectionHeader
-        activeShift={activeShift}
-        highlightAdminOverride={mode === 'ADMIN_OVERRIDE'}
-        isCurrentWeek={isCurrentWeek}
-        weekLabel={weekLabel}
-        onGoToday={handleGoToday}
-        onPrevWeek={handlePrevWeek}
-        onNextWeek={handleNextWeek}
-      />
-
       <PlanningSectionViewTabs
         activeShift={activeShift}
         viewMode={viewMode}
@@ -158,12 +138,19 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         assignmentsMap={assignmentsMap}
         coverageData={coverageData}
         agentsToRender={agentsToRender}
+        incidents={incidents}
+        isCurrentWeek={isCurrentWeek}
         onEditDay={setEditingDay}
+        onGoToday={handleGoToday}
+        onNextWeek={handleNextWeek}
         onNavigateToSettings={onNavigateToSettings}
         onTogglePlanOverride={togglePlanOverride}
         onCellContextMenu={handleCellContextMenu}
+        onPrevWeek={handlePrevWeek}
+        representatives={representatives}
         viewMode={viewMode}
         weekDays={weekDays}
+        weekLabel={weekLabel}
         weeklyPlan={weeklyPlan}
       />
 

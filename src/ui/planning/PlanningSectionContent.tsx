@@ -2,6 +2,7 @@
 
 import type {
   DayInfo,
+  Incident,
   ISODate,
   Representative,
   ShiftType,
@@ -18,7 +19,11 @@ type PlanningSectionContentProps = {
   assignmentsMap: PlannerAssignmentsMap
   coverageData: Record<ISODate, EffectiveCoverageResult>
   agentsToRender: Representative[]
+  incidents: Incident[]
+  isCurrentWeek: boolean
   onEditDay: React.Dispatch<React.SetStateAction<DayInfo | null>>
+  onGoToday: () => void
+  onNextWeek: () => void
   onNavigateToSettings: () => void
   onTogglePlanOverride: (
     representativeId: string,
@@ -29,8 +34,11 @@ type PlanningSectionContentProps = {
     date: ISODate,
     event: React.MouseEvent
   ) => void
+  onPrevWeek: () => void
+  representatives: Representative[]
   viewMode: PlanningSectionViewMode
   weekDays: DayInfo[]
+  weekLabel: string
   weeklyPlan: WeeklyPlan | null
 }
 
@@ -39,12 +47,19 @@ export function PlanningSectionContent({
   assignmentsMap,
   coverageData,
   agentsToRender,
+  incidents,
+  isCurrentWeek,
   onEditDay,
+  onGoToday,
+  onNextWeek,
   onNavigateToSettings,
   onTogglePlanOverride,
   onCellContextMenu,
+  onPrevWeek,
+  representatives,
   viewMode,
   weekDays,
+  weekLabel,
   weeklyPlan,
 }: PlanningSectionContentProps) {
   if (viewMode !== 'OPERATIONAL') {
@@ -57,12 +72,19 @@ export function PlanningSectionContent({
       assignmentsMap={assignmentsMap}
       coverageData={coverageData}
       agents={agentsToRender}
+      incidents={incidents}
+      isCurrentWeek={isCurrentWeek}
+      representatives={representatives}
       weekDays={weekDays}
+      weekLabel={weekLabel}
       weeklyPlan={weeklyPlan}
       onCellClick={onTogglePlanOverride}
       onCellContextMenu={onCellContextMenu}
       onEditDay={onEditDay}
+      onGoToday={onGoToday}
+      onNextWeek={onNextWeek}
       onNavigateToSettings={onNavigateToSettings}
+      onPrevWeek={onPrevWeek}
     />
   )
 }
