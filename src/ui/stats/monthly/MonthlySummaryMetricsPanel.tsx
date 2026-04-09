@@ -3,6 +3,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { AlertTriangle, FileText, Plane } from 'lucide-react'
 import type { MonthlySummaryMetrics } from './monthlySummaryMetrics'
+import { UI_GLOSSARY } from '@/ui/copy/glossary'
 
 interface MetricCardProps {
   icon: LucideIcon
@@ -94,7 +95,7 @@ export function MonthlySummaryMetricsPanel({
       />
       <MetricCard
         icon={AlertTriangle}
-        label="Agentes con ≥10 pts"
+        label={`${UI_GLOSSARY.representative.plural} con ≥10 pts`}
         value={metrics.atRisk}
         color="var(--text-danger)"
       />

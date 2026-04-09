@@ -66,7 +66,7 @@ export function useAuditDashboard() {
 
       if (!days) {
         alert(
-          'No se puede generar snapshot: faltan datos de calendario para esta semana.'
+          'No se puede guardar la semana: faltan datos de calendario para estos días.'
         )
         return
       }
@@ -104,7 +104,7 @@ export function useAuditDashboard() {
 
       if (!success) {
         alert(
-          'Error crítico: El snapshot fue rechazado por violación de integridad de cadena.'
+          'No se pudo guardar la semana porque la validación interna falló.'
         )
         return
       }
@@ -122,7 +122,7 @@ export function useAuditDashboard() {
       })
     } catch (error) {
       console.error(error)
-      alert('Error generando snapshot')
+      alert('No se pudo guardar la semana.')
     } finally {
       setIsSnapshotting(false)
     }

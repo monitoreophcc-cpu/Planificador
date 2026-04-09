@@ -16,7 +16,7 @@ describe('systemTrustOverviewUtils', () => {
         true
       )
     ).toEqual({
-      title: 'Cola vacia',
+      title: 'Cola vacía',
       description: 'No hay cambios pendientes por subir a la nube.',
       tone: 'success',
     })
@@ -54,7 +54,7 @@ describe('systemTrustOverviewUtils', () => {
     ).toEqual({
       title: 'Cola pausada',
       description:
-        'Hay cambios preparados, pero hace falta una sesion activa para enviarlos a la nube.',
+        'Hay cambios preparados, pero hace falta una sesión activa para enviarlos a la nube.',
       tone: 'neutral',
     })
   })

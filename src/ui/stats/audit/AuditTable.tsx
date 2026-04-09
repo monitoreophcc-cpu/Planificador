@@ -36,7 +36,7 @@ export function AuditTable({ events }: Props) {
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        No hay eventos de auditoría registrados.
+        No hay movimientos del sistema registrados.
       </div>
     )
   }
@@ -70,10 +70,10 @@ export function AuditTable({ events }: Props) {
             marginBottom: '8px',
           }}
         >
-          Bitácora forense
+          Registro reciente
         </div>
         <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-          Eventos recientes del sistema
+          Movimientos recientes del sistema
         </div>
         <div style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
           {events.length} evento(s) registrados para consulta histórica.
@@ -84,9 +84,9 @@ export function AuditTable({ events }: Props) {
         <thead>
           <tr>
             <th style={tableHeaderStyle}>Fecha</th>
-            <th style={tableHeaderStyle}>Actor</th>
-            <th style={tableHeaderStyle}>Acción</th>
-            <th style={tableHeaderStyle}>Entidad</th>
+            <th style={tableHeaderStyle}>Hecho por</th>
+            <th style={tableHeaderStyle}>Cambio</th>
+            <th style={tableHeaderStyle}>Registro</th>
             <th style={tableHeaderStyle}>Detalle</th>
           </tr>
         </thead>

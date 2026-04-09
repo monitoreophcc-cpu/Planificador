@@ -33,9 +33,9 @@ export function DailyLogView() {
     ? selectedRow.isUnassigned
       ? 'Su turno aparece sin cobertura ahora mismo.'
       : selectedRow.isCovered
-        ? `Actualmente cubierto por ${selectedRow.coveredByName ?? 'otro agente'}.`
+        ? `Actualmente cubierto por ${selectedRow.coveredByName ?? 'otro representante'}.`
         : selectedRow.isCovering
-          ? `Actualmente está cubriendo a ${selectedRow.coveringName ?? 'otro agente'}.`
+          ? `Actualmente está cubriendo a ${selectedRow.coveringName ?? 'otro representante'}.`
           : selectedRow.isOperationallyAbsent || selectedRow.isAbsent
             ? 'Figura como ausente en la operación actual.'
             : 'Listo para registrar un evento sobre esta ficha.'
@@ -61,7 +61,7 @@ export function DailyLogView() {
 
     if (selectedRow.isCovering) {
       pills.push({
-        label: `Cubre a ${selectedRow.coveringName ?? 'otro agente'}`,
+        label: `Cubre a ${selectedRow.coveringName ?? 'otro representante'}`,
         tone: {
           accent: 'var(--accent)',
           background: 'rgba(var(--accent-rgb), 0.08)',
@@ -72,7 +72,7 @@ export function DailyLogView() {
 
     if (selectedRow.isCovered) {
       pills.push({
-        label: `Cubierto por ${selectedRow.coveredByName ?? 'otro agente'}`,
+        label: `Cubierto por ${selectedRow.coveredByName ?? 'otro representante'}`,
         tone: {
           accent: 'var(--accent-strong)',
           background: 'rgba(var(--accent-rgb), 0.08)',

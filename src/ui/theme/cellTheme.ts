@@ -1,11 +1,15 @@
 import type { VisualVariant } from '@/application/ui-adapters/cellState'
-import { Check, Sun, XCircle, LucideIcon } from 'lucide-react'
+import { Check, LucideIcon } from 'lucide-react'
+import { PLANNER_THEME } from './plannerTheme'
 
 export interface CellTheme {
-    bg: string
-    fg: string
-    border?: string
-    icon?: LucideIcon
+  bg: string
+  fg: string
+  border: string
+  hoverBg?: string
+  hoverBorder?: string
+  shadow?: string
+  icon?: LucideIcon
 }
 
 /**
@@ -22,46 +26,60 @@ export interface CellTheme {
  * - Working → Blanco + Checkmark (Descanso visual)
  */
 export const CELL_THEME: Record<VisualVariant, CellTheme> = {
-    WORKING: {
-        bg: '#ffffff',
-        fg: '#15803d',
-        icon: Check,
-    },
+  WORKING: {
+    bg: 'transparent',
+    fg: PLANNER_THEME.success,
+    border: 'transparent',
+    hoverBg: 'rgba(255, 255, 255, 0.04)',
+    hoverBorder: 'transparent',
+    icon: Check,
+  },
 
-    OFF: {
-        bg: 'transparent', // Neutral, no attention
-        fg: '#9ca3af',     // Muted gray
-        border: 'none',
-    },
+  OFF: {
+    bg: PLANNER_THEME.offBg,
+    fg: PLANNER_THEME.offText,
+    border: PLANNER_THEME.offBorder,
+    hoverBg: 'rgba(255, 255, 255, 0.05)',
+    hoverBorder: PLANNER_THEME.offBorder,
+  },
 
-    VACATION: {
-        bg: 'hsl(200, 70%, 94%)',
-        fg: 'hsl(200, 55%, 30%)',
-    },
+  VACATION: {
+    bg: PLANNER_THEME.vacationBg,
+    fg: PLANNER_THEME.vacationText,
+    border: PLANNER_THEME.vacationBorder,
+    hoverBg: 'rgba(255, 255, 255, 0.05)',
+    hoverBorder: PLANNER_THEME.vacationBorder,
+  },
 
-    LICENSE: {
-        bg: 'hsl(265, 60%, 95%)',
-        fg: 'hsl(265, 40%, 35%)',
-    },
+  LICENSE: {
+    bg: PLANNER_THEME.licenseBg,
+    fg: PLANNER_THEME.licenseText,
+    border: PLANNER_THEME.licenseBorder,
+    hoverBg: 'rgba(255, 255, 255, 0.05)',
+    hoverBorder: PLANNER_THEME.licenseBorder,
+  },
 
-    HOLIDAY: {
-        bg: 'hsl(142, 60%, 94%)',
-        fg: 'hsl(35, 90%, 30%)',
-        border: 'hsl(35, 90%, 60%)',
-        icon: Sun,
-    },
+  HOLIDAY: {
+    bg: PLANNER_THEME.holidayBg,
+    fg: PLANNER_THEME.holidayText,
+    border: PLANNER_THEME.holidayBorder,
+    hoverBg: 'rgba(255, 255, 255, 0.05)',
+    hoverBorder: PLANNER_THEME.holidayBorder,
+  },
 
-    ABSENT: {
-        bg: 'hsl(0, 85%, 92%)',
-        fg: 'hsl(0, 70%, 25%)',
-        border: 'hsl(0, 85%, 60%)',
-        icon: XCircle,
-    },
+  ABSENT: {
+    bg: PLANNER_THEME.absenceBg,
+    fg: PLANNER_THEME.absenceText,
+    border: PLANNER_THEME.absenceBorder,
+    hoverBg: 'rgba(255, 255, 255, 0.05)',
+    hoverBorder: PLANNER_THEME.absenceBorder,
+  },
 
-    ABSENT_JUSTIFIED: {
-        bg: 'hsl(0, 60%, 97%)', // Much lighter red (Almost white-red)
-        fg: 'hsl(0, 60%, 40%)', // Softer text
-        border: 'hsl(0, 60%, 80%)', // Soft border
-        icon: Check, // Semantic "OK"
-    },
+  ABSENT_JUSTIFIED: {
+    bg: PLANNER_THEME.justifiedBg,
+    fg: PLANNER_THEME.justifiedText,
+    border: PLANNER_THEME.justifiedBorder,
+    hoverBg: 'rgba(255, 255, 255, 0.05)',
+    hoverBorder: PLANNER_THEME.justifiedBorder,
+  },
 }

@@ -4,8 +4,6 @@ import React from 'react'
 import type {
   Representative,
   DayInfo,
-  DailyPresence,
-  RepresentativeId,
   ISODate,
   ShiftType,
   WeeklyPlan,
@@ -15,7 +13,7 @@ import { PlannerAssignmentsMap } from '@/application/ui-adapters/getEffectiveAss
 import { mapEffectiveDutyToCellState } from '@/application/ui-adapters/mapEffectiveDutyToCellState'
 import { PLANNER_WIDTHS } from './constants'
 import { useAppStore } from '@/store/useAppStore'
-import { CellBadge } from '@/application/ui-adapters/cellState'
+import { PLANNER_THEME } from '@/ui/theme/plannerTheme'
 
 interface PlanRowProps {
   agent: Representative
@@ -38,6 +36,7 @@ export const PlanRow = React.memo(function PlanRow({
   onCellClick,
   onCellContextMenu,
 }: PlanRowProps) {
+  const [isHovered, setIsHovered] = React.useState(false)
   const { representatives } = useAppStore(s => ({
     representatives: s.representatives,
   }))
@@ -47,27 +46,44 @@ export const PlanRow = React.memo(function PlanRow({
 
   return (
     <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         display: 'flex',
         alignItems: 'stretch',
-        borderBottom: '1px solid #eee',
-        minHeight: '45px',
-        background: isAlternate ? '#f9fafb' : 'white', // Zebra Horizontal
+        borderBottom: `1px solid ${PLANNER_THEME.border}`,
+        minHeight: '50px',
+        background: isHovered
+          ? 'rgba(47, 128, 237, 0.14)'
+          : isAlternate
+            ? 'rgba(255, 255, 255, 0.045)'
+            : 'rgba(255, 255, 255, 0.015)',
+        transition: 'background-color 120ms ease',
       }}
     >
       <div
         style={{
-          padding: '8px 12px',
-          fontWeight: 500,
+          padding: '8px 14px 8px 18px',
+          fontWeight: 700,
+          fontSize: '0.94rem',
           width: `${PLANNER_WIDTHS.AGENT_NAME}px`,
           minWidth: `${PLANNER_WIDTHS.AGENT_NAME}px`,
           display: 'flex',
           alignItems: 'center',
+          color: PLANNER_THEME.text,
+          textShadow: isHovered ? '0 0 18px rgba(47, 128, 237, 0.18)' : 'none',
         }}
       >
         {agent.name}
       </div>
-      <div style={{ flex: 1, display: 'flex', gap: '4px', paddingRight: '4px' }}>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          gap: '4px',
+          padding: '2px 10px 2px 0',
+        }}
+      >
         {weekDays.map((day) => {
           // Lookup effective duty from adapter map
           const effectiveDuty = assignmentsMap[agent.id]?.[day.date]?.[activeShift]

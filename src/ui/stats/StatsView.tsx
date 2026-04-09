@@ -28,23 +28,23 @@ export function StatsView() {
   const activeMeta =
     activeTab === 'monthly'
       ? {
-          eyebrow: 'Lectura mensual',
-          title: 'Resumen, tendencias y focos de incidencia',
+          eyebrow: 'Resumen del mes',
+          title: 'Resumen y alertas del mes',
           description:
-            'Una vista para entender rápidamente dónde se está tensionando la operación y qué personas necesitan atención.',
+            'Una vista para entender rápido dónde se está tensando la operación y qué personas conviene revisar.',
         }
       : activeTab === 'points'
         ? {
-            eyebrow: 'Disciplina operativa',
-            title: 'Puntos e incidencias punitivas',
+            eyebrow: 'Seguimiento de incidencias',
+            title: 'Incidencias y puntos del mes',
             description:
               'Seguimiento mensual por rol y turno para leer acumulados sin perder claridad.',
           }
         : {
-            eyebrow: 'Lectura institucional',
-            title: 'Riesgo, desempeño y análisis comparativo',
+            eyebrow: 'Lectura general',
+            title: 'Comparativos y lectura general',
             description:
-              'Reportes ejecutivos y análisis de períodos para entender el comportamiento operativo con más contexto.',
+              'Vistas comparativas y reportes para entender mejor cómo cambió la operación en el período.',
           }
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
@@ -110,7 +110,7 @@ export function StatsView() {
               letterSpacing: '-0.03em',
             }}
           >
-            Reportes
+            {activeMeta.title}
           </h2>
           <p
             style={{
@@ -148,13 +148,13 @@ export function StatsView() {
             style={tabStyle(activeTab === 'points')}
             onClick={() => setActiveTab('points')}
           >
-            Reporte de Puntos
+            Incidencias y puntos
           </button>
           <button
             style={tabStyle(activeTab === 'executive')}
             onClick={() => setActiveTab('executive')}
           >
-            Reporte Operativo
+            Comparativos
           </button>
         </div>
       </section>

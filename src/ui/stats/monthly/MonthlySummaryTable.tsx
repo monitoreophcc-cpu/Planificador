@@ -5,6 +5,7 @@ import type {
   PersonMonthlySummary,
   RiskLevel,
 } from '@/domain/analytics/types'
+import { UI_GLOSSARY } from '@/ui/copy/glossary'
 
 interface MonthlySummaryTableProps {
   data: PersonMonthlySummary[]
@@ -41,7 +42,7 @@ function RiskBadge({ level }: { level: RiskLevel }) {
     }
   > = {
     danger: {
-      label: 'Riesgo alto',
+      label: 'Revisar',
       color: 'var(--text-danger)',
       background: 'var(--bg-danger)',
       border: 'var(--border-danger)',
@@ -202,9 +203,12 @@ export function MonthlySummaryTable({
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <TableMetaChip label="Agentes" value={String(sortedData.length)} />
           <TableMetaChip
-            label="En atención"
+            label={UI_GLOSSARY.representative.plural}
+            value={String(sortedData.length)}
+          />
+          <TableMetaChip
+            label="Para revisar"
             value={String(attentionCount)}
             tone={attentionCount > 0 ? 'warning' : 'default'}
           />

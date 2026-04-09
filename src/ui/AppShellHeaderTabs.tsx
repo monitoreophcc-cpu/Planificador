@@ -2,6 +2,7 @@
 
 import { BarChart3, ClipboardList, CalendarDays, SlidersHorizontal } from 'lucide-react'
 import type { AppShellView } from './appShellTypes'
+import { UI_GLOSSARY } from './copy/glossary'
 
 type AppShellHeaderTabsProps = {
   activeView: AppShellView
@@ -16,7 +17,7 @@ const APP_SHELL_VIEWS: Array<{
   { id: 'DAILY_LOG', label: 'Registro Diario', icon: ClipboardList },
   { id: 'PLANNING', label: 'Planificación', icon: CalendarDays },
   { id: 'STATS', label: 'Reportes', icon: BarChart3 },
-  { id: 'SETTINGS', label: 'Configuración', icon: SlidersHorizontal },
+  { id: 'SETTINGS', label: UI_GLOSSARY.settingsSection, icon: SlidersHorizontal },
 ]
 
 export function AppShellHeaderTabs({

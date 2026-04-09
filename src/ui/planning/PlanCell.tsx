@@ -1,6 +1,7 @@
 import React from 'react'
 import { ResolvedCellState } from '@/application/ui-adapters/cellState'
 import { CELL_THEME } from '@/ui/theme/cellTheme'
+import { PLANNER_THEME } from '@/ui/theme/plannerTheme'
 import type { ISODate } from '../../domain/types'
 
 interface PlanCellProps {
@@ -27,10 +28,14 @@ export const PlanCell = React.memo(function PlanCell({
 }: PlanCellProps) {
   const theme = CELL_THEME[resolved.variant]
   const Icon = theme.icon
+  const isInteractive = resolved.canEdit || resolved.canContextMenu
+  const showPrimaryPill = Boolean(resolved.label)
+  const showSecondaryBadge =
+    resolved.badge === 'CUBIERTO' || resolved.badge === 'CUBRIENDO'
 
   const style: React.CSSProperties = {
     flex: 1,
-    padding: '10px 8px',
+    padding: '5px 4px',
     textAlign: 'center',
     fontSize: '12px',
     fontWeight: 600,
@@ -41,34 +46,67 @@ export const PlanCell = React.memo(function PlanCell({
     alignItems: 'center',
     justifyContent: 'center',
 
-    gap: '4px',
-    background: theme.bg,
+    gap: '2px',
+    minHeight: '100%',
+    background: 'transparent',
     color: theme.fg,
-    border: theme.border ? `1px solid ${theme.border}` : '1px solid #eee',
-    borderLeft: '1px solid #eee',
-    cursor: resolved.canEdit ? 'pointer' : 'default',
-    opacity: resolved.canEdit ? 1 : 0.6,
-    borderRadius: '6px',
-    transition: 'background-color 120ms ease, transform 100ms ease, box-shadow 120ms ease',
+    border: '1px solid transparent',
+    cursor: isInteractive ? 'pointer' : 'default',
+    opacity: 1,
+    borderRadius: '10px',
+    transition: 'background 140ms ease, border-color 140ms ease, transform 100ms ease',
   }
 
-  // Badge styling
-  const badgeStyle: React.CSSProperties = {
-    fontSize: '9px',
+  const primaryPillStyle: React.CSSProperties = {
+    fontSize:
+      resolved.variant === 'ABSENT' || resolved.variant === 'ABSENT_JUSTIFIED'
+        ? '9px'
+        : '10px',
     fontWeight: 700,
-    padding: '2px 6px',
-    borderRadius: '4px',
-    marginTop: '2px',
+    padding: '3px 8px',
+    borderRadius: '8px',
+    letterSpacing: '0.01em',
+    background: theme.bg,
+    color: theme.fg,
+    border: `1px solid ${theme.border}`,
+    lineHeight: 1,
     whiteSpace: 'nowrap',
   }
 
-  const badgeColors: Record<string, { bg: string; fg: string }> = {
-    CUBIERTO: { bg: '#dbeafe', fg: '#1e40af' },
-    CUBRIENDO: { bg: '#f3e8ff', fg: '#6b21a8' },
-    AUSENCIA: { bg: '#fee2e2', fg: '#991b1b' },
-    VACACIONES: { bg: '#d1fae5', fg: '#065f46' },
-    LICENCIA: { bg: '#fce7f3', fg: '#9f1239' },
+  const badgeStyle: React.CSSProperties = {
+    fontSize: '8px',
+    fontWeight: 700,
+    padding: '2px 6px',
+    borderRadius: '999px',
+    whiteSpace: 'nowrap',
+    letterSpacing: '0.03em',
+    border: '1px solid transparent',
+    textTransform: 'uppercase',
   }
+
+  const badgeColors: Record<string, { bg: string; fg: string; border: string }> = {
+    CUBIERTO: {
+      bg: PLANNER_THEME.coverageCoveredBg,
+      fg: PLANNER_THEME.coverageCoveredText,
+      border: PLANNER_THEME.coverageCoveredBorder,
+    },
+    CUBRIENDO: {
+      bg: PLANNER_THEME.coverageCoveringBg,
+      fg: PLANNER_THEME.coverageCoveringText,
+      border: PLANNER_THEME.coverageCoveringBorder,
+    },
+    AUSENCIA: { bg: theme.bg, fg: theme.fg, border: theme.border },
+    VACACIONES: { bg: theme.bg, fg: theme.fg, border: theme.border },
+    LICENCIA: { bg: theme.bg, fg: theme.fg, border: theme.border },
+  }
+
+  const interactiveState = isInteractive
+    ? {
+        background: theme.hoverBg ?? 'rgba(255, 255, 255, 0.04)',
+        borderColor: theme.hoverBorder ?? 'transparent',
+        transform: 'translateY(-1px)',
+      }
+    : undefined
 
   return (
     <div
@@ -78,6 +116,16 @@ export const PlanCell = React.memo(function PlanCell({
       title={resolved.tooltip} // ✅ Native tooltip avoids clipping issues
       tabIndex={0}
       style={style}
+      onMouseEnter={e => {
+        if (!interactiveState) return
+        Object.assign(e.currentTarget.style, interactiveState)
+      }}
+      onMouseLeave={e => {
+        if (!interactiveState) return
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.borderColor = 'transparent'
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
       onClick={resolved.canEdit ? onClick : undefined}
       onContextMenu={resolved.canContextMenu ? onContextMenu : undefined}
       onKeyDown={e => {
@@ -87,26 +135,30 @@ export const PlanCell = React.memo(function PlanCell({
           onClick()
         }
       }}
+      onFocus={e => {
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+        e.currentTarget.style.borderColor = PLANNER_THEME.focusRing
+      }}
+      onBlur={e => {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.borderColor = 'transparent'
+      }}
     >
-      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-        {Icon && <Icon size={14} strokeWidth={2} />}
-        {resolved.label && <span>{resolved.label}</span>}
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center', minHeight: '16px' }}>
+        {!showPrimaryPill && Icon && <Icon size={15} strokeWidth={2.4} />}
+        {showPrimaryPill && <span style={primaryPillStyle}>{resolved.label}</span>}
       </div>
 
-      {/* 🔄 NEW: Render badge if present */}
-      {resolved.badge && (
+      {showSecondaryBadge && resolved.badge && (
         <div
           style={{
             ...badgeStyle,
             background: badgeColors[resolved.badge]?.bg || '#f3f4f6',
             color: badgeColors[resolved.badge]?.fg || '#374151',
+            borderColor: badgeColors[resolved.badge]?.border || '#d1d5db',
           }}
         >
-          {resolved.badge === 'CUBIERTO' && '🔄'}
-          {resolved.badge === 'CUBRIENDO' && '🤝'}
-          {resolved.badge === 'AUSENCIA' && '⚠️'}
-          {resolved.badge === 'VACACIONES' && '🏖️'}
-          {resolved.badge === 'LICENCIA' && '📋'}
+          {resolved.badge === 'CUBIERTO' ? 'Cubierto' : 'Cubre'}
         </div>
       )}
     </div>

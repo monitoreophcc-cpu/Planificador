@@ -91,7 +91,7 @@ export function PlanningSectionHeader({
               flexWrap: 'wrap',
             }}
           >
-            Planificacion
+            Planificación
             <span
               style={{
                 fontSize: '12px',
@@ -110,15 +110,15 @@ export function PlanningSectionHeader({
                     : '1px solid rgba(var(--accent-rgb), 0.18)',
               }}
             >
-              {activeShift === 'DAY' ? 'Turno Dia' : 'Turno Noche'}
+              {activeShift === 'DAY' ? 'Turno Día' : 'Turno Noche'}
             </span>
           </h2>
           <HelpPanel
-            title="Como usar el planner"
+            title="Cómo usar el planner"
             points={[
-              'Click en una celda para cambiar el turno del agente',
-              'Click derecho para gestionar swaps y coberturas',
-              'El grafico lateral muestra la cobertura requerida vs actual',
+              'Haz clic en una celda para cambiar el turno del representante',
+              'Haz clic derecho para gestionar cambios y coberturas',
+              'El gráfico de cobertura compara lo requerido con lo asignado',
             ]}
           />
         </div>

@@ -51,7 +51,7 @@ export function CoverageRulesPanel({ onNavigateToSettings }: { onNavigateToSetti
           gap: '4px',
         }}
       >
-        Ver configuración →
+        Ver ajustes →
       </button>
     </div>
   )

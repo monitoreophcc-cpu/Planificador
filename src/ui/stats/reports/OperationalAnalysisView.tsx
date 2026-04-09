@@ -104,14 +104,14 @@ export default function OperationalAnalysisView() {
             color: 'var(--accent)',
             marginBottom: '8px',
           }}
-        >
-          Investigación histórica
+          >
+          Consulta histórica
         </div>
         <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 8px', color: 'var(--text-main)' }}>
-          Análisis de Períodos
+          Comparar períodos
         </h2>
         <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
-          Este modo permite investigar períodos específicos sin afectar el reporte institucional.
+          Esta vista ayuda a comparar períodos específicos sin afectar el reporte principal.
         </p>
       </div>
 
@@ -136,13 +136,13 @@ export default function OperationalAnalysisView() {
               marginBottom: '8px',
             }}
           >
-            Configuración del análisis
+            Parámetros de comparación
           </div>
           <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-            Define el período base y el punto de contraste
+            Elige qué período revisar y con cuál compararlo
           </div>
           <div style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Úsalo para estudiar una mejora, un deterioro o un tramo específico frente a otro comparable.
+            Úsalo para revisar una mejora, un deterioro o un tramo puntual frente a otro comparable.
           </div>
         </div>
 
@@ -187,8 +187,8 @@ export default function OperationalAnalysisView() {
           }}
         >
           {!hasChanged && analysisParams !== null
-            ? 'Análisis actualizado'
-            : 'Ejecutar análisis'}
+            ? 'Resultados al día'
+            : 'Actualizar resultados'}
         </button>
       </div>
 
@@ -222,8 +222,8 @@ export default function OperationalAnalysisView() {
           }}
         >
           <p style={{ margin: 0, fontSize: '14px' }}>
-            Selecciona un período base y un modo de comparación, luego haz clic en
-            <strong> &quot;Ejecutar análisis&quot;</strong> para ver los resultados.
+            Selecciona un período base y una comparación, luego haz clic en
+            <strong> &quot;Actualizar resultados&quot;</strong> para ver el cambio entre ambos.
           </p>
         </div>
       ) : (

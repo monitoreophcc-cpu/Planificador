@@ -1,6 +1,7 @@
 'use client'
 
 import type { ShiftType } from '@/domain/types'
+import { PLANNER_THEME } from '@/ui/theme/plannerTheme'
 
 export type PlanningSectionViewMode = 'OPERATIONAL' | 'MANAGERIAL'
 
@@ -15,20 +16,18 @@ interface PlanningSectionViewTabsProps {
 
 function shiftTabStyle(isActive: boolean) {
   return {
-    padding: '10px 14px',
+    padding: '14px 34px',
     cursor: 'pointer',
-    border: `1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent'}`,
-    color: isActive ? 'var(--accent-strong)' : 'var(--text-muted)',
-    fontWeight: isActive
-      ? 'var(--font-weight-semibold)'
-      : 'var(--font-weight-medium)',
-    background: isActive
-      ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
-      : 'transparent',
-    fontSize: '14px',
-    marginRight: '10px',
-    borderRadius: '16px',
-    boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+    border: `1px solid ${
+      isActive ? PLANNER_THEME.controlBorderStrong : PLANNER_THEME.controlBorder
+    }`,
+    color: isActive ? PLANNER_THEME.controlText : PLANNER_THEME.controlTextMuted,
+    fontWeight: isActive ? 700 : 500,
+    background: isActive ? PLANNER_THEME.controlBgActive : PLANNER_THEME.controlBg,
+    fontSize: '1rem',
+    marginRight: '8px',
+    borderRadius: '18px',
+    boxShadow: isActive ? '0 12px 24px rgba(11, 9, 7, 0.18)' : 'none',
   } as const
 }
 
@@ -41,20 +40,19 @@ export function PlanningSectionViewTabs({
   onOpenSwapManager,
 }: PlanningSectionViewTabsProps) {
   return (
-    <div style={{ marginBottom: 'var(--space-lg)' }}>
+    <div style={{ marginBottom: '4px' }}>
       <div
         style={{
-          border: '1px solid var(--shell-border)',
+          border: `1px solid ${PLANNER_THEME.shellBorderStrong}`,
           borderRadius: '22px',
-          background:
-            'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-tint) 100%)',
+          background: PLANNER_THEME.shellSurfaceTinted,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
           flexWrap: 'wrap',
-          padding: '10px 12px',
-          boxShadow: 'var(--shadow-sm)',
+          padding: '14px 16px',
+          boxShadow: PLANNER_THEME.shellShadow,
         }}
       >
         <div
@@ -71,7 +69,7 @@ export function PlanningSectionViewTabs({
             )}
             onClick={onSelectDay}
           >
-            Turno Dia
+            Turno Día
           </button>
           <button
             style={shiftTabStyle(
@@ -93,18 +91,18 @@ export function PlanningSectionViewTabs({
           <button
             onClick={onOpenSwapManager}
             style={{
-              padding: '10px 14px',
-              background: 'linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%)',
-              color: 'var(--text-on-accent)',
-              border: '1px solid rgba(var(--accent-rgb), 0.24)',
-              borderRadius: '16px',
-              fontWeight: 'var(--font-weight-semibold)',
-              fontSize: '14px',
+              padding: '14px 22px',
+              background: PLANNER_THEME.controlBg,
+              color: PLANNER_THEME.controlText,
+              border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+              borderRadius: '18px',
+              fontWeight: 700,
+              fontSize: '1rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 'var(--space-sm)',
-              boxShadow: '0 18px 30px rgba(var(--accent-rgb), 0.16)',
+              gap: '10px',
+              boxShadow: '0 12px 24px rgba(11, 9, 7, 0.18)',
             }}
           >
             <svg

@@ -45,11 +45,11 @@ export function AppShellHeaderSession() {
                 className="app-shell-session__status-label"
                 style={{ color: 'var(--text-main)' }}
               >
-                Sesion no disponible
+                Sesión no disponible
               </span>
             </div>
             <p className="app-shell-session__subcopy">
-              Inicia sesion para activar el respaldo por usuario y mantener la nube al dia.
+              Inicia sesión para activar el respaldo por usuario y mantener la nube al día.
             </p>
           </div>
         </div>
@@ -84,7 +84,7 @@ export function AppShellHeaderSession() {
 
         <div className="app-shell-session__meta">
           <p className="app-shell-session__eyebrow">
-            {loading ? 'Verificando acceso' : 'Sesion activa'}
+            {loading ? 'Verificando acceso' : 'Sesión activa'}
           </p>
           <div className="app-shell-session__name">{loading ? 'Cargando sesión...' : userName}</div>
           <div className="app-shell-session__status-row">

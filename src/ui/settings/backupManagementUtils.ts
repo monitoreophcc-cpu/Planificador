@@ -33,9 +33,9 @@ export function formatBackupKindLabel(
 ): string {
   switch (kind) {
     case 'auto':
-      return 'AUTO'
+      return 'AUTOMÁTICO'
     case 'recovery':
-      return 'RECUPERACION'
+      return 'RECUPERACIÓN'
     default:
       return 'MANUAL'
   }
@@ -46,9 +46,9 @@ export function describeBackupKind(
 ): string {
   switch (kind) {
     case 'auto':
-      return 'Sirve como ultimo punto seguro automatico del navegador.'
+      return 'Sirve como último punto seguro automático del navegador.'
     case 'recovery':
-      return 'Se crea antes de restaurar o importar para que puedas deshacer la recuperacion.'
+      return 'Se crea antes de restaurar o importar para que puedas deshacer la recuperación.'
     default:
       return 'Ideal para guardar un punto seguro antes de cambios grandes o ajustes delicados.'
   }
@@ -56,7 +56,7 @@ export function describeBackupKind(
 
 export function formatBackupSummary(summary: BackupSnapshotSummary): string[] {
   return [
-    `${summary.representatives} reps`,
+    `${summary.representatives} representantes`,
     `${summary.incidents} incidencias`,
     `${summary.swaps} cambios`,
     `${summary.coverageRules} reglas`,
@@ -78,7 +78,7 @@ export function buildRecoveryConfirmationMessage(
     `- ${summary.coverageRules} reglas de cobertura`,
     `- ${summary.coverages} coberturas`,
     '',
-    'Antes de reemplazar el estado actual, la app guardara un respaldo de recuperacion en este navegador.',
+    'Antes de reemplazar el estado actual, la app guardará un respaldo de recuperación en este navegador.',
     '¿Deseas continuar?',
   ].join('\n')
 }

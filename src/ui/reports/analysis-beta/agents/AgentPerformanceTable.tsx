@@ -63,7 +63,7 @@ export function AgentPerformanceTable() {
     }, [data.transactions, processTransactions, resetMonth]);
 
     const copyTableToClipboard = () => {
-        const headers = ['Agente', 'Transacciones', 'Ventas Netas ($)', 'Ticket Promedio ($)'];
+        const headers = ['Representante', 'Transacciones', 'Ventas Netas ($)', 'Ticket Promedio ($)'];
         const rows = agentRecords.map(record => [
             record.agentName,
             record.validTransactions.toString(),
@@ -92,7 +92,7 @@ export function AgentPerformanceTable() {
         return (
             <div className="bg-white rounded-lg border border-gray-200 p-8">
                 <p className="text-gray-500 text-center">
-                    No hay datos de rendimiento de agentes disponibles.
+                    No hay datos de rendimiento de representantes disponibles.
                 </p>
                 <p className="text-sm text-gray-400 text-center mt-2">
                     Carga archivos de transacciones para ver el rendimiento acumulativo.
@@ -107,7 +107,7 @@ export function AgentPerformanceTable() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-semibold text-gray-900">
-                        Rendimiento por Agente
+                        Rendimiento por Representante
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
                         Rango de fechas: <span className="font-medium">
@@ -116,7 +116,7 @@ export function AgentPerformanceTable() {
                                 : 'Sin datos'}
                         </span>
                         {' • '}
-                        {agentRecords.length} agentes
+                        {agentRecords.length} representantes
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -147,7 +147,7 @@ export function AgentPerformanceTable() {
                                     #
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Agente
+                                    Representante
                                 </th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Transacciones

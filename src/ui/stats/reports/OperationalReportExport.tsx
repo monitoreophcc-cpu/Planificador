@@ -24,7 +24,7 @@ export function OperationalReportExport({ report }: { report: OperationalReport 
                     margin: '0 0 4px 0',
                     color: '#111827'
                 }}>
-                    Reporte Operativo Gerencial
+                    Resumen operativo
                 </h1>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#4b5563' }}>
                     <span>
@@ -39,7 +39,7 @@ export function OperationalReportExport({ report }: { report: OperationalReport 
             {/* METRICS TABLE */}
             <div style={{ marginBottom: '32px' }}>
                 <h2 style={{ fontSize: '14px', marginBottom: '12px', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Resumen de Indicadores
+                    Resumen general
                 </h2>
                 <table style={{
                     width: '100%',
@@ -57,9 +57,9 @@ export function OperationalReportExport({ report }: { report: OperationalReport 
                     <tbody>
                         {[
                             { label: 'Incidencias Totales', key: 'incidents' as const },
-                            { label: 'Puntos de Penalización', key: 'points' as const },
-                            { label: 'Ausencias Totales', key: 'absences' as const },
-                            { label: 'Licencias Médicas', key: 'licenses' as const },
+                            { label: 'Puntos acumulados', key: 'points' as const },
+                            { label: 'Ausencias totales', key: 'absences' as const },
+                            { label: 'Licencias médicas', key: 'licenses' as const },
                         ].map((row, idx) => {
                             const currentVal = current.metrics[row.key]
                             const prevVal = comparison.previous.metrics[row.key]
@@ -94,7 +94,7 @@ export function OperationalReportExport({ report }: { report: OperationalReport 
             {/* MANAGERIAL READING */}
             <div style={{ marginBottom: '32px' }}>
                 <h2 style={{ fontSize: '14px', marginBottom: '8px', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Lectura Gerencial
+                    Lectura general
                 </h2>
                 <div style={{
                     padding: '16px',
@@ -111,13 +111,13 @@ export function OperationalReportExport({ report }: { report: OperationalReport 
             {report.risk.needsAttention.length > 0 && (
                 <div style={{ marginBottom: '32px' }}>
                     <h2 style={{ fontSize: '14px', marginBottom: '12px', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Foco de Atención (Top Riesgos)
+                        Personas para revisar
                     </h2>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #9ca3af', fontSize: '10px' }}>
-                                <th align="left" style={{ padding: '4px' }}>Agente</th>
-                                <th align="right" style={{ padding: '4px' }}>Puntos de Penalización</th>
+                                <th align="left" style={{ padding: '4px' }}>Representante</th>
+                                <th align="right" style={{ padding: '4px' }}>Puntos</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -142,7 +142,7 @@ export function OperationalReportExport({ report }: { report: OperationalReport 
                 display: 'flex',
                 justifyContent: 'space-between'
             }}>
-                <span>Generado automáticamente por Planning Engine</span>
+                <span>Generado automáticamente por el sistema</span>
                 <span>{new Date().toLocaleDateString('es-CL')}</span>
             </div>
         </div>

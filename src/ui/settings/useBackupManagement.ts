@@ -91,9 +91,9 @@ export function useBackupManagement(): UseBackupManagementResult {
   const handleExport = () => {
     try {
       exportBackup(buildCurrentBackupPayload(exportState, coverages))
-      showSuccess('Backup exportado exitosamente')
+      showSuccess('Respaldo exportado correctamente')
     } catch (err) {
-      showError(`Error al exportar backup: ${(err as Error).message}`)
+      showError(`Error al exportar el respaldo: ${(err as Error).message}`)
     }
   }
 
@@ -120,7 +120,7 @@ export function useBackupManagement(): UseBackupManagementResult {
         showSuccess(`${result.message} Se guardó un respaldo de recuperación del estado anterior.`)
       }
     } catch (err) {
-      showError(`Error al importar backup: ${(err as Error).message}`)
+      showError(`Error al importar el respaldo: ${(err as Error).message}`)
     }
 
     event.target.value = ''
@@ -130,9 +130,9 @@ export function useBackupManagement(): UseBackupManagementResult {
     try {
       saveBackupToLocalStorage(buildCurrentBackupPayload(exportState, coverages))
       refreshBackupList()
-      showSuccess('Backup guardado en el navegador')
+      showSuccess('Respaldo guardado en este navegador')
     } catch (err) {
-      showError(`Error al guardar backup: ${(err as Error).message}`)
+      showError(`Error al guardar el respaldo: ${(err as Error).message}`)
     }
   }
 
@@ -166,7 +166,7 @@ export function useBackupManagement(): UseBackupManagementResult {
     try {
       const state = loadBackupFromLocalStorage(key)
       if (!state) {
-        showError('No se pudo cargar el backup')
+        showError('No se pudo cargar el respaldo')
         return
       }
 
@@ -174,19 +174,19 @@ export function useBackupManagement(): UseBackupManagementResult {
       const result = await importState(createPayloadFromBackupState(state))
       showSuccess(`${result.message} Se guardó un respaldo de recuperación del estado anterior.`)
     } catch (err) {
-      showError(`Error al restaurar backup: ${(err as Error).message}`)
+      showError(`Error al restaurar el respaldo: ${(err as Error).message}`)
     }
   }
 
   const handleDeleteBackup = (key: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este backup?')) return
+    if (!confirm('¿Estás seguro de que deseas eliminar este respaldo?')) return
 
     try {
       deleteBackupFromLocalStorage(key)
       refreshBackupList()
-      showSuccess('Backup eliminado')
+      showSuccess('Respaldo eliminado')
     } catch (err) {
-      showError(`Error al eliminar backup: ${(err as Error).message}`)
+      showError(`Error al eliminar el respaldo: ${(err as Error).message}`)
     }
   }
 

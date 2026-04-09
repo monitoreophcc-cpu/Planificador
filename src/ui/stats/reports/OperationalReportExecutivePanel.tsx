@@ -143,7 +143,7 @@ export function OperationalReportExecutivePanel({
           tone="danger"
         />
         <ExecutiveMetricCard
-          label="Puntos acumulados"
+          label="Puntos del período"
           value={report.current.metrics.points}
           delta={report.comparison.previous.delta.points}
           icon={TrendingDown}
@@ -191,7 +191,7 @@ export function OperationalReportExecutivePanel({
               marginBottom: '10px',
             }}
           >
-            Lectura del período
+            Resumen del período
           </div>
           <div
             style={{
@@ -227,7 +227,7 @@ export function OperationalReportExecutivePanel({
               }}
             >
               <AlertTriangle size={14} />
-              {report.risk.needsAttention.length} en atención
+              {report.risk.needsAttention.length} para revisar
             </div>
             <div
               style={{
@@ -244,7 +244,7 @@ export function OperationalReportExecutivePanel({
               }}
             >
               <ShieldCheck size={14} />
-              {report.risk.topPerformers.length} destacados
+              {report.risk.topPerformers.length} con mejor resultado
             </div>
           </div>
         </div>
@@ -322,8 +322,8 @@ export function OperationalReportExecutivePanel({
           </div>
           <p style={{ margin: '14px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
             {leadingShiftStats.points > 0 || leadingShiftStats.incidents > 0
-              ? `Es el turno que concentra más presión disciplinaria en el período actual.`
-              : 'No hay presión disciplinaria registrada por turno en este período.'}
+              ? `Es el turno que concentra más incidencias y puntos en este período.`
+              : 'No hay incidencias relevantes por turno en este período.'}
           </p>
         </div>
 
@@ -347,7 +347,7 @@ export function OperationalReportExecutivePanel({
               marginBottom: '10px',
             }}
           >
-            Tipo dominante
+            Incidencia más repetida
           </div>
           <div style={{ fontSize: '19px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
             {leadingIncidentLabel}
@@ -381,7 +381,7 @@ export function OperationalReportExecutivePanel({
                     fontSize: '13px',
                   }}
                 >
-                  <span style={{ color: 'var(--text-muted)' }}>Puntos asociados</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Puntos vinculados</span>
                   <strong style={{ color: 'var(--text-main)' }}>{leadingIncident.points}</strong>
                 </div>
                 <div

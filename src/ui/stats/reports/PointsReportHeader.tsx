@@ -36,7 +36,7 @@ export function PointsReportHeader({
             marginBottom: '8px',
           }}
         >
-          Control disciplinario
+          Seguimiento de incidencias
         </div>
         <h2
           style={{
@@ -47,7 +47,7 @@ export function PointsReportHeader({
             letterSpacing: '-0.02em',
           }}
         >
-          Reporte de Puntos por Incidencia
+          Incidencias y puntos del mes
         </h2>
         <p
           style={{
@@ -56,8 +56,7 @@ export function PointsReportHeader({
             fontSize: '14px',
           }}
         >
-          Resumen mensual de incidencias punitivas y puntos, segmentado por rol
-          y turno.
+          Resumen mensual de incidencias y puntos, ordenado por rol y turno.
         </p>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

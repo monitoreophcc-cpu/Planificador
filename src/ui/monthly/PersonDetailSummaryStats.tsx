@@ -20,9 +20,9 @@ function RiskBadge({ level }: { level: RiskLevel }) {
   }
 
   const labels: Record<RiskLevel, string> = {
-    danger: 'RIESGO',
-    warning: 'ATENCION',
-    ok: 'OK',
+    danger: 'REVISAR',
+    warning: 'ATENCIÓN',
+    ok: 'ESTABLE',
   }
 
   return (
@@ -108,7 +108,7 @@ export function PersonDetailSummaryStats({
             fontWeight: 500,
           }}
         >
-          Estado General
+          Estado general
         </div>
         <RiskBadge level={riskLevel} />
       </div>

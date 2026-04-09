@@ -9,8 +9,8 @@ import { resolveIncidentDates } from '@/domain/incidents/resolveIncidentDates'
 
 export function getPersonDetailEventEmptyMessage(selectedDate: Date | null) {
   return selectedDate
-    ? 'No se registraron incidencias en este dia.'
-    : 'No se registraron incidencias con penalizacion este mes.'
+    ? 'No se registraron incidencias en este día.'
+    : 'No se registraron incidencias con puntos este mes.'
 }
 
 export function buildIncidentDisplay(
@@ -44,8 +44,8 @@ export function buildIncidentDisplay(
         } del ${startFormatted} al ${endFormatted}`,
         workingDaysInfo:
           incident.type === 'VACACIONES'
-            ? `${resolved.dates.length} dias laborables • Retorna ${returnFormatted}`
-            : `${resolved.dates.length} dias naturales • Retorna ${returnFormatted}`,
+            ? `${resolved.dates.length} días laborables • Retorna ${returnFormatted}`
+            : `${resolved.dates.length} días naturales • Retorna ${returnFormatted}`,
       }
     }
   }

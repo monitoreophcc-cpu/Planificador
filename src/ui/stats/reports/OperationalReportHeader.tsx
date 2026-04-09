@@ -4,8 +4,8 @@ import { FileText } from 'lucide-react'
 import type { PeriodKind } from '@/domain/reports/operationalTypes'
 
 const PERIOD_OPTIONS: Array<{ label: string; value: PeriodKind }> = [
-  { label: 'Mes Actual', value: 'MONTH' },
-  { label: 'Trimestre Actual', value: 'QUARTER' },
+  { label: 'Mes actual', value: 'MONTH' },
+  { label: 'Trimestre actual', value: 'QUARTER' },
 ]
 
 interface OperationalReportHeaderProps {
@@ -42,13 +42,13 @@ export function OperationalReportHeader({
               marginBottom: '8px',
             }}
           >
-            Informe institucional
+            Resumen general
           </div>
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-            Reporte Operativo
+            Resumen operativo
           </h2>
           <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-            Evaluación del período <strong>{currentPeriodLabel}</strong>
+            Vista del período <strong>{currentPeriodLabel}</strong>
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -68,10 +68,10 @@ export function OperationalReportHeader({
               fontWeight: 700,
               boxShadow: 'var(--shadow-sm)',
             }}
-            title="Descargar PDF para Jefatura"
+            title="Descargar PDF"
           >
             <FileText size={16} />
-            Exportar PDF
+            Descargar PDF
           </button>
           <select
             onChange={event => onPeriodChange(event.target.value as PeriodKind)}

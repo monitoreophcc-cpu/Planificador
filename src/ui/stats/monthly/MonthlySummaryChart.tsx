@@ -246,6 +246,7 @@ export function MonthlySummaryChart({
 
       <div className="monthly-summary-chart-grid">
         <div
+          className="monthly-summary-chart-grid__chart"
           style={{
             padding: '18px',
             borderRadius: '18px',
@@ -331,7 +332,10 @@ export function MonthlySummaryChart({
           </div>
         </div>
 
-        <aside style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <aside
+          className="monthly-summary-chart-grid__side"
+          style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+        >
           <div
             style={{
               padding: '16px',
@@ -483,128 +487,154 @@ export function MonthlySummaryChart({
               )}
             </div>
           </div>
+        </aside>
 
+        <div
+          className="monthly-summary-chart-grid__people"
+          style={{
+            padding: '16px',
+            borderRadius: '18px',
+            border: '1px solid rgba(202, 189, 168, 0.4)',
+            background:
+              'linear-gradient(180deg, rgba(255,255,255,0.76) 0%, rgba(248,242,233,0.36) 100%)',
+          }}
+        >
           <div
             style={{
-              padding: '16px',
-              borderRadius: '18px',
-              border: '1px solid rgba(202, 189, 168, 0.4)',
-              background:
-                'linear-gradient(180deg, rgba(255,255,255,0.76) 0%, rgba(248,242,233,0.36) 100%)',
+              fontSize: '12px',
+              fontWeight: 800,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              marginBottom: '10px',
             }}
           >
-            <div
-              style={{
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                color: 'var(--text-muted)',
-                marginBottom: '10px',
-              }}
-            >
-              Mayor carga de puntos
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {analysis.topPeople.map((person, index) => {
-                const tone = getRiskTone(person.riskLevel)
+            Mayor carga de puntos
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '10px',
+            }}
+          >
+            {analysis.topPeople.map((person, index) => {
+              const tone = getRiskTone(person.riskLevel)
 
-                return (
+              return (
+                <div
+                  key={person.representativeId}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '14px',
+                    border: '1px solid rgba(202, 189, 168, 0.38)',
+                    background: 'rgba(255,255,255,0.56)',
+                  }}
+                >
                   <div
-                    key={person.representativeId}
                     style={{
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '10px',
                       display: 'grid',
-                      gridTemplateColumns: 'auto minmax(0, 1fr) auto',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px 12px',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(202, 189, 168, 0.38)',
-                      background: 'rgba(255,255,255,0.56)',
+                      placeItems: 'center',
+                      background: tone.background,
+                      border: `1px solid ${tone.border}`,
+                      color: tone.text,
+                      fontSize: '12px',
+                      fontWeight: 800,
                     }}
                   >
+                    #{index + 1}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
                     <div
                       style={{
-                        width: '30px',
-                        height: '30px',
-                        borderRadius: '10px',
-                        display: 'grid',
-                        placeItems: 'center',
-                        background: tone.background,
-                        border: `1px solid ${tone.border}`,
-                        color: tone.text,
-                        fontSize: '12px',
-                        fontWeight: 800,
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: 'var(--text-main)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
-                      #{index + 1}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: 'var(--text-main)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {person.name}
-                      </div>
-                      <div
-                        style={{
-                          marginTop: '2px',
-                          fontSize: '12px',
-                          color: 'var(--text-muted)',
-                        }}
-                      >
-                        {person.totals.ausencias} aus. · {person.totals.tardanzas} tard. ·{' '}
-                        {person.totals.errores} err.
-                      </div>
+                      {person.name}
                     </div>
                     <div
                       style={{
-                        padding: '6px 10px',
-                        borderRadius: '999px',
-                        background:
-                          person.totals.puntos > 0
-                            ? 'var(--bg-danger)'
-                            : 'var(--bg-success)',
-                        border:
-                          person.totals.puntos > 0
-                            ? '1px solid var(--border-danger)'
-                            : '1px solid var(--border-success)',
-                        color:
-                          person.totals.puntos > 0
-                            ? 'var(--text-danger)'
-                            : 'var(--text-success)',
+                        marginTop: '2px',
                         fontSize: '12px',
-                        fontWeight: 800,
+                        color: 'var(--text-muted)',
                       }}
                     >
-                      {person.totals.puntos} pts
+                      {person.totals.ausencias} aus. · {person.totals.tardanzas} tard. ·{' '}
+                      {person.totals.errores} err.
                     </div>
                   </div>
-                )
-              })}
-            </div>
+                  <div
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '999px',
+                      background:
+                        person.totals.puntos > 0
+                          ? 'var(--bg-danger)'
+                          : 'var(--bg-success)',
+                      border:
+                        person.totals.puntos > 0
+                          ? '1px solid var(--border-danger)'
+                          : '1px solid var(--border-success)',
+                      color:
+                        person.totals.puntos > 0
+                          ? 'var(--text-danger)'
+                          : 'var(--text-success)',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {person.totals.puntos} pts
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        </aside>
+        </div>
       </div>
 
       <style jsx>{`
         .monthly-summary-chart-grid {
           display: grid;
           grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.95fr);
+          grid-template-areas:
+            'chart side'
+            'people people';
           gap: 22px;
           padding: 22px;
           align-items: start;
         }
 
+        .monthly-summary-chart-grid__chart {
+          grid-area: chart;
+        }
+
+        .monthly-summary-chart-grid__side {
+          grid-area: side;
+        }
+
+        .monthly-summary-chart-grid__people {
+          grid-area: people;
+        }
+
         @media (max-width: 980px) {
           .monthly-summary-chart-grid {
             grid-template-columns: 1fr;
+            grid-template-areas:
+              'chart'
+              'side'
+              'people';
           }
         }
       `}</style>
