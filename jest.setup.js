@@ -1,5 +1,10 @@
 global.IS_REACT_ACT_ENVIRONMENT = true
 
+if (typeof global.MessageChannel === 'undefined') {
+  const { MessageChannel } = require('worker_threads')
+  global.MessageChannel = MessageChannel
+}
+
 // Polyfill for structuredClone in test environment
 if (typeof global.structuredClone === 'undefined') {
   global.structuredClone = (obj) => {

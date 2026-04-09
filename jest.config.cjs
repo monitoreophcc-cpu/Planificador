@@ -7,6 +7,7 @@ module.exports = {
     '<rootDir>/src/domain/call-center-analysis/',
   ],
   moduleNameMapper: {
+    '\\.(css|less|sass|scss)$': '<rootDir>/test/styleMock.cjs',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {
