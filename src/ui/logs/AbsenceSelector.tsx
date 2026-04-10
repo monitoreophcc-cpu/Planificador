@@ -69,7 +69,7 @@ export function AbsenceSelector({
           }}
           style={getAbsenceConfirmButtonStyle(justified === null)}
         >
-          Confirmar
+          Registrar
         </button>
       </div>
     </>

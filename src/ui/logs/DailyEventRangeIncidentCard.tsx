@@ -112,12 +112,12 @@ export const RangeIncidentCard = memo(function RangeIncidentCard({
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            fontSize: '12px',
+            fontSize: '13px',
             color: 'var(--text-muted)',
           }}
         >
           <span>
-            Dia {incident.dayCount} de {incident.totalDuration}
+            Día {incident.dayCount} de {incident.totalDuration}
           </span>
           {incident.returnDate && (
             <span style={{ fontWeight: 500 }}>

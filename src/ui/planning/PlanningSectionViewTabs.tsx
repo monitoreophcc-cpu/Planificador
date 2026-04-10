@@ -18,16 +18,14 @@ function shiftTabStyle(isActive: boolean) {
   return {
     padding: '14px 34px',
     cursor: 'pointer',
-    border: `1px solid ${
-      isActive ? PLANNER_THEME.controlBorderStrong : PLANNER_THEME.controlBorder
-    }`,
-    color: isActive ? PLANNER_THEME.controlText : PLANNER_THEME.controlTextMuted,
+    border: `1px solid ${isActive ? 'var(--color-primary)' : 'var(--border-strong)'}`,
+    color: isActive ? 'var(--color-primary)' : 'var(--text-main)',
     fontWeight: isActive ? 700 : 500,
-    background: isActive ? PLANNER_THEME.controlBgActive : PLANNER_THEME.controlBg,
-    fontSize: '1rem',
+    background: isActive ? 'rgba(var(--accent-rgb), 0.1)' : 'transparent',
+    fontSize: '14px',
     marginRight: '8px',
     borderRadius: '18px',
-    boxShadow: isActive ? '0 12px 24px rgba(11, 9, 7, 0.18)' : 'none',
+    boxShadow: 'none',
   } as const
 }
 
@@ -92,17 +90,17 @@ export function PlanningSectionViewTabs({
             onClick={onOpenSwapManager}
             style={{
               padding: '14px 22px',
-              background: PLANNER_THEME.controlBg,
-              color: PLANNER_THEME.controlText,
-              border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+              background: 'transparent',
+              color: 'var(--text-main)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '18px',
-              fontWeight: 700,
-              fontSize: '1rem',
+              fontWeight: 600,
+              fontSize: '14px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              boxShadow: '0 12px 24px rgba(11, 9, 7, 0.18)',
+              boxShadow: 'none',
             }}
           >
             <svg

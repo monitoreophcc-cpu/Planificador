@@ -17,7 +17,7 @@ export function AppShellHeaderBrand() {
         <div className="app-shell-header__eyebrow">Centro de control</div>
         <span className="app-shell-header__title">Control Operativo</span>
         <p className="app-shell-header__caption">
-          Operacion diaria, planificacion y respaldo hibrido en una sola superficie.
+          Operación diaria, planificación y respaldo híbrido en una sola superficie.
         </p>
       </div>
     </div>

@@ -12,7 +12,7 @@ const mockCreateClient = jest.fn(() => ({
 }))
 
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: () => mockCreateClient(),
+  createClient: async () => mockCreateClient(),
 }))
 
 describe('auth callback route', () => {

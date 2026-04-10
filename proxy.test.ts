@@ -1,7 +1,7 @@
 /** @jest-environment node */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { middleware } from './middleware'
+import { proxy } from './proxy'
 
 const mockUpdateSession = jest.fn()
 
@@ -9,7 +9,7 @@ jest.mock('@/lib/supabase/middleware', () => ({
   updateSession: (...args: unknown[]) => mockUpdateSession(...args),
 }))
 
-describe('auth middleware', () => {
+describe('auth proxy', () => {
   beforeEach(() => {
     mockUpdateSession.mockReset()
   })
@@ -22,7 +22,7 @@ describe('auth middleware', () => {
       hasSession: false,
     })
 
-    const response = await middleware(request)
+    const response = await proxy(request)
 
     expect(response.headers.get('location')).toBe(
       'https://example.com/login?next=%2Freportes%3Fvista%3Dsemanal'
@@ -37,7 +37,7 @@ describe('auth middleware', () => {
       hasSession: true,
     })
 
-    const response = await middleware(request)
+    const response = await proxy(request)
 
     expect(response.headers.get('location')).toBe(
       'https://example.com/reportes'
@@ -53,7 +53,7 @@ describe('auth middleware', () => {
       hasSession: false,
     })
 
-    const response = await middleware(request)
+    const response = await proxy(request)
 
     expect(response.headers.get('location')).toBeNull()
     expect(response.status).toBe(nextResponse.status)

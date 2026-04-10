@@ -107,7 +107,7 @@ export function DailyLogToolbar({
       icon: Shield,
       accent: 'var(--success)',
       note:
-        coveringCount > 0 ? `${coveringCount} persona(s) cubriendo` : undefined,
+        coveringCount > 0 ? `${coveringCount} personas cubriendo` : undefined,
     },
   ]
 
@@ -247,7 +247,7 @@ export function DailyLogToolbar({
             }}
           >
             <UserRound size={14} />
-            {visibleRepresentatives} representante(s) visibles
+            {visibleRepresentatives} representantes visibles
           </span>
           {selectedRepName ? (
             <span
@@ -264,6 +264,7 @@ export function DailyLogToolbar({
                 fontWeight: 700,
                 boxShadow: 'var(--shadow-sm)',
               }}
+              title="Foco operativo: destaca al representante seleccionado para registrar más rápido."
             >
               Foco actual: {selectedRepName}
             </span>
