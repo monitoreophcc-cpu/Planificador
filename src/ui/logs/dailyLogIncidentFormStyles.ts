@@ -41,7 +41,7 @@ export function getDailyLogIncidentInputStyle(): CSSProperties {
 export function getDailyLogIncidentTextareaStyle(): CSSProperties {
   return {
     ...inputStyle,
-    height: '60px',
+    minHeight: '72px',
   }
 }
 
@@ -50,8 +50,9 @@ export function getDailyLogIncidentSubmitStyle(
 ): CSSProperties {
   return {
     ...submitButtonStyle,
-    backgroundColor: disabled ? 'var(--bg-subtle)' : 'var(--accent)',
-    color: disabled ? 'var(--text-muted)' : 'var(--text-on-accent)',
+    backgroundColor: 'var(--color-primary)',
+    color: 'var(--text-on-accent)',
     cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.5 : 1,
   }
 }

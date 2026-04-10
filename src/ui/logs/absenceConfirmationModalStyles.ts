@@ -13,8 +13,9 @@ const overlayStyle: CSSProperties = {
 const dialogStyle: CSSProperties = {
   background: 'var(--bg-surface)',
   borderRadius: 'var(--radius-lg)',
-  padding: 'var(--space-lg)',
-  width: '400px',
+  padding: '32px',
+  width: '420px',
+  minWidth: '420px',
   maxWidth: '90%',
   boxShadow: 'var(--shadow-lg)',
   display: 'flex',
@@ -75,9 +76,9 @@ const cancelButtonStyle: CSSProperties = {
   flex: 1,
   padding: '12px',
   borderRadius: 'var(--radius-md)',
-  border: '1px solid var(--border-subtle)',
-  background: 'var(--bg-surface)',
-  color: 'var(--text-main)',
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--text-muted)',
   fontWeight: 600,
   cursor: 'pointer',
 }
@@ -144,9 +145,10 @@ export function getAbsenceConfirmButtonStyle(
     padding: '12px',
     borderRadius: 'var(--radius-md)',
     border: 'none',
-    background: disabled ? 'var(--bg-subtle)' : 'var(--accent)',
-    color: disabled ? 'var(--text-muted)' : 'var(--text-on-accent)',
+    background: disabled ? 'var(--color-primary)' : 'var(--color-primary)',
+    color: 'var(--text-on-accent)',
     fontWeight: 700,
     cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.5 : 1,
   }
 }

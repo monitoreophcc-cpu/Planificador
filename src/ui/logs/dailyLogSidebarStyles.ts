@@ -35,11 +35,11 @@ export const dailyLogSidebarStyles = {
     transition: 'all 0.2s ease',
   } satisfies CSSProperties,
   activeListItem: {
-    background:
-      'linear-gradient(180deg, rgba(var(--accent-rgb), 0.12) 0%, var(--surface-raised) 100%)',
-    borderColor: 'rgba(var(--accent-rgb), 0.18)',
-    color: 'var(--accent-strong)',
+    background: 'rgba(var(--accent-rgb), 0.1)',
+    borderColor: 'var(--color-primary)',
+    borderLeft: '3px solid var(--color-primary)',
+    color: 'var(--color-primary)',
     fontWeight: 600,
-    boxShadow: '0 14px 24px rgba(var(--accent-rgb), 0.1)',
+    boxShadow: '0 10px 20px rgba(var(--accent-rgb), 0.1)',
   } satisfies CSSProperties,
 }

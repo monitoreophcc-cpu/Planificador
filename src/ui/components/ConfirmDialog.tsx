@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useEffect, useId } from 'react'
 import { motion } from 'framer-motion'
-import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
+import { AlertCircle, AlertTriangle, X } from 'lucide-react'
 
 type ConfirmIntent = 'danger' | 'warning' | 'info'
 
@@ -94,7 +94,7 @@ export function ConfirmDialog({
       badge: 'var(--accent)',
       badgeSurface: 'rgba(var(--accent-rgb), 0.12)',
       borderColor: 'rgba(var(--accent-rgb), 0.18)',
-      icon: <Info size={18} />,
+      icon: <AlertTriangle size={18} />,
       eyebrow: 'Confirmacion',
       confirmStyle: {
         background: 'linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%)',
@@ -254,9 +254,10 @@ export function ConfirmDialog({
               onClick={onCancel}
               style={{
                 ...buttonStyle,
-                background: 'linear-gradient(180deg, var(--bg-subtle) 0%, var(--surface-veil) 100%)',
-                color: 'var(--text-main)',
-                borderColor: 'var(--border-subtle)',
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                borderColor: 'transparent',
+                boxShadow: 'none',
               }}
             >
               {cancelLabel}
