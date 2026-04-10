@@ -270,7 +270,6 @@ export function PlanView({
             <div
               style={{
                 fontSize: '12px',
-                fontWeight: 500,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
