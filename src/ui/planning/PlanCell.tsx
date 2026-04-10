@@ -32,6 +32,10 @@ export const PlanCell = React.memo(function PlanCell({
   const showPrimaryPill = Boolean(resolved.label)
   const showSecondaryBadge =
     resolved.badge === 'CUBIERTO' || resolved.badge === 'CUBRIENDO'
+  const normalizedLabel =
+    resolved.label === 'OFF'
+      ? resolved.label.replace(/^[^A-ZÁÉÍÓÚÜÑ]+/u, '')
+      : resolved.label
 
   const style: React.CSSProperties = {
     flex: 1,
