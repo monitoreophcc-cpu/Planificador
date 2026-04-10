@@ -1,6 +1,6 @@
 'use client'
 
-import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DailyLogAttentionPanel } from './DailyLogAttentionPanel'
 import { DailyLogSidebar } from './DailyLogSidebar'
 import { DailyLogToolbar } from './DailyLogToolbar'
@@ -99,19 +99,6 @@ export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
     return pills
   }, [selectedRow])
 
-  const handleAttentionSelect = (
-    representativeId: string,
-    suggestedIncidentType?: typeof controller.incidentType
-  ) => {
-    startTransition(() => {
-      controller.onSelectRepresentative(representativeId)
-
-      if (suggestedIncidentType) {
-        controller.setIncidentType(suggestedIncidentType)
-      }
-    })
-  }
-
   useEffect(() => {
     const currentSelectedRepId = controller.selectedRep?.id ?? null
 
@@ -148,11 +135,9 @@ export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
       }}
     >
       <DailyLogToolbar
-        activeShift={controller.activeShift}
         date={controller.dateForLog}
         filterMode={controller.filterMode}
         isExpanded={isDashboardExpanded}
-        onActiveShiftChange={controller.setActiveShift}
         onDateChange={date =>
           controller.setLogDate(format(date, 'yyyy-MM-dd'))
         }
@@ -160,16 +145,21 @@ export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
         onToggleExpanded={() =>
           setIsDashboardExpanded(currentValue => !currentValue)
         }
-        selectedRepName={controller.selectedRep?.name}
         summaryMeta={summaryMeta}
-        visibleRepresentatives={controller.representativeRows.length}
       />
 
       {isDashboardExpanded ? (
         <DailyLogAttentionPanel
+          activeCoveragesCount={controller.activeCoveragesForDay.length}
+          activeShift={controller.activeShift}
+          allCalendarDaysForRelevantMonths={
+            controller.allCalendarDaysForRelevantMonths
+          }
+          dailyStats={controller.dailyStats}
+          incidents={controller.incidents}
+          logDate={controller.logDate}
+          representatives={controller.representatives}
           rows={controller.representativeRows}
-          selectedRepId={controller.selectedRep?.id ?? null}
-          onSelectRepresentative={handleAttentionSelect}
         />
       ) : null}
 

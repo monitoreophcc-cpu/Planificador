@@ -169,6 +169,7 @@ export function useDailyLogController() {
     ...formState,
     allCalendarDaysForRelevantMonths,
     dateForLog,
+    incidents,
     isLoading,
     logDate,
     representatives,

@@ -6,9 +6,6 @@ import {
   ChevronDown,
   ChevronUp,
   Info,
-  Moon,
-  Sun,
-  UserRound,
 } from 'lucide-react'
 import { DailyLogDateNavigator } from './DailyLogDateNavigator'
 import { DailyLogFilterTabs } from './DailyLogFilterTabs'
@@ -16,36 +13,28 @@ import { DailyLogFilterTabs } from './DailyLogFilterTabs'
 export type DailyLogFilterMode = 'TODAY' | 'WEEK' | 'MONTH'
 
 type DailyLogToolbarProps = {
-  activeShift: 'DAY' | 'NIGHT'
   date: Date
   filterMode: DailyLogFilterMode
   isExpanded: boolean
-  onActiveShiftChange: (shift: 'DAY' | 'NIGHT') => void
   onDateChange: (date: Date) => void
   onFilterModeChange: (mode: DailyLogFilterMode) => void
   onToggleExpanded: () => void
-  selectedRepName?: string
   summaryMeta: {
     eyebrow: string
     title: string
     description: string
     context: string
   }
-  visibleRepresentatives: number
 }
 
 export function DailyLogToolbar({
-  activeShift,
   date,
   filterMode,
   isExpanded,
-  onActiveShiftChange,
   onDateChange,
   onFilterModeChange,
   onToggleExpanded,
-  selectedRepName,
   summaryMeta,
-  visibleRepresentatives,
 }: DailyLogToolbarProps) {
   return (
     <section
@@ -151,72 +140,6 @@ export function DailyLogToolbar({
             </p>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => onActiveShiftChange('DAY')}
-              style={getShiftChipStyle(activeShift === 'DAY', 'var(--accent-warm)')}
-            >
-              <Sun size={15} />
-              Día
-            </button>
-            <button
-              type="button"
-              onClick={() => onActiveShiftChange('NIGHT')}
-              style={getShiftChipStyle(activeShift === 'NIGHT', 'var(--accent)')}
-            >
-              <Moon size={15} />
-              Noche
-            </button>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                minHeight: '54px',
-                padding: '0 18px',
-                borderRadius: '999px',
-                border: '1px solid var(--shell-border)',
-                background:
-                  'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
-                color: 'var(--text-main)',
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
-              <UserRound size={16} />
-              {visibleRepresentatives} representantes visibles
-            </span>
-            {selectedRepName ? (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  minHeight: '54px',
-                  padding: '0 18px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(var(--accent-rgb), 0.16)',
-                  background: 'rgba(var(--accent-rgb), 0.08)',
-                  color: 'var(--accent-strong)',
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
-                  boxShadow: 'var(--shadow-sm)',
-                }}
-                title="Foco operativo: destaca al representante seleccionado para registrar más rápido."
-              >
-                Foco actual: {selectedRepName}
-              </span>
-            ) : null}
-          </div>
         </div>
 
         <div
@@ -231,10 +154,19 @@ export function DailyLogToolbar({
           <button
             type="button"
             onClick={onToggleExpanded}
+            aria-pressed={isExpanded}
             style={getSummaryButtonStyle(isExpanded)}
           >
-            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            {isExpanded ? 'Ocultar resumen operativo' : 'Ver resumen operativo'}
+            <span style={getSummaryButtonIconStyle(isExpanded)} aria-hidden="true">
+              {isExpanded ? (
+                <ChevronUp size={17} strokeWidth={2.35} />
+              ) : (
+                <ChevronDown size={17} strokeWidth={2.35} />
+              )}
+            </span>
+            <span style={getSummaryButtonLabelStyle()}>
+              {isExpanded ? 'Ocultar resumen operativo' : 'Ver resumen operativo'}
+            </span>
           </button>
 
           <DailyLogDateNavigator date={date} onDateChange={onDateChange} />
@@ -249,47 +181,56 @@ export function DailyLogToolbar({
   )
 }
 
-function getShiftChipStyle(
-  isActive: boolean,
-  accent: string
-): React.CSSProperties {
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 18px',
-    borderRadius: '999px',
-    border: `1px solid ${isActive ? accent : 'var(--shell-border)'}`,
-    background: isActive
-      ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
-      : 'rgba(255,255,255,0.56)',
-    color: isActive ? accent : 'var(--text-muted)',
-    fontSize: '0.95rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    boxShadow: isActive
-      ? 'var(--shadow-sm)'
-      : 'inset 0 1px 0 rgba(255,255,255,0.55)',
-  }
-}
-
 function getSummaryButtonStyle(isExpanded: boolean): React.CSSProperties {
   return {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '12px',
     justifyContent: 'center',
-    minHeight: '56px',
-    padding: '0 24px',
+    minHeight: '54px',
+    padding: '6px 18px 6px 8px',
     borderRadius: '999px',
-    border: '1px solid var(--shell-border)',
-    background:
-      'linear-gradient(180deg, rgba(245, 247, 248, 0.96) 0%, rgba(230, 234, 236, 0.96) 100%)',
+    border: isExpanded
+      ? '1px solid rgba(var(--accent-rgb), 0.24)'
+      : '1px solid rgba(137, 149, 161, 0.28)',
+    background: isExpanded
+      ? 'linear-gradient(180deg, rgba(236, 242, 246, 0.98) 0%, rgba(222, 230, 236, 0.98) 100%)'
+      : 'linear-gradient(180deg, rgba(248, 250, 251, 0.98) 0%, rgba(235, 239, 241, 0.98) 100%)',
     color: 'var(--accent-strong)',
-    fontSize: '1rem',
-    fontWeight: 700,
+    fontSize: '0.98rem',
+    fontWeight: 800,
+    letterSpacing: '-0.01em',
     cursor: 'pointer',
-    boxShadow: isExpanded ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+    boxShadow: isExpanded
+      ? '0 18px 30px rgba(24, 34, 48, 0.12), inset 0 1px 0 rgba(255,255,255,0.75)'
+      : '0 12px 24px rgba(24, 34, 48, 0.08), inset 0 1px 0 rgba(255,255,255,0.82)',
+    maxWidth: '100%',
+  }
+}
+
+function getSummaryButtonIconStyle(isExpanded: boolean): React.CSSProperties {
+  return {
+    width: '38px',
+    height: '38px',
+    borderRadius: '999px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    border: isExpanded
+      ? '1px solid rgba(var(--accent-rgb), 0.2)'
+      : '1px solid rgba(var(--accent-rgb), 0.14)',
+    background: isExpanded
+      ? 'linear-gradient(180deg, rgba(var(--accent-rgb), 0.16) 0%, rgba(var(--accent-rgb), 0.08) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(245, 247, 248, 0.92) 100%)',
+    color: 'var(--accent-strong)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)',
+  }
+}
+
+function getSummaryButtonLabelStyle(): React.CSSProperties {
+  return {
+    lineHeight: 1.1,
   }
 }
 

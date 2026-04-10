@@ -1,114 +1,60 @@
 'use client'
 
-import type { IncidentType } from '@/domain/types'
-import { AlertTriangle, CalendarRange, RefreshCw, Shield, UserRound } from 'lucide-react'
+import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale'
+import type {
+  DayInfo,
+  Incident,
+  ISODate,
+  Representative,
+  ShiftType,
+} from '@/domain/types'
+import {
+  type DailyLogSummaryMetric,
+  getDailyLogSummaryMetrics,
+} from './dailyLogSummaryMetrics'
 import type { DailyLogRepresentativeRow } from './dailyLogTypes'
 
 type DailyLogAttentionPanelProps = {
-  rows: DailyLogRepresentativeRow[]
-  selectedRepId: string | null
-  onSelectRepresentative: (
-    representativeId: string,
-    suggestedIncidentType?: IncidentType
-  ) => void
-}
-
-type AttentionItem = {
-  id: string
-  label: string
-  note: string
-  priority: number
-  suggestedIncidentType?: IncidentType
-  tone: {
-    accent: string
-    background: string
-    border: string
+  activeCoveragesCount: number
+  activeShift: ShiftType
+  allCalendarDaysForRelevantMonths: DayInfo[]
+  dailyStats: {
+    dayPresent: number
+    dayPlanned: number
+    nightPresent: number
+    nightPlanned: number
   }
-}
-
-function buildAttentionItems(rows: DailyLogRepresentativeRow[]): AttentionItem[] {
-  return rows
-    .flatMap(row => {
-      if (row.isUnassigned) {
-        return [
-          {
-            id: row.id,
-            label: row.name,
-            note: 'Turno sin cobertura',
-            priority: 0,
-            suggestedIncidentType: 'AUSENCIA',
-            tone: {
-              accent: '#b91c1c',
-              background: 'rgba(254, 242, 242, 0.96)',
-              border: 'rgba(248, 113, 113, 0.22)',
-            },
-          },
-        ]
-      }
-
-      if (row.isCovering) {
-        return [
-          {
-            id: row.id,
-            label: row.name,
-            note: `Cubre a ${row.coveringName ?? 'otro representante'}`,
-            priority: 1,
-            tone: {
-              accent: '#6d28d9',
-              background: 'rgba(245, 243, 255, 0.96)',
-              border: 'rgba(124, 58, 237, 0.2)',
-            },
-          },
-        ]
-      }
-
-      if (row.isCovered) {
-        return [
-          {
-            id: row.id,
-            label: row.name,
-            note: `Cubierto por ${row.coveredByName ?? 'otro representante'}`,
-            priority: 2,
-            suggestedIncidentType: 'AUSENCIA',
-            tone: {
-              accent: '#1d4ed8',
-              background: 'rgba(239, 246, 255, 0.96)',
-              border: 'rgba(37, 99, 235, 0.18)',
-            },
-          },
-        ]
-      }
-
-      if (row.isOperationallyAbsent || row.isAbsent) {
-        return [
-          {
-            id: row.id,
-            label: row.name,
-            note: 'Ausencia operativa',
-            priority: 3,
-            suggestedIncidentType: 'AUSENCIA',
-            tone: {
-              accent: '#475569',
-              background: 'rgba(248, 250, 252, 0.96)',
-              border: 'rgba(148, 163, 184, 0.2)',
-            },
-          },
-        ]
-      }
-
-      return []
-    })
-    .sort((left, right) => left.priority - right.priority || left.label.localeCompare(right.label))
+  incidents: Incident[]
+  logDate: ISODate
+  representatives: Representative[]
+  rows: DailyLogRepresentativeRow[]
 }
 
 export function DailyLogAttentionPanel({
+  activeCoveragesCount,
+  activeShift,
+  allCalendarDaysForRelevantMonths,
+  dailyStats,
+  incidents,
+  logDate,
+  representatives,
   rows,
-  selectedRepId,
-  onSelectRepresentative,
 }: DailyLogAttentionPanelProps) {
-  const attentionItems = buildAttentionItems(rows).slice(0, 8)
-  const uncoveredCount = rows.filter(row => row.isUnassigned).length
-  const activeCoverageCount = rows.filter(row => row.isCovered || row.isCovering).length
+  const metrics = getDailyLogSummaryMetrics({
+    activeCoveragesCount,
+    activeShift,
+    allCalendarDaysForRelevantMonths,
+    dailyStats,
+    incidents,
+    logDate,
+    representativeRows: rows,
+    representatives,
+  })
+
+  const friendlyDate = format(parseISO(logDate), "EEEE d 'de' MMMM", {
+    locale: es,
+  })
 
   return (
     <section
@@ -143,16 +89,16 @@ export function DailyLogAttentionPanel({
               marginBottom: '8px',
             }}
           >
-            Acción rápida
+            Resumen operativo
           </div>
           <h3
             style={{
               margin: 0,
-              fontSize: '1.04rem',
+              fontSize: '1.08rem',
               color: 'var(--text-main)',
             }}
           >
-            Quién requiere atención ahora
+            KPIs listos para decidir antes de registrar
           </h3>
           <p
             style={{
@@ -162,9 +108,8 @@ export function DailyLogAttentionPanel({
               color: 'var(--text-muted)',
             }}
           >
-            Usa estos accesos directos para saltar a las fichas con turnos sin
-            cobertura, coberturas o ausencias ya detectadas, sin buscarlas otra vez
-            en la lista lateral.
+            {friendlyDate.charAt(0).toUpperCase() + friendlyDate.slice(1)} · turno{' '}
+            {activeShift === 'DAY' ? 'día' : 'noche'}.
           </p>
         </div>
 
@@ -175,149 +120,30 @@ export function DailyLogAttentionPanel({
             flexWrap: 'wrap',
           }}
         >
-          <SummaryChip
-            icon={<AlertTriangle size={14} />}
-            label={`${uncoveredCount} sin cobertura`}
-            tone={{
-              accent: uncoveredCount > 0 ? '#b91c1c' : '#475569',
-              background:
-                uncoveredCount > 0 ? 'rgba(254, 242, 242, 0.96)' : 'rgba(248,250,252,0.96)',
-              border:
-                uncoveredCount > 0 ? 'rgba(248, 113, 113, 0.22)' : 'rgba(148, 163, 184, 0.18)',
-            }}
-          />
-          <SummaryChip
-            icon={<Shield size={14} />}
-            label={`${activeCoverageCount} cobertura(s)`}
-            tone={{
-              accent: '#1d4ed8',
-              background: 'rgba(239, 246, 255, 0.96)',
-              border: 'rgba(37, 99, 235, 0.18)',
-            }}
-          />
+          <SummaryChip label={`${rows.length} fichas visibles`} />
+          <SummaryChip label={`${metrics.find(metric => metric.id === 'incidents')?.value ?? '0'} incidencia(s)`} />
         </div>
       </div>
 
-      {attentionItems.length === 0 ? (
-        <div
-          style={{
-            padding: '16px',
-            borderRadius: '16px',
-            border: '1px dashed rgba(148, 163, 184, 0.24)',
-            background: 'rgba(248,250,252,0.82)',
-            color: '#64748b',
-            fontSize: '13px',
-            lineHeight: 1.6,
-          }}
-        >
-          El turno actual no muestra focos urgentes. Puedes usar la lista lateral para
-          registrar eventos preventivos o revisar incidencias históricas del día.
-        </div>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-            gap: '10px',
-          }}
-        >
-          {attentionItems.map(item => (
-            <button
-              key={`${item.id}-${item.note}`}
-              type="button"
-              onClick={() =>
-                onSelectRepresentative(item.id, item.suggestedIncidentType)
-              }
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                textAlign: 'left',
-                padding: '14px',
-                borderRadius: '16px',
-                border: `1px solid ${item.tone.border}`,
-                background:
-                  selectedRepId === item.id ? 'white' : item.tone.background,
-                boxShadow:
-                  selectedRepId === item.id
-                    ? '0 12px 24px rgba(15, 23, 42, 0.06)'
-                    : 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '12px',
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: 'rgba(255,255,255,0.88)',
-                  color: item.tone.accent,
-                  border: `1px solid ${item.tone.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                {item.priority === 0 ? (
-                  <AlertTriangle size={16} />
-                ) : item.priority === 1 ? (
-                  <RefreshCw size={16} />
-                ) : item.priority === 2 ? (
-                  <Shield size={16} />
-                ) : (
-                  <CalendarRange size={16} />
-                )}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: 'var(--text-main)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  {item.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: '12px',
-                    lineHeight: 1.5,
-                    color: item.tone.accent,
-                    fontWeight: 600,
-                  }}
-                >
-                  {item.note}
-                </div>
-                {item.suggestedIncidentType ? (
-                  <div
-                    style={{
-                      marginTop: '6px',
-                      fontSize: '11px',
-                      lineHeight: 1.45,
-                      color: '#64748b',
-                    }}
-                  >
-                    Sugerido: {item.suggestedIncidentType.toLowerCase()}
-                  </div>
-                ) : null}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+          gap: '10px',
+        }}
+      >
+        {metrics.map(metric => (
+          <SummaryMetricCard key={metric.id} metric={metric} />
+        ))}
+      </div>
     </section>
   )
 }
 
 function SummaryChip({
-  icon,
   label,
-  tone,
 }: {
-  icon: React.ReactNode
   label: string
-  tone: { accent: string; background: string; border: string }
 }) {
   return (
     <span
@@ -327,15 +153,100 @@ function SummaryChip({
         gap: '8px',
         padding: '8px 12px',
         borderRadius: '999px',
-        border: `1px solid ${tone.border}`,
-        background: tone.background,
-        color: tone.accent,
+        border: '1px solid rgba(148, 163, 184, 0.18)',
+        background: 'rgba(248,250,252,0.96)',
+        color: '#475569',
         fontSize: '12px',
         fontWeight: 700,
       }}
     >
-      {icon}
       {label}
     </span>
   )
+}
+
+function SummaryMetricCard({ metric }: { metric: DailyLogSummaryMetric }) {
+  const tone = getMetricTone(metric.tone)
+
+  return (
+    <section
+      style={{
+        padding: '16px',
+        borderRadius: '18px',
+        border: `1px solid ${tone.border}`,
+        background: tone.background,
+        boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        minHeight: '132px',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#64748b',
+        }}
+      >
+        {metric.title}
+      </div>
+      <div
+        style={{
+          fontSize: '2rem',
+          lineHeight: 1,
+          fontWeight: 800,
+          letterSpacing: '-0.05em',
+          color: tone.accent,
+        }}
+      >
+        {metric.value}
+      </div>
+      <p
+        style={{
+          margin: 0,
+          marginTop: 'auto',
+          fontSize: '0.84rem',
+          lineHeight: 1.55,
+          color: '#516277',
+        }}
+      >
+        {metric.caption}
+      </p>
+    </section>
+  )
+}
+
+function getMetricTone(tone: DailyLogSummaryMetric['tone']) {
+  if (tone === 'danger') {
+    return {
+      accent: '#b91c1c',
+      background: 'rgba(254, 242, 242, 0.96)',
+      border: 'rgba(248, 113, 113, 0.22)',
+    }
+  }
+
+  if (tone === 'warning') {
+    return {
+      accent: '#b45309',
+      background: 'rgba(255, 251, 235, 0.96)',
+      border: 'rgba(245, 158, 11, 0.22)',
+    }
+  }
+
+  if (tone === 'accent') {
+    return {
+      accent: '#1d4ed8',
+      background: 'rgba(239, 246, 255, 0.96)',
+      border: 'rgba(37, 99, 235, 0.18)',
+    }
+  }
+
+  return {
+    accent: '#334155',
+    background: 'rgba(248, 250, 252, 0.96)',
+    border: 'rgba(148, 163, 184, 0.18)',
+  }
 }
