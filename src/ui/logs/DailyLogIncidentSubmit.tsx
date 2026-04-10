@@ -100,7 +100,7 @@ function buildIncidentPreview({
     OTRO: 'evento manual',
     LICENCIA: 'licencia',
     VACACIONES: 'vacaciones',
-    OVERRIDE: 'ajuste interno',
+    OVERRIDE: 'cambio de turno',
     SWAP: 'intercambio',
   }
 

@@ -251,31 +251,54 @@ export function PlanView({
         </div>
         {weekDays.map(day => {
           const isToday = day.date === todayIso
+          const isHoliday = day.kind === 'HOLIDAY'
+          const headerBackground = isToday
+            ? isHoliday
+              ? 'rgba(235, 87, 87, 0.1)'
+              : 'rgba(47, 128, 237, 0.12)'
+            : isHoliday
+              ? 'rgba(235, 87, 87, 0.08)'
+              : 'transparent'
+          const headerBorder = isToday
+            ? isHoliday
+              ? 'rgba(235, 87, 87, 0.34)'
+              : 'rgba(47, 128, 237, 0.28)'
+            : isHoliday
+              ? 'rgba(235, 87, 87, 0.28)'
+              : 'transparent'
+          const headerTextColor = isHoliday
+            ? '#c53030'
+            : isToday
+              ? PLANNER_THEME.info
+              : 'var(--color-text-secondary)'
 
           return (
             <div
               key={day.date}
               style={{
-                padding: '0 6px',
+                padding: '0 2px',
               }}
             >
               <div
                 style={{
                   textAlign: 'center',
                   cursor: 'pointer',
-                  color: isToday ? PLANNER_THEME.info : 'var(--color-text-secondary)',
+                  color: headerTextColor,
                   position: 'relative',
-                  padding: '8px 6px 10px',
+                  padding: '9px 4px 8px',
                   borderRadius: '16px',
-                  minHeight: '62px',
+                  minHeight: '74px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '2px',
-                  background: isToday ? 'rgba(47, 128, 237, 0.12)' : 'transparent',
-                  border: `1px solid ${isToday ? 'rgba(47, 128, 237, 0.28)' : 'transparent'}`,
-                  boxShadow: isToday ? 'inset 0 1px 0 rgba(255, 255, 255, 0.4)' : 'none',
+                  gap: '1px',
+                  background: headerBackground,
+                  border: `1px solid ${headerBorder}`,
+                  boxShadow:
+                    isToday || isHoliday
+                      ? 'inset 0 1px 0 rgba(255, 255, 255, 0.4)'
+                      : 'none',
                   transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease',
                 }}
                 title={day.label}
@@ -285,7 +308,9 @@ export function PlanView({
                   style={{
                     fontSize: '14px',
                     letterSpacing: '0.01em',
-                    fontWeight: isToday ? 700 : 600,
+                    fontWeight: isHoliday ? 800 : isToday ? 700 : 600,
+                    color: headerTextColor,
+                    textTransform: 'lowercase',
                   }}
                 >
                   {new Date(day.date + 'T12:00:00Z')
@@ -296,21 +321,44 @@ export function PlanView({
                   style={{
                     fontSize: '13px',
                     lineHeight: 1.1,
-                    fontWeight: isToday ? 700 : 600,
-                    color: isToday ? PLANNER_THEME.info : 'var(--color-text-secondary)',
-                    opacity: isToday ? 1 : 0.82,
+                    fontWeight: isHoliday ? 800 : isToday ? 700 : 600,
+                    color: headerTextColor,
+                    opacity: isHoliday || isToday ? 1 : 0.82,
                   }}
                 >
                   {day.date.split('-')[2]}
                 </div>
+                {isHoliday ? (
+                  <div
+                    style={{
+                      marginTop: '5px',
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      background: 'rgba(235, 87, 87, 0.08)',
+                      border: '1px solid rgba(235, 87, 87, 0.32)',
+                      color: '#c53030',
+                      fontSize: '9px',
+                      fontWeight: 800,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Feriado
+                  </div>
+                ) : null}
                 <div
                   aria-hidden="true"
                   style={{
                     width: '24px',
                     height: '2px',
                     borderRadius: '999px',
-                    backgroundColor: isToday ? PLANNER_THEME.info : 'transparent',
-                    opacity: isToday ? 1 : 0,
+                    backgroundColor: isHoliday
+                      ? '#c53030'
+                      : isToday
+                        ? PLANNER_THEME.info
+                        : 'transparent',
+                    opacity: isToday || isHoliday ? 1 : 0,
                     marginTop: '2px',
                   }}
                 />
@@ -374,6 +422,7 @@ export function PlanView({
                 color: coverage ? coverageColor(day.date) : PLANNER_THEME.textFaint,
                 fontWeight: 700,
                 fontSize: '0.98rem',
+                padding: '6px 0',
               }}
             >
               {coverage?.actual ?? '—'}

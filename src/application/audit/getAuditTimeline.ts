@@ -1,6 +1,6 @@
 import { AuditEvent } from '@/domain/audit/types'
-import { format, parseISO } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { incidentLabel } from '@/application/presenters/humanize'
+import type { IncidentType } from '@/domain/types'
 
 export interface AuditTimelineItem {
     id: string
@@ -42,7 +42,7 @@ export function mapAuditEventsToTimeline(
 
             if (e.type === 'INCIDENT_CREATED') {
                 const type = safeString(payload, 'incidentType')
-                if (type) summary = `Incidencia: ${type}`
+                if (type) summary = `Incidencia: ${humanizeIncidentType(type)}`
                 const note = safeString(payload, 'note')
                 if (note) details = note
             }
@@ -69,8 +69,24 @@ function formatEventType(type: AuditEvent['type']): string {
         case 'INCIDENT_CREATED': return 'Incidencia registrada'
         case 'INCIDENT_REMOVED': return 'Incidencia eliminada'
         case 'SWAP_APPLIED': return 'Intercambio aplicado'
-        case 'OVERRIDE_APPLIED': return 'Modificación manual'
+        case 'OVERRIDE_APPLIED': return 'Cambio de turno aplicado'
         case 'SNAPSHOT_CREATED': return 'Snapshot creado'
-        default: return type || 'Unknown Event'
+        default: return type || 'Evento desconocido'
+    }
+}
+
+function humanizeIncidentType(type: string) {
+    switch (type) {
+        case 'TARDANZA':
+        case 'AUSENCIA':
+        case 'ERROR':
+        case 'OTRO':
+        case 'LICENCIA':
+        case 'VACACIONES':
+        case 'OVERRIDE':
+        case 'SWAP':
+            return incidentLabel(type as IncidentType)
+        default:
+            return type
     }
 }

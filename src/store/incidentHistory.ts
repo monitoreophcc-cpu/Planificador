@@ -40,13 +40,13 @@ export function buildIncidentConfirmOptions({
   const label = incidentLabel(incident.type)
 
   return {
-    title: isOverride ? 'Confirmar Cambio de Turno' : 'Confirmar Incidencia',
+    title: isOverride ? 'Confirmar cambio de turno' : 'Confirmar Incidencia',
     description: React.createElement(
       'span',
       null,
       'Registrar ',
       isOverride
-        ? 'una modificación manual'
+        ? 'un cambio de turno'
         : React.createElement(
             'strong',
             {

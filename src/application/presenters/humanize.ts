@@ -48,6 +48,8 @@ export function incidentLabel(type: IncidentType): string {
       return 'Licencia'
     case 'OVERRIDE':
       return 'Cambio de turno'
+    case 'SWAP':
+      return 'Intercambio'
     default:
       return 'Incidencia'
   }

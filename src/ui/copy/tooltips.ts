@@ -22,9 +22,9 @@ export const TOOLTIPS = {
       'Ausencia justificada por causa médica o administrativa. No se puede modificar el plan.',
   },
   override: {
-    title: 'Ajuste manual',
+    title: 'Cambio de turno',
     description:
-      'Este día fue cambiado manualmente y no sigue la planificación base. Haz clic para revertir.',
+      'Este día quedó marcado con un cambio de turno y no sigue la planificación base. Haz clic para revertir.',
   },
   base: {
     title: 'Estado base',

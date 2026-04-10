@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { INCIDENT_STYLES } from '@/domain/incidents/incidentStyles'
 import { parseISO } from 'date-fns'
 import { AlertTriangle, BarChart3, CalendarRange, ShieldCheck } from 'lucide-react'
 import { Bar } from 'react-chartjs-2'
@@ -457,7 +458,9 @@ export function MonthlySummaryChart({
                         fontSize: '13px',
                       }}
                     >
-                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{type}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                        {INCIDENT_STYLES[type as keyof typeof INCIDENT_STYLES]?.label ?? type}
+                      </span>
                       <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{count}</span>
                     </div>
                     <div

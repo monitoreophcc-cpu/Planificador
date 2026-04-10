@@ -8,31 +8,46 @@ const ACTION_STYLES: Record<
   string,
   { label: string; bg: string; text: string }
 > = {
-  // Incident Actions (Amber/Yellow)
   INCIDENT_CREATED: {
     label: 'Incidencia creada',
     bg: '#fefce8',
     text: '#a16207',
+  },
+  INCIDENT_REMOVED: {
+    label: 'Incidencia eliminada',
+    bg: '#fff7ed',
+    text: '#c2410c',
   },
   INCIDENT_DELETED: {
     label: 'Incidencia eliminada',
     bg: '#fff7ed',
     text: '#c2410c',
   },
-
-  // Planning Actions (Blue)
+  COVERAGE_CREATED: {
+    label: 'Cobertura creada',
+    bg: '#ecfeff',
+    text: '#0f766e',
+  },
+  COVERAGE_CANCELLED: {
+    label: 'Cobertura cancelada',
+    bg: '#ecfdf5',
+    text: '#047857',
+  },
+  SWAP_APPLIED: {
+    label: 'Intercambio aplicado',
+    bg: '#eff6ff',
+    text: '#1d4ed8',
+  },
   OVERRIDE_APPLIED: {
-    label: 'Cambio manual',
+    label: 'Cambio de turno aplicado',
     bg: '#eff6ff',
     text: '#1d4ed8',
   },
   OVERRIDE_REVERTED: {
-    label: 'Cambio deshecho',
+    label: 'Cambio de turno deshecho',
     bg: '#e0e7ff',
     text: '#312e81',
   },
-
-  // Rule Actions (Green)
   COVERAGE_RULE_CREATED: {
     label: 'Regla creada',
     bg: '#f0fdf4',
@@ -69,14 +84,33 @@ const ACTION_STYLES: Record<
   },
   DATA_IMPORTED: { label: 'Importación', bg: '#e5e7eb', text: '#4b5563' },
   DATA_EXPORTED: { label: 'Exportación', bg: '#e5e7eb', text: '#4b5563' },
+  SNAPSHOT_CREATED: {
+    label: 'Semana guardada',
+    bg: '#eef2ff',
+    text: '#4338ca',
+  },
 }
 
-export function AuditActionBadge({ action }: { action: AuditEventType | string }) {
+function formatUnknownActionLabel(action: string) {
+  return action
+    .toLowerCase()
+    .split('_')
+    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ')
+}
+
+export function getAuditActionStyle(action: AuditEventType | string) {
   const style = ACTION_STYLES[action] || {
-    label: action,
+    label: formatUnknownActionLabel(action),
     bg: '#f3f4f6',
     text: '#4b5563',
   }
+
+  return style
+}
+
+export function AuditActionBadge({ action }: { action: AuditEventType | string }) {
+  const style = getAuditActionStyle(action)
 
   return (
     <span

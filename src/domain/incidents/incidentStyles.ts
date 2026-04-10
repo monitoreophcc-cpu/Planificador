@@ -30,7 +30,7 @@ export const INCIDENT_STYLES: Record<
     variant: 'neutral',
   },
   OVERRIDE: {
-    label: 'Cambio de Turno',
+    label: 'Cambio de turno',
     variant: 'neutral',
   },
   SWAP: {

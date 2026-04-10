@@ -45,6 +45,7 @@ import {
 import { useCloudSyncStore, type CloudSyncStatus } from './useCloudSyncStore'
 import { useSyncHealthStore } from './useSyncHealthStore'
 import { createAppStoreUiBridge } from './appStoreUiBridge'
+import type { CloudSnapshot } from '@/persistence/supabase-sync'
 
 // --- Main App State ---
 export type AppState = PlanningBaseState &
@@ -140,48 +141,42 @@ export const useAppStore = create<AppState>()(
         try {
           cloudSyncModule = await loadCloudSyncModule()
           const {
-            extractWeeklyPlansFromHistoryEvents,
             loadCloudSnapshotIfNeeded,
             mergeCloudPlanningHistory,
           } = cloudSyncModule
-          const cloudState = await loadCloudSnapshotIfNeeded(get())
-
-          if (cloudState) {
+          const applyCloudSnapshot = (cloudState: CloudSnapshot) => {
             set(state => {
               state.representatives = cloudState.representatives
               state.incidents = cloudState.incidents
               state.swaps = cloudState.swaps
-
-              if (cloudState.coverageRules.length > 0) {
-                state.coverageRules = cloudState.coverageRules
-              }
-
-              if (
-                extractWeeklyPlansFromHistoryEvents(state.historyEvents).length === 0 &&
-                cloudState.weeklyPlans.length > 0
-              ) {
-                state.historyEvents = mergeCloudPlanningHistory(
-                  state.historyEvents,
-                  cloudState.weeklyPlans
-                )
-              }
+              state.coverageRules = cloudState.coverageRules
+              state.historyEvents = mergeCloudPlanningHistory(
+                state.historyEvents,
+                cloudState.weeklyPlans
+              )
             })
 
             get()._generateCalendarDays()
+          }
+          const cloudState = await loadCloudSnapshotIfNeeded(get())
+
+          if (cloudState) {
+            applyCloudSnapshot(cloudState)
+          }
+
+          if (cloudSyncModule) {
+            cloudSyncModule.ensureCloudSyncWatcher(
+              listener => api.subscribe(listener),
+              get,
+              get().triggerCloudSync,
+              setCloudStatus,
+              applyCloudSnapshot
+            )
           }
         } catch (error) {
           console.error(
             '[Cloud Bootstrap] No se pudo hidratar desde Supabase. Se mantiene IndexedDB como fuente local.',
             error
-          )
-        }
-
-        if (cloudSyncModule) {
-          cloudSyncModule.ensureCloudSyncWatcher(
-            listener => api.subscribe(listener),
-            get,
-            get().triggerCloudSync,
-            setCloudStatus
           )
         }
       },

@@ -2,7 +2,7 @@
 'use client'
 
 import { AuditEvent } from '@/domain/audit/types'
-import { AuditActionBadge } from './AuditActionBadge'
+import { AuditActionBadge, getAuditActionStyle } from './AuditActionBadge'
 import { AuditDetail } from './AuditDetail'
 
 const cellStyle: React.CSSProperties = {
@@ -13,6 +13,9 @@ const cellStyle: React.CSSProperties = {
 }
 
 export function AuditRow({ event }: { event: AuditEvent }) {
+  const action = event.type || event.action || 'UNKNOWN'
+  const actionLabel = getAuditActionStyle(action).label
+
   return (
     <tr className="audit-row">
       <style jsx global>{`
@@ -39,10 +42,10 @@ export function AuditRow({ event }: { event: AuditEvent }) {
         )}
       </td>
       <td style={cellStyle}>
-        <AuditActionBadge action={event.type || 'UNKNOWN'} />
+        <AuditActionBadge action={action} />
       </td>
       <td style={cellStyle}>
-        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{event.type}</div>
+        <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{actionLabel}</div>
         {event.repId && (
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             {event.repId}
