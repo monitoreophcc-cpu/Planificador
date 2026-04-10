@@ -30,8 +30,8 @@ export const CELL_THEME: Record<VisualVariant, CellTheme> = {
     bg: 'transparent',
     fg: PLANNER_THEME.success,
     border: 'transparent',
-    hoverBg: 'rgba(255, 255, 255, 0.04)',
-    hoverBorder: 'transparent',
+    hoverBg: PLANNER_THEME.surfaceHover,
+    hoverBorder: PLANNER_THEME.borderStrong,
     icon: Check,
   },
 

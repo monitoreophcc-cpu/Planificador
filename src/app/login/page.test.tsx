@@ -7,6 +7,21 @@ jest.mock('./LoginButton', () => ({
   LoginButton: () => React.createElement('button', { type: 'button' }, 'LOGIN_BUTTON'),
 }))
 
+async function renderLoginPage(
+  root: Root,
+  options?: {
+    error?: string
+  }
+) {
+  const page = await LoginPage({
+    searchParams: options ? Promise.resolve(options) : undefined,
+  })
+
+  await act(async () => {
+    root.render(page)
+  })
+}
+
 describe('LoginPage', () => {
   let container: HTMLDivElement
   let root: Root
@@ -26,9 +41,8 @@ describe('LoginPage', () => {
   })
 
   it('renders the login shell', async () => {
-    await act(async () => {
-      root.render(React.createElement(LoginPage))
-    })
+    await renderLoginPage(root)
+
     expect(container.textContent).toContain('Planificador')
     expect(container.textContent).toContain('Sistema de gestión operativa')
     expect(container.textContent).toContain('LOGIN_BUTTON')
@@ -36,13 +50,8 @@ describe('LoginPage', () => {
   })
 
   it('shows the authentication error message when requested', async () => {
-    await act(async () => {
-      root.render(
-        React.createElement(LoginPage, {
-          searchParams: { error: 'auth' },
-        })
-      )
-    })
+    await renderLoginPage(root, { error: 'auth' })
+
     expect(container.textContent).toContain('No se pudo autenticar. Intenta de nuevo.')
   })
 })

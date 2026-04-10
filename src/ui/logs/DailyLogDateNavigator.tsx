@@ -8,7 +8,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react'
-import { addDays, addMonths, format, isToday, subDays, subMonths } from 'date-fns'
+import { addDays, addMonths, format, subDays, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { CalendarGrid } from '../components/CalendarGrid'
 import { getDailyLogControlButtonStyle } from './dailyLogToolbarStyles'
@@ -35,79 +35,70 @@ export function DailyLogDateNavigator({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 'var(--space-sm)',
+        gap: '14px',
         position: 'relative',
         flexWrap: 'wrap',
         justifyContent: 'flex-end',
       }}
     >
-      <button
-        onClick={() => onDateChange(subMonths(date, 1))}
-        style={getDailyLogControlButtonStyle()}
-        title="Ir al mes anterior"
-      >
-        <ChevronsLeft size={16} />
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <button
+          onClick={() => onDateChange(subMonths(date, 1))}
+          style={getDailyLogControlButtonStyle()}
+          title="Ir al mes anterior"
+        >
+          <ChevronsLeft size={18} />
+        </button>
 
-      <button
-        onClick={() => onDateChange(subDays(date, 1))}
-        style={getDailyLogControlButtonStyle()}
-        title="Ir al día anterior"
-      >
-        <ChevronLeft size={16} />
-      </button>
+        <button
+          onClick={() => onDateChange(subDays(date, 1))}
+          style={getDailyLogControlButtonStyle()}
+          title="Ir al día anterior"
+        >
+          <ChevronLeft size={18} />
+        </button>
+      </div>
 
       <div
         style={{
-          fontWeight: 600,
-          fontSize: '14px',
+          fontWeight: 700,
+          fontSize: '15px',
           color: 'var(--text-main)',
-          minWidth: '220px',
+          minWidth: '250px',
           textAlign: 'center',
-          padding: '0 8px',
+          padding: '0 14px',
           letterSpacing: '-0.01em',
+          textTransform: 'capitalize',
         }}
       >
-        {format(date, "EEEE, dd 'de' MMMM", { locale: es })}
+        {format(date, "EEEE, d 'de' MMMM", { locale: es })}
       </div>
 
-      <button
-        onClick={() => onDateChange(addDays(date, 1))}
-        style={getDailyLogControlButtonStyle()}
-        title="Ir al día siguiente"
-      >
-        <ChevronRight size={16} />
-      </button>
-
-      <button
-        onClick={handleToggleCalendar}
-        style={getDailyLogControlButtonStyle()}
-        title="Abrir calendario"
-      >
-        <CalendarIcon size={16} />
-      </button>
-
-      <button
-        onClick={() => onDateChange(addMonths(date, 1))}
-        style={getDailyLogControlButtonStyle()}
-        title="Ir al mes siguiente"
-      >
-        <ChevronsRight size={16} />
-      </button>
-
-      {!isToday(date) && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <button
-          onClick={() => onDateChange(new Date())}
-          style={{
-            ...getDailyLogControlButtonStyle(),
-            padding: '8px 12px',
-            fontSize: '12px',
-            fontWeight: 600,
-          }}
+          onClick={() => onDateChange(addDays(date, 1))}
+          style={getDailyLogControlButtonStyle()}
+          title="Ir al día siguiente"
         >
-          Hoy
+          <ChevronRight size={18} />
         </button>
-      )}
+
+        <button
+          onClick={handleToggleCalendar}
+          style={getDailyLogControlButtonStyle()}
+          title="Abrir calendario"
+        >
+          <CalendarIcon size={18} />
+        </button>
+
+        <button
+          onClick={() => onDateChange(addMonths(date, 1))}
+          style={getDailyLogControlButtonStyle()}
+          title="Ir al mes siguiente"
+        >
+          <ChevronsRight size={18} />
+        </button>
+      </div>
 
       {isCalendarOpen && (
         <div

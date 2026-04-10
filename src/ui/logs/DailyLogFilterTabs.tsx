@@ -24,8 +24,8 @@ export function DailyLogFilterTabs({
       style={{
         display: 'flex',
         gap: 'var(--space-sm)',
-        paddingBottom: '4px',
         flexWrap: 'wrap',
+        justifyContent: 'flex-end',
       }}
     >
       {FILTER_OPTIONS.map(option => (

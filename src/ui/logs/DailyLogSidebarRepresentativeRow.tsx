@@ -33,7 +33,9 @@ export function DailyLogSidebarRepresentativeRow({
     ...(row.isOperationallyAbsent ? { opacity: 0.7 } : {}),
     ...(row.isUnassigned
       ? {
-          borderLeft: '4px solid var(--danger)',
+          borderLeftWidth: '4px',
+          borderLeftStyle: 'solid',
+          borderLeftColor: 'var(--danger)',
           background:
             'linear-gradient(180deg, var(--bg-danger) 0%, rgba(255,255,255,0.6) 100%)',
         }

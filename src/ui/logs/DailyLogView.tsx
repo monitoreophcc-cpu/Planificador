@@ -10,16 +10,20 @@ import { format } from 'date-fns'
 import { DailyLogModals } from './DailyLogModals'
 import { useDailyLogController } from './useDailyLogController'
 
-export function DailyLogView() {
+type DailyLogViewProps = {
+  summaryMeta: {
+    eyebrow: string
+    title: string
+    description: string
+    context: string
+  }
+}
+
+export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
   const controller = useDailyLogController()
   const [isDashboardExpanded, setIsDashboardExpanded] = useState(false)
   const formRef = useRef<HTMLElement | null>(null)
   const previousSelectedRepIdRef = useRef<string | null>(null)
-
-  const coveringCount = useMemo(
-    () => controller.representativeRows.filter(row => row.isCovering).length,
-    [controller.representativeRows]
-  )
   const selectedRow = useMemo(
     () =>
       controller.selectedRep
@@ -144,18 +148,10 @@ export function DailyLogView() {
       }}
     >
       <DailyLogToolbar
-        activeCoveragesCount={controller.activeCoveragesForDay.length}
         activeShift={controller.activeShift}
-        coveringCount={coveringCount}
         date={controller.dateForLog}
-        dayIncidentsCount={controller.dayIncidents.length}
-        dayPlanned={controller.dailyStats.dayPlanned}
-        dayPresent={controller.dailyStats.dayPresent}
         filterMode={controller.filterMode}
         isExpanded={isDashboardExpanded}
-        nightPlanned={controller.dailyStats.nightPlanned}
-        nightPresent={controller.dailyStats.nightPresent}
-        ongoingIncidentsCount={controller.ongoingIncidents.length}
         onActiveShiftChange={controller.setActiveShift}
         onDateChange={date =>
           controller.setLogDate(format(date, 'yyyy-MM-dd'))
@@ -165,6 +161,7 @@ export function DailyLogView() {
           setIsDashboardExpanded(currentValue => !currentValue)
         }
         selectedRepName={controller.selectedRep?.name}
+        summaryMeta={summaryMeta}
         visibleRepresentatives={controller.representativeRows.length}
       />
 

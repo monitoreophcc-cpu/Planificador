@@ -2,7 +2,8 @@ import { CSSProperties } from 'react'
 import { DailyLogFilterMode } from './DailyLogToolbar'
 
 const controlButtonStyle: CSSProperties = {
-  padding: '8px 10px',
+  width: '50px',
+  height: '50px',
   border: '1px solid var(--shell-border)',
   background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
   borderRadius: '999px',
@@ -35,10 +36,11 @@ export function getDailyLogFilterButtonStyle(
   mode: DailyLogFilterMode
 ): CSSProperties {
   return {
-    padding: '8px 12px',
+    minHeight: '54px',
+    padding: '0 22px',
     borderRadius: '999px',
     border: '1px solid',
-    fontSize: '12px',
+    fontSize: '0.95rem',
     fontWeight: 700,
     cursor: 'pointer',
     boxShadow:

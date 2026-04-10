@@ -1,13 +1,37 @@
 const { TextDecoder, TextEncoder } = require('util')
-const { MessageChannel } = require('worker_threads')
 global.IS_REACT_ACT_ENVIRONMENT = true
 if (typeof global.TextEncoder === 'undefined') { global.TextEncoder = TextEncoder }
 if (typeof global.TextDecoder === 'undefined') { global.TextDecoder = TextDecoder }
-if (typeof global.MessageChannel === 'undefined') { global.MessageChannel = MessageChannel }
-
 if (typeof global.MessageChannel === 'undefined') {
-  const { MessageChannel } = require('worker_threads')
-  global.MessageChannel = MessageChannel
+  class MessagePort {
+    constructor() {
+      this.onmessage = null
+      this._target = null
+    }
+
+    postMessage(message) {
+      const target = this._target
+      setTimeout(() => {
+        target?.onmessage?.({ data: message })
+      }, 0)
+    }
+
+    close() {}
+    start() {}
+    addEventListener() {}
+    removeEventListener() {}
+  }
+
+  global.MessageChannel = class MessageChannel {
+    constructor() {
+      const port1 = new MessagePort()
+      const port2 = new MessagePort()
+      port1._target = port2
+      port2._target = port1
+      this.port1 = port1
+      this.port2 = port2
+    }
+  }
 }
 
 // Polyfill for structuredClone in test environment

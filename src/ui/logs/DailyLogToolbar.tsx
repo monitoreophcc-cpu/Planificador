@@ -1,14 +1,13 @@
 'use client'
 
 import React from 'react'
+import * as Popover from '@radix-ui/react-popover'
 import {
-  Activity,
-  CalendarRange,
   ChevronDown,
   ChevronUp,
-  Shield,
-  Sun,
+  Info,
   Moon,
+  Sun,
   UserRound,
 } from 'lucide-react'
 import { DailyLogDateNavigator } from './DailyLogDateNavigator'
@@ -17,440 +16,359 @@ import { DailyLogFilterTabs } from './DailyLogFilterTabs'
 export type DailyLogFilterMode = 'TODAY' | 'WEEK' | 'MONTH'
 
 type DailyLogToolbarProps = {
-  activeCoveragesCount: number
   activeShift: 'DAY' | 'NIGHT'
-  coveringCount: number
   date: Date
-  dayIncidentsCount: number
-  dayPlanned: number
-  dayPresent: number
   filterMode: DailyLogFilterMode
   isExpanded: boolean
-  nightPlanned: number
-  nightPresent: number
-  ongoingIncidentsCount: number
   onActiveShiftChange: (shift: 'DAY' | 'NIGHT') => void
   onDateChange: (date: Date) => void
   onFilterModeChange: (mode: DailyLogFilterMode) => void
   onToggleExpanded: () => void
   selectedRepName?: string
+  summaryMeta: {
+    eyebrow: string
+    title: string
+    description: string
+    context: string
+  }
   visibleRepresentatives: number
 }
 
 export function DailyLogToolbar({
-  activeCoveragesCount,
   activeShift,
-  coveringCount,
   date,
-  dayIncidentsCount,
-  dayPlanned,
-  dayPresent,
   filterMode,
   isExpanded,
-  nightPlanned,
-  nightPresent,
-  ongoingIncidentsCount,
   onActiveShiftChange,
   onDateChange,
   onFilterModeChange,
   onToggleExpanded,
   selectedRepName,
+  summaryMeta,
   visibleRepresentatives,
 }: DailyLogToolbarProps) {
-  const primaryStats = [
-    {
-      label:
-        filterMode === 'TODAY'
-          ? 'Incidencias del día'
-          : filterMode === 'WEEK'
-            ? 'Incidencias de la semana'
-            : 'Incidencias del mes',
-      value: dayIncidentsCount.toString(),
-      note:
-        filterMode === 'TODAY'
-          ? 'Eventos del día seleccionado'
-          : filterMode === 'WEEK'
-            ? 'Eventos dentro de la semana activa'
-            : 'Eventos dentro del mes activo',
-      icon: Activity,
-      accent: 'var(--accent)',
-      background: 'rgba(var(--accent-rgb), 0.08)',
-      border: 'rgba(var(--accent-rgb), 0.18)',
-    },
-    {
-      label: 'Eventos en curso',
-      value: ongoingIncidentsCount.toString(),
-      note: 'Licencias y vacaciones activas',
-      icon: CalendarRange,
-      accent: 'var(--success)',
-      background: 'var(--bg-success)',
-      border: 'var(--border-success)',
-    },
-  ]
-
-  const compactMetrics = [
-    {
-      label: 'Día',
-      value: `${dayPresent}/${dayPlanned}`,
-      icon: Sun,
-      accent: 'var(--accent-warm)',
-    },
-    {
-      label: 'Noche',
-      value: `${nightPresent}/${nightPlanned}`,
-      icon: Moon,
-      accent: 'var(--accent)',
-    },
-    {
-      label: 'Coberturas',
-      value: activeCoveragesCount.toString(),
-      icon: Shield,
-      accent: 'var(--success)',
-      note:
-        coveringCount > 0 ? `${coveringCount} personas cubriendo` : undefined,
-    },
-  ]
-
   return (
     <section
       style={{
-        borderRadius: '26px',
+        borderRadius: '32px',
         border: '1px solid var(--shell-border)',
         background:
-          'linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-tint) 58%, rgba(var(--accent-rgb), 0.08) 100%)',
-        boxShadow: 'var(--shadow-md)',
-        padding: '22px 24px',
+          'linear-gradient(135deg, rgba(255, 253, 249, 0.98) 0%, rgba(248, 242, 233, 0.96) 60%, rgba(var(--accent-rgb), 0.05) 100%)',
+        boxShadow: '0 24px 48px rgba(24, 34, 48, 0.08)',
+        padding: '30px 36px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '18px',
+        gap: '28px',
       }}
     >
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: '18px',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(320px, 1.2fr) minmax(360px, 0.95fr)',
+          gap: '24px',
+          alignItems: 'start',
         }}
       >
-        <div style={{ maxWidth: '72ch' }}>
-          <div
-            style={{
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--accent)',
-              marginBottom: '10px',
-            }}
-          >
-            Centro operativo del día
-          </div>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: '1.55rem',
-              lineHeight: 1.1,
-              color: 'var(--text-main)',
-            }}
-          >
-            Registro Diario
-          </h2>
-          <p
-            style={{
-              margin: '12px 0 0',
-              fontSize: '14px',
-              color: 'var(--text-muted)',
-              lineHeight: 1.65,
-            }}
-          >
-            {isExpanded
-              ? 'Aquí ves el resumen operativo completo antes de registrar algo.'
-              : 'Vista compacta para entrar directo al registro. Puedes abrir el resumen cuando lo necesites.'}
-          </p>
-        </div>
-
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'flex-end',
-            gap: '10px',
+            gap: '20px',
+            minWidth: 0,
+          }}
+        >
+          <div style={{ maxWidth: '38rem' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                marginBottom: '14px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--accent)',
+                }}
+              >
+                Centro operativo del día
+              </div>
+
+              <Popover.Root>
+                <Popover.Trigger asChild>
+                  <button
+                    type="button"
+                    aria-label={`Ver contexto de ${summaryMeta.title}`}
+                    style={getInfoButtonStyle()}
+                  >
+                    <Info size={16} />
+                  </button>
+                </Popover.Trigger>
+                <Popover.Portal>
+                  <Popover.Content
+                    side="bottom"
+                    align="start"
+                    sideOffset={10}
+                    style={getInfoPopoverStyle()}
+                  >
+                    <div style={getPopoverEyebrowStyle()}>{summaryMeta.eyebrow}</div>
+                    <div style={getPopoverTitleStyle()}>{summaryMeta.title}</div>
+                    <div style={getPopoverDescriptionStyle()}>{summaryMeta.description}</div>
+                    <div style={getPopoverContextStyle()}>{summaryMeta.context}</div>
+                    <Popover.Arrow style={getPopoverArrowStyle()} />
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+            </div>
+
+            <h2
+              style={{
+                margin: 0,
+                fontSize: '2.1rem',
+                lineHeight: 1.08,
+                fontWeight: 500,
+                letterSpacing: '-0.04em',
+                color: 'var(--text-main)',
+              }}
+            >
+              Registro Diario
+            </h2>
+            <p
+              style={{
+                margin: '14px 0 0',
+                fontSize: '1.02rem',
+                color: 'var(--text-muted)',
+                lineHeight: 1.6,
+              }}
+            >
+              {isExpanded
+                ? 'Aquí ves el resumen operativo completo antes de registrar algo.'
+                : 'Vista compacta para entrar directo al registro. Puedes abrir el resumen cuando lo necesites.'}
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => onActiveShiftChange('DAY')}
+              style={getShiftChipStyle(activeShift === 'DAY', 'var(--accent-warm)')}
+            >
+              <Sun size={15} />
+              Día
+            </button>
+            <button
+              type="button"
+              onClick={() => onActiveShiftChange('NIGHT')}
+              style={getShiftChipStyle(activeShift === 'NIGHT', 'var(--accent)')}
+            >
+              <Moon size={15} />
+              Noche
+            </button>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                minHeight: '54px',
+                padding: '0 18px',
+                borderRadius: '999px',
+                border: '1px solid var(--shell-border)',
+                background:
+                  'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
+                color: 'var(--text-main)',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <UserRound size={16} />
+              {visibleRepresentatives} representantes visibles
+            </span>
+            {selectedRepName ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  minHeight: '54px',
+                  padding: '0 18px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(var(--accent-rgb), 0.16)',
+                  background: 'rgba(var(--accent-rgb), 0.08)',
+                  color: 'var(--accent-strong)',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  boxShadow: 'var(--shadow-sm)',
+                }}
+                title="Foco operativo: destaca al representante seleccionado para registrar más rápido."
+              >
+                Foco actual: {selectedRepName}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            justifyItems: 'end',
+            alignContent: 'start',
+            gap: '18px',
+            minWidth: 0,
           }}
         >
           <button
             type="button"
             onClick={onToggleExpanded}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '9px 13px',
-              borderRadius: '999px',
-              border: '1px solid rgba(var(--accent-rgb), 0.16)',
-              background: 'rgba(var(--accent-rgb), 0.08)',
-              color: 'var(--accent-strong)',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)',
-            }}
+            style={getSummaryButtonStyle(isExpanded)}
           >
-            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            {isExpanded ? 'Ocultar resumen' : 'Ver resumen operativo'}
+            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            {isExpanded ? 'Ocultar resumen operativo' : 'Ver resumen operativo'}
           </button>
 
           <DailyLogDateNavigator date={date} onDateChange={onDateChange} />
+
+          <DailyLogFilterTabs
+            filterMode={filterMode}
+            onFilterModeChange={onFilterModeChange}
+          />
         </div>
       </div>
-
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '10px',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => onActiveShiftChange('DAY')}
-            style={getShiftChipStyle(activeShift === 'DAY', 'var(--accent-warm)')}
-          >
-            <Sun size={15} />
-            Día
-          </button>
-          <button
-            type="button"
-            onClick={() => onActiveShiftChange('NIGHT')}
-            style={getShiftChipStyle(activeShift === 'NIGHT', 'var(--accent)')}
-          >
-            <Moon size={15} />
-            Noche
-          </button>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 12px',
-              borderRadius: '999px',
-              border: '1px solid var(--shell-border)',
-              background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
-              color: 'var(--text-main)',
-              fontSize: '12px',
-              fontWeight: 700,
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <UserRound size={14} />
-            {visibleRepresentatives} representantes visibles
-          </span>
-          {selectedRepName ? (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                borderRadius: '999px',
-                border: '1px solid rgba(var(--accent-rgb), 0.16)',
-                background: 'rgba(var(--accent-rgb), 0.08)',
-                color: 'var(--accent-strong)',
-                fontSize: '12px',
-                fontWeight: 700,
-                boxShadow: 'var(--shadow-sm)',
-              }}
-              title="Foco operativo: destaca al representante seleccionado para registrar más rápido."
-            >
-              Foco actual: {selectedRepName}
-            </span>
-          ) : null}
-        </div>
-
-        <DailyLogFilterTabs
-          filterMode={filterMode}
-          onFilterModeChange={onFilterModeChange}
-        />
-      </div>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '12px',
-        }}
-      >
-        {primaryStats.map(item => {
-          const Icon = item.icon
-
-          return (
-            <div
-              key={item.label}
-              style={{
-                borderRadius: '16px',
-                border: `1px solid ${item.border}`,
-                background: `linear-gradient(180deg, ${item.background} 0%, var(--surface-raised) 100%)`,
-                padding: '14px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '12px',
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: 'var(--surface-raised)',
-                  color: item.accent,
-                  border: `1px solid ${item.border}`,
-                }}
-              >
-                <Icon size={18} />
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-faint)',
-                    marginBottom: '4px',
-                  }}
-                >
-                  {item.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: '1.05rem',
-                    fontWeight: 700,
-                    color: 'var(--text-main)',
-                  }}
-                >
-                  {item.value}
-                </div>
-                <div
-                  style={{
-                    marginTop: '6px',
-                    fontSize: '12px',
-                    lineHeight: 1.5,
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {item.note}
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {isExpanded ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '10px',
-          }}
-        >
-          {compactMetrics.map(metric => {
-            const Icon = metric.icon
-
-            return (
-              <div
-                key={metric.label}
-                style={{
-                borderRadius: '16px',
-                border: '1px solid var(--shell-border)',
-                background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
-                padding: '12px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
-                <div
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '12px',
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: 'rgba(255,255,255,0.64)',
-                    color: metric.accent,
-                    border: '1px solid var(--shell-border)',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={16} />
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-faint)',
-                      marginBottom: '2px',
-                    }}
-                  >
-                    {metric.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.98rem',
-                      fontWeight: 700,
-                      color: 'var(--text-main)',
-                    }}
-                  >
-                    {metric.value}
-                  </div>
-                  {metric.note ? (
-                    <div
-                      style={{
-                        marginTop: '4px',
-                        fontSize: '12px',
-                        color: 'var(--text-muted)',
-                      }}
-                    >
-                      {metric.note}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      ) : null}
     </section>
   )
 }
 
-function getShiftChipStyle(isActive: boolean, accent: string): React.CSSProperties {
+function getShiftChipStyle(
+  isActive: boolean,
+  accent: string
+): React.CSSProperties {
   return {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '8px 12px',
+    padding: '10px 18px',
     borderRadius: '999px',
     border: `1px solid ${isActive ? accent : 'var(--shell-border)'}`,
     background: isActive
       ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
-      : 'transparent',
+      : 'rgba(255,255,255,0.56)',
     color: isActive ? accent : 'var(--text-muted)',
-    fontSize: '12px',
+    fontSize: '0.95rem',
     fontWeight: 700,
     cursor: 'pointer',
-    boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+    boxShadow: isActive
+      ? 'var(--shadow-sm)'
+      : 'inset 0 1px 0 rgba(255,255,255,0.55)',
+  }
+}
+
+function getSummaryButtonStyle(isExpanded: boolean): React.CSSProperties {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '10px',
+    justifyContent: 'center',
+    minHeight: '56px',
+    padding: '0 24px',
+    borderRadius: '999px',
+    border: '1px solid var(--shell-border)',
+    background:
+      'linear-gradient(180deg, rgba(245, 247, 248, 0.96) 0%, rgba(230, 234, 236, 0.96) 100%)',
+    color: 'var(--accent-strong)',
+    fontSize: '1rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: isExpanded ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+  }
+}
+
+function getInfoButtonStyle(): React.CSSProperties {
+  return {
+    width: '28px',
+    height: '28px',
+    borderRadius: '999px',
+    border: '1px solid rgba(var(--accent-rgb), 0.16)',
+    background: 'rgba(255,255,255,0.62)',
+    color: 'var(--text-muted)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    padding: 0,
+    boxShadow: 'var(--shadow-sm)',
+  }
+}
+
+function getInfoPopoverStyle(): React.CSSProperties {
+  return {
+    zIndex: 180,
+    width: 'min(320px, calc(100vw - 28px))',
+    padding: '14px 15px',
+    borderRadius: '18px',
+    border: '1px solid var(--shell-border)',
+    background:
+      'linear-gradient(180deg, var(--surface-raised) 0%, var(--bg-panel) 100%)',
+    boxShadow: 'var(--shadow-lg)',
+  }
+}
+
+function getPopoverEyebrowStyle(): React.CSSProperties {
+  return {
+    margin: 0,
+    color: 'var(--text-faint)',
+    fontSize: '0.68rem',
+    fontWeight: 700,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+  }
+}
+
+function getPopoverTitleStyle(): React.CSSProperties {
+  return {
+    marginTop: '6px',
+    color: 'var(--text-main)',
+    fontSize: '1rem',
+    fontWeight: 700,
+    letterSpacing: '-0.02em',
+  }
+}
+
+function getPopoverDescriptionStyle(): React.CSSProperties {
+  return {
+    marginTop: '8px',
+    color: 'var(--text-muted)',
+    fontSize: '0.9rem',
+    lineHeight: 1.55,
+  }
+}
+
+function getPopoverContextStyle(): React.CSSProperties {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    marginTop: '10px',
+    padding: '6px 10px',
+    borderRadius: '999px',
+    background: 'rgba(var(--accent-rgb), 0.1)',
+    color: 'var(--accent-strong)',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+  }
+}
+
+function getPopoverArrowStyle(): React.CSSProperties {
+  return {
+    fill: 'var(--bg-panel)',
   }
 }

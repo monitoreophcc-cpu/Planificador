@@ -249,50 +249,75 @@ export function PlanView({
         >
           {UI_GLOSSARY.representative.singular}
         </div>
-        {weekDays.map(day => (
-          <div
-            key={day.date}
-            style={{
-              textAlign: 'center',
-              cursor: 'pointer',
-              color: day.date === todayIso ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-              position: 'relative',
-              padding: '0 4px 4px',
-            }}
-            title={day.label}
-            onClick={() => onEditDay(day)}
-          >
-            <div style={{ fontSize: '14px', letterSpacing: '0.01em', fontWeight: 600 }}>
-              {new Date(day.date + 'T12:00:00Z')
-                .toLocaleDateString('es-ES', { weekday: 'short' })
-                .replace('.', '')}
-            </div>
+        {weekDays.map(day => {
+          const isToday = day.date === todayIso
+
+          return (
             <div
+              key={day.date}
               style={{
-                fontSize: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                color: day.date === todayIso ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                opacity: 0.8,
+                padding: '0 6px',
               }}
             >
-              {day.date.split('-')[2]}
-              {day.date === todayIso && (
+              <div
+                style={{
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  color: isToday ? PLANNER_THEME.info : 'var(--color-text-secondary)',
+                  position: 'relative',
+                  padding: '8px 6px 10px',
+                  borderRadius: '16px',
+                  minHeight: '62px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '2px',
+                  background: isToday ? 'rgba(47, 128, 237, 0.12)' : 'transparent',
+                  border: `1px solid ${isToday ? 'rgba(47, 128, 237, 0.28)' : 'transparent'}`,
+                  boxShadow: isToday ? 'inset 0 1px 0 rgba(255, 255, 255, 0.4)' : 'none',
+                  transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease',
+                }}
+                title={day.label}
+                onClick={() => onEditDay(day)}
+              >
                 <div
                   style={{
-                    width: '100%',
-                    maxWidth: '24px',
+                    fontSize: '14px',
+                    letterSpacing: '0.01em',
+                    fontWeight: isToday ? 700 : 600,
+                  }}
+                >
+                  {new Date(day.date + 'T12:00:00Z')
+                    .toLocaleDateString('es-ES', { weekday: 'short' })
+                    .replace('.', '')}
+                </div>
+                <div
+                  style={{
+                    fontSize: '13px',
+                    lineHeight: 1.1,
+                    fontWeight: isToday ? 700 : 600,
+                    color: isToday ? PLANNER_THEME.info : 'var(--color-text-secondary)',
+                    opacity: isToday ? 1 : 0.82,
+                  }}
+                >
+                  {day.date.split('-')[2]}
+                </div>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: '24px',
                     height: '2px',
                     borderRadius: '999px',
-                    backgroundColor: 'var(--color-primary)',
+                    backgroundColor: isToday ? PLANNER_THEME.info : 'transparent',
+                    opacity: isToday ? 1 : 0,
+                    marginTop: '2px',
                   }}
                 />
-              )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div
