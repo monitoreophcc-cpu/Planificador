@@ -68,12 +68,28 @@ export function DailyLogSidebarRepresentativeRow({
         ) : null}
         <span
           style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            flexShrink: 0,
+            background: row.isOperationallyAbsent || row.isAbsent
+              ? 'var(--color-critical)'
+              : row.isCovered
+                ? 'var(--color-warning)'
+                : 'var(--color-ok)',
+          }}
+          aria-hidden="true"
+        />
+        <span
+          style={{
             textDecoration: row.isOperationallyAbsent ? 'line-through' : 'none',
             color: row.isOperationallyAbsent
               ? 'var(--text-muted)'
               : row.isUnassigned
                 ? 'var(--text-danger)'
-                : 'inherit',
+                : selected
+                  ? 'var(--color-primary)'
+                  : 'inherit',
             fontWeight: row.isUnassigned || bulkSelected ? 600 : 400,
             minWidth: 0,
             overflow: 'hidden',

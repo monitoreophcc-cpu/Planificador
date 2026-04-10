@@ -95,6 +95,20 @@ export function CoverageAbsenceModal({
                     <p style={{ margin: 0, fontSize: '15px', color: '#111827', fontWeight: 600 }}>
                         ¿Registrar ausencia para <strong>{resolution.displayContext.targetName}</strong>?
                     </p>
+                    <p
+                        style={{
+                            margin: '10px 0 0',
+                            fontSize: '14px',
+                            color: '#92400e',
+                            fontWeight: 700,
+                            background: '#fef3c7',
+                            border: '1px solid #fbbf24',
+                            borderRadius: '8px',
+                            padding: '8px 10px',
+                        }}
+                    >
+                        ⚠ Impacto estimado: 2 puntos sobre el registro del día
+                    </p>
                 </div>
 
                 {/* Actions */}
@@ -104,9 +118,9 @@ export function CoverageAbsenceModal({
                         style={{
                             padding: '10px 20px',
                             borderRadius: '8px',
-                            border: '1px solid #d1d5db',
-                            backgroundColor: 'white',
-                            color: '#374151',
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            color: '#6b7280',
                             fontSize: '14px',
                             fontWeight: 600,
                             cursor: 'pointer'

@@ -2,6 +2,7 @@
 
 import type { FormEventHandler } from 'react'
 import type { IncidentType } from '@/domain/types'
+import { UserRoundSearch } from 'lucide-react'
 import { DailyLogIncidentFields } from './DailyLogIncidentFields'
 import { DailyLogIncidentSubmit } from './DailyLogIncidentSubmit'
 
@@ -135,27 +136,51 @@ export function DailyLogIncidentForm({
           ) : null}
         </header>
 
-        <DailyLogIncidentFields
-          customPoints={customPoints}
-          disabled={!hasSelectedRep}
-          duration={duration}
-          incidentType={incidentType}
-          note={note}
-          onCustomPointsChange={onCustomPointsChange}
-          onDurationChange={onDurationChange}
-          onIncidentTypeChange={onIncidentTypeChange}
-          onNoteChange={onNoteChange}
-        />
+        {hasSelectedRep ? (
+          <>
+            <DailyLogIncidentFields
+              customPoints={customPoints}
+              disabled={!hasSelectedRep}
+              duration={duration}
+              incidentType={incidentType}
+              note={note}
+              onCustomPointsChange={onCustomPointsChange}
+              onDurationChange={onDurationChange}
+              onIncidentTypeChange={onIncidentTypeChange}
+              onNoteChange={onNoteChange}
+            />
 
-        <DailyLogIncidentSubmit
-          conflictMessages={conflictMessages}
-          customPoints={customPoints}
-          disabled={!hasSelectedRep}
-          duration={duration}
-          incidentType={incidentType}
-          logDate={logDate}
-          selectedRepName={selectedRepName}
-        />
+            <DailyLogIncidentSubmit
+              conflictMessages={conflictMessages}
+              customPoints={customPoints}
+              disabled={!hasSelectedRep}
+              duration={duration}
+              incidentType={incidentType}
+              logDate={logDate}
+              selectedRepName={selectedRepName}
+            />
+          </>
+        ) : (
+          <div
+            style={{
+              border: '1px dashed var(--border-subtle)',
+              borderRadius: '16px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: '8px',
+              background: 'var(--bg-subtle)',
+            }}
+          >
+            <UserRoundSearch size={24} color="var(--color-primary)" />
+            <strong style={{ fontSize: '16px' }}>Selecciona un representante</strong>
+            <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+              Elige una ficha de la lista para registrar una incidencia
+            </span>
+          </div>
+        )}
       </div>
     </form>
   )

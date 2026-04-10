@@ -80,7 +80,7 @@ export function OperationalReportPersonList({
             {title}
           </h3>
           <div style={{ marginTop: '4px', fontSize: '13px', color: 'var(--text-muted)' }}>
-            {data.length} representante(s)
+            {data.length} representantes
           </div>
         </div>
       </header>

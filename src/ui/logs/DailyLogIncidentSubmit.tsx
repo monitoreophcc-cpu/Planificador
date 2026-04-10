@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { InlineAlert } from '../components/InlineAlert'
 import { getDailyLogIncidentSubmitStyle } from './dailyLogIncidentFormStyles'
+import { AlertTriangle } from 'lucide-react'
 
 type DailyLogIncidentSubmitProps = {
   conflictMessages: string[]
@@ -47,49 +48,25 @@ export function DailyLogIncidentSubmit({
       <div
         style={{
           padding: '14px 16px',
-          borderRadius: '16px',
-          border: '1px solid rgba(148, 163, 184, 0.16)',
-          background: 'rgba(248,250,252,0.86)',
+          borderRadius: '12px',
+          border: '1px solid var(--border-warning)',
+          background: 'var(--bg-warning)',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
+          alignItems: 'center',
+          gap: '8px',
         }}
       >
-        <div
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: '#64748b',
-          }}
-        >
-          Vista previa
-        </div>
-        <div
-          style={{
-            fontSize: '14px',
-            fontWeight: 700,
-            color: 'var(--text-main)',
-          }}
-        >
-          {preview.title}
-        </div>
-        <div
-          style={{
-            fontSize: '13px',
-            lineHeight: 1.6,
-            color: 'var(--text-muted)',
-          }}
-        >
-          {preview.description}
-        </div>
+        <AlertTriangle size={16} color="var(--text-warning)" />
+        <strong style={{ fontSize: '16px', color: 'var(--text-warning)' }}>
+          Impacto: {preview.points} puntos
+        </strong>
       </div>
 
       <div>
         <button
           type="submit"
           disabled={disabled}
+          title={disabled ? 'Selecciona un representante y tipo de incidencia' : undefined}
           style={getDailyLogIncidentSubmitStyle(disabled)}
         >
           {preview.buttonLabel}
@@ -142,14 +119,16 @@ function buildIncidentPreview({
       title: `Registrar ${labelMap[incidentType]} para ${targetName}`,
       description: `Se aplicará desde ${formattedDate} por ${duration} día(s). Este registro es administrativo y no suma puntos punitivos.`,
       buttonLabel: `Registrar ${labelMap[incidentType]}`,
+      points: 0,
     }
   }
 
   if (incidentType === 'AUSENCIA') {
     return {
       title: `Registrar ausencia para ${targetName}`,
-      description: `Se registrará sobre ${formattedDate}. Antes de guardar se confirmará si la ausencia fue justificada; si no lo es, el impacto estimado es de hasta ${pointsPreview} punto(s).`,
+      description: `Se registrará sobre ${formattedDate}. Antes de guardar se confirmará si la ausencia fue justificada; si no lo es, el impacto estimado es de hasta ${pointsPreview} puntos.`,
       buttonLabel: 'Revisar ausencia',
+      points: pointsPreview,
     }
   }
 
@@ -159,14 +138,16 @@ function buildIncidentPreview({
       description:
         customPoints === ''
           ? `Se guardará en ${formattedDate}. Define los puntos manuales si este evento debe afectar el acumulado.`
-          : `Se guardará en ${formattedDate} con ${pointsPreview} punto(s) manual(es).`,
+          : `Se guardará en ${formattedDate} con ${pointsPreview} puntos manuales.`,
       buttonLabel: 'Registrar evento manual',
+      points: pointsPreview,
     }
   }
 
   return {
     title: `Registrar ${labelMap[incidentType]} para ${targetName}`,
-    description: `Se guardará en ${formattedDate} con un impacto estimado de ${pointsPreview} punto(s).`,
+    description: `Se guardará en ${formattedDate} con un impacto estimado de ${pointsPreview} puntos.`,
     buttonLabel: `Registrar ${labelMap[incidentType]}`,
+    points: pointsPreview,
   }
 }

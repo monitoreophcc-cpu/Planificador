@@ -236,7 +236,7 @@ export function PlanView({
           padding: '12px 0 10px',
           fontWeight: 600,
           background: PLANNER_THEME.surfacePanelSoft,
-          color: PLANNER_THEME.textMuted,
+          color: 'var(--color-text-secondary)',
         }}
       >
         <div
@@ -255,14 +255,21 @@ export function PlanView({
             style={{
               textAlign: 'center',
               cursor: 'pointer',
-              color: day.date === todayIso ? PLANNER_THEME.info : PLANNER_THEME.textMuted,
+              color: day.date === todayIso ? 'var(--color-primary)' : 'var(--color-text-secondary)',
               position: 'relative',
-              padding: '0 4px',
+              padding: '0 4px 4px',
             }}
             title={day.label}
             onClick={() => onEditDay(day)}
           >
-            <div style={{ fontSize: '0.9rem', letterSpacing: '0.01em' }}>
+            <div
+              style={{
+                fontSize: '14px',
+                letterSpacing: '0.01em',
+                fontWeight: day.date === todayIso ? 600 : 500,
+                color: day.date === todayIso ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+              }}
+            >
               {new Date(day.date + 'T12:00:00Z')
                 .toLocaleDateString('es-ES', { weekday: 'short' })
                 .replace('.', '')}
@@ -270,25 +277,16 @@ export function PlanView({
             <div
               style={{
                 fontSize: '12px',
-                fontWeight: 500,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '4px',
-                color: day.date === todayIso ? PLANNER_THEME.info : PLANNER_THEME.textMuted,
+                color: day.date === todayIso ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                opacity: 0.8,
+                fontWeight: day.date === todayIso ? 600 : 500,
               }}
             >
               {day.date.split('-')[2]}
-              {day.date === todayIso && (
-                <div
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: PLANNER_THEME.info,
-                  }}
-                />
-              )}
             </div>
           </div>
         ))}
