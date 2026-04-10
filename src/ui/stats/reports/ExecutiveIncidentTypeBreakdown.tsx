@@ -64,7 +64,7 @@ export function ExecutiveIncidentTypeBreakdown({
                 style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
               >
                 <span style={{ fontSize: '14px' }}>
-                  <strong>{item.count}</strong> evento(s)
+                  <strong>{item.count}</strong> eventos
                 </span>
                 <span
                   style={{

@@ -60,7 +60,7 @@ export function DailyEventsList({
     const confirmed = await showConfirm({
       title: `¿Eliminar incidencia?`,
       description: `Esto eliminará permanentemente la incidencia "${incident.note || INCIDENT_STYLES[incident.type].label
-        }" registrada para ${incident.repName}.`,
+        }" registrada para ${incident.repName}`,
       intent: 'danger',
       confirmLabel: 'Sí, eliminar',
     })

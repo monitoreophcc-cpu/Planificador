@@ -126,7 +126,7 @@ function buildIncidentPreview({
   if (incidentType === 'AUSENCIA') {
     return {
       title: `Registrar ausencia para ${targetName}`,
-      description: `Se registrará sobre ${formattedDate}. Antes de guardar se confirmará si la ausencia fue justificada; si no lo es, el impacto estimado es de hasta ${pointsPreview} punto(s).`,
+      description: `Se registrará sobre ${formattedDate}. Antes de guardar se confirmará si la ausencia fue justificada; si no lo es, el impacto estimado es de hasta ${pointsPreview} puntos.`,
       buttonLabel: 'Revisar ausencia',
       points: pointsPreview,
     }
@@ -138,7 +138,7 @@ function buildIncidentPreview({
       description:
         customPoints === ''
           ? `Se guardará en ${formattedDate}. Define los puntos manuales si este evento debe afectar el acumulado.`
-          : `Se guardará en ${formattedDate} con ${pointsPreview} punto(s) manual(es).`,
+          : `Se guardará en ${formattedDate} con ${pointsPreview} puntos manuales.`,
       buttonLabel: 'Registrar evento manual',
       points: pointsPreview,
     }
@@ -146,7 +146,7 @@ function buildIncidentPreview({
 
   return {
     title: `Registrar ${labelMap[incidentType]} para ${targetName}`,
-    description: `Se guardará en ${formattedDate} con un impacto estimado de ${pointsPreview} punto(s).`,
+    description: `Se guardará en ${formattedDate} con un impacto estimado de ${pointsPreview} puntos.`,
     buttonLabel: `Registrar ${labelMap[incidentType]}`,
     points: pointsPreview,
   }

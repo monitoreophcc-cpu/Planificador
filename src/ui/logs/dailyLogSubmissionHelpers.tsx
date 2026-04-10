@@ -192,8 +192,8 @@ export async function submitDailyLogIncidentBatch(args: {
         ? `Comentario global: "${bulkNote.trim()}".`
         : 'Se aplicará el mismo criterio a todas las fichas seleccionadas.'
       : bulkNote.trim()
-        ? `Cada registro usará ${bulkCustomPoints} punto(s) y el comentario "${bulkNote.trim()}".`
-        : `Cada registro usará ${bulkCustomPoints} punto(s) manuales.`
+        ? `Cada registro usará ${bulkCustomPoints} puntos y el comentario "${bulkNote.trim()}".`
+        : `Cada registro usará ${bulkCustomPoints} puntos manuales.`
 
   const confirmed = await showConfirm({
     title: 'Registrar lote',
