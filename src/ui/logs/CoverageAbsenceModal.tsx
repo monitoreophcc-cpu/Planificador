@@ -107,7 +107,7 @@ export function CoverageAbsenceModal({
                             padding: '8px 10px',
                         }}
                     >
-                        ⚠ Impacto estimado: 2 puntos sobre el registro del día
+                        ⚠ Impacto estimado: 2 punto(s) sobre el registro del día
                     </p>
                 </div>
 
