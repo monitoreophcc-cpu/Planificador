@@ -120,6 +120,7 @@ export function DailyLogIncidentFields({
         <label style={labelStyle}>Comentario (opcional)</label>
         <textarea
           style={textareaStyle}
+          rows={3}
           placeholder="Escribe un comentario..."
           value={note}
           onChange={event => onNoteChange(event.target.value)}
@@ -133,63 +134,17 @@ export function DailyLogIncidentFields({
 function getIncidentQuickActionStyle(
   isActive: boolean,
   disabled: boolean,
-  type: IncidentType
+  _type: IncidentType
 ): React.CSSProperties {
-  const tones: Record<
-    IncidentType,
-    { accent: string; background: string; border: string }
-  > = {
-    TARDANZA: {
-      accent: '#b45309',
-      background: 'rgba(255, 251, 235, 0.96)',
-      border: 'rgba(245, 158, 11, 0.22)',
-    },
-    AUSENCIA: {
-      accent: '#b91c1c',
-      background: 'rgba(254, 242, 242, 0.96)',
-      border: 'rgba(248, 113, 113, 0.22)',
-    },
-    ERROR: {
-      accent: '#be123c',
-      background: 'rgba(255, 241, 242, 0.96)',
-      border: 'rgba(244, 114, 182, 0.2)',
-    },
-    LICENCIA: {
-      accent: '#1d4ed8',
-      background: 'rgba(239, 246, 255, 0.96)',
-      border: 'rgba(37, 99, 235, 0.18)',
-    },
-    VACACIONES: {
-      accent: '#0f766e',
-      background: 'rgba(240, 253, 250, 0.96)',
-      border: 'rgba(13, 148, 136, 0.18)',
-    },
-    OTRO: {
-      accent: '#475569',
-      background: 'rgba(248, 250, 252, 0.96)',
-      border: 'rgba(148, 163, 184, 0.18)',
-    },
-    OVERRIDE: {
-      accent: '#475569',
-      background: 'rgba(248, 250, 252, 0.96)',
-      border: 'rgba(148, 163, 184, 0.18)',
-    },
-    SWAP: {
-      accent: '#1d4ed8',
-      background: 'rgba(239, 246, 255, 0.96)',
-      border: 'rgba(37, 99, 235, 0.18)',
-    },
-  }
-
   return {
     padding: '8px 12px',
     borderRadius: '999px',
-    border: `1px solid ${isActive ? tones[type].border : 'rgba(148, 163, 184, 0.16)'}`,
-    background: isActive ? tones[type].background : 'rgba(255,255,255,0.9)',
-    color: isActive ? tones[type].accent : '#475569',
+    border: `1px solid ${isActive ? 'var(--color-primary)' : 'var(--border-strong)'}`,
+    background: isActive ? 'var(--color-primary)' : 'transparent',
+    color: isActive ? 'var(--text-on-accent)' : '#334155',
     fontSize: '12px',
     fontWeight: 700,
     cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.55 : 1,
+    opacity: disabled ? 0.4 : 1,
   }
 }

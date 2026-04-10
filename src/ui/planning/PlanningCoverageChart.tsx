@@ -51,17 +51,6 @@ export function PlanningCoverageChart({
       Math.max(entry.coverage?.actual ?? 0, entry.coverage?.required ?? 0)
     )
   )
-  const requiredValues = coverageEntries
-    .map(entry => entry.coverage?.required ?? 0)
-    .filter(value => value > 0)
-  const minRequired = requiredValues.length ? Math.min(...requiredValues) : 0
-  const maxRequired = requiredValues.length ? Math.max(...requiredValues) : 0
-  const minimumLabel =
-    !requiredValues.length
-      ? 'Sin regla'
-      : minRequired === maxRequired
-        ? `${minRequired}`
-        : `${minRequired}-${maxRequired}`
   const todayIso = format(new Date(), 'yyyy-MM-dd') as ISODate
 
   if (!hasCoverageRules) {
@@ -186,15 +175,6 @@ export function PlanningCoverageChart({
             flexWrap: 'wrap',
           }}
         >
-          <div
-            style={{
-              color: PLANNER_THEME.textMuted,
-              fontSize: '0.82rem',
-              fontWeight: 600,
-            }}
-          >
-            Mínimo: {minimumLabel}
-          </div>
           <button
             onClick={onNavigateToSettings}
             style={{
@@ -275,6 +255,7 @@ export function PlanningCoverageChart({
                       height: `${barHeight}px`,
                       borderRadius: '999px',
                       background: toneColor(tone),
+                      border: isToday ? '2px solid var(--color-primary)' : '2px solid transparent',
                       boxShadow: `0 10px 24px ${tone === 'danger' ? 'rgba(204, 71, 71, 0.18)' : tone === 'warning' ? 'rgba(213, 146, 34, 0.18)' : 'rgba(32, 195, 139, 0.16)'}`,
                     }}
                   />
@@ -284,20 +265,21 @@ export function PlanningCoverageChart({
                     textAlign: 'center',
                     color: isToday ? PLANNER_THEME.info : PLANNER_THEME.textMuted,
                     fontWeight: isToday ? 700 : 500,
-                    fontSize: '0.76rem',
+                    fontSize: '12px',
+                    opacity: 0.8,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1px',
+                    gap: '4px',
                   }}
                 >
                   <span>{dayLabel}</span>
                   {isToday && (
                     <span
                       style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        background: PLANNER_THEME.info,
+                        width: '20px',
+                        height: '2px',
+                        borderRadius: '999px',
+                        background: 'var(--color-primary)',
                         alignSelf: 'center',
                       }}
                     />
