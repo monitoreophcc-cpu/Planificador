@@ -32,6 +32,10 @@ export const PlanCell = React.memo(function PlanCell({
   const showPrimaryPill = Boolean(resolved.label)
   const showSecondaryBadge =
     resolved.badge === 'CUBIERTO' || resolved.badge === 'CUBRIENDO'
+  const normalizedLabel =
+    resolved.label === 'OFF'
+      ? resolved.label.replace(/^[^A-ZÁÉÍÓÚÜÑ]+/u, '')
+      : resolved.label
 
   const style: React.CSSProperties = {
     flex: 1,
@@ -63,7 +67,7 @@ export const PlanCell = React.memo(function PlanCell({
         ? '9px'
         : '10px',
     fontWeight: 700,
-    padding: '3px 8px',
+    padding: '4px 8px',
     borderRadius: '8px',
     letterSpacing: '0.01em',
     background: theme.bg,
@@ -71,6 +75,10 @@ export const PlanCell = React.memo(function PlanCell({
     border: `1px solid ${theme.border}`,
     lineHeight: 1,
     whiteSpace: 'nowrap',
+    minHeight: '20px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
   }
 
   const badgeStyle: React.CSSProperties = {
@@ -146,7 +154,12 @@ export const PlanCell = React.memo(function PlanCell({
     >
       <div style={{ display: 'flex', gap: 4, alignItems: 'center', minHeight: '16px' }}>
         {!showPrimaryPill && Icon && <Icon size={15} strokeWidth={2.4} />}
-        {showPrimaryPill && <span style={primaryPillStyle}>{resolved.label}</span>}
+        {showPrimaryPill && (
+          <span style={primaryPillStyle}>
+            {normalizedLabel === 'LIC' ? '✦' : normalizedLabel === 'AUS' ? '!' : ''}
+            {normalizedLabel}
+          </span>
+        )}
       </div>
 
       {showSecondaryBadge && resolved.badge && (

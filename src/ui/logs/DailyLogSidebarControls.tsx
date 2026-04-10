@@ -76,8 +76,8 @@ export function DailyLogSidebarControls({
             }}
           >
             {filteredCount === totalCount
-              ? `${totalCount} ficha(s) visibles`
-              : `${filteredCount} de ${totalCount} ficha(s) en esta vista`}
+              ? `${totalCount} fichas visibles`
+              : `${filteredCount} de ${totalCount} fichas en esta vista`}
           </div>
         </div>
 
@@ -223,17 +223,13 @@ export function DailyLogSidebarControls({
                 gap: '6px',
                 padding: '8px 12px',
                 borderRadius: '999px',
-                border: `1px solid ${
-                  isActive ? 'rgba(var(--accent-rgb), 0.16)' : 'var(--shell-border)'
-                }`,
-                background: isActive
-                  ? 'rgba(var(--accent-rgb), 0.08)'
-                  : 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.45) 100%)',
-                color: isActive ? 'var(--accent-strong)' : 'var(--text-muted)',
+                border: `1px solid ${isActive ? 'var(--color-primary)' : 'var(--border-strong)'}`,
+                background: isActive ? 'var(--color-primary)' : 'transparent',
+                color: isActive ? 'var(--text-on-accent)' : 'var(--text-main)',
                 fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+                boxShadow: 'none',
               }}
             >
               <Icon size={13} />
@@ -252,22 +248,26 @@ export function DailyLogSidebarControls({
           marginBottom: 'var(--space-md)',
         }}
       >
-        <button
-          type="button"
-          onClick={onToggleHideAbsent}
+        <label
           style={{
-            background: 'none',
-            border: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
             cursor: 'pointer',
-            color: hideAbsent ? 'var(--accent)' : 'var(--text-muted)',
+            color: 'var(--text-muted)',
             fontSize: '12px',
             fontWeight: 600,
-            padding: 0,
           }}
           title="Solo afecta la vista, no el conteo"
         >
-          {hideAbsent ? 'Mostrar ausentes' : 'Ocultar ausentes'}
-        </button>
+          <input
+            type="checkbox"
+            checked={hideAbsent}
+            onChange={onToggleHideAbsent}
+            style={{ accentColor: 'var(--color-primary)' }}
+          />
+          Ocultar ausentes
+        </label>
 
         {searchTerm ? (
           <span

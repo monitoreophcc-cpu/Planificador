@@ -51,8 +51,8 @@ export const PlanRow = React.memo(function PlanRow({
       style={{
         display: 'flex',
         alignItems: 'stretch',
-        borderBottom: `1px solid ${PLANNER_THEME.border}`,
-        minHeight: '50px',
+        borderBottom: '1px solid var(--color-border)',
+        minHeight: '56px',
         background: isHovered
           ? 'rgba(47, 128, 237, 0.14)'
           : isAlternate
@@ -63,9 +63,9 @@ export const PlanRow = React.memo(function PlanRow({
     >
       <div
         style={{
-          padding: '8px 14px 8px 18px',
-          fontWeight: 700,
-          fontSize: '0.94rem',
+          padding: '12px 14px 12px 18px',
+          fontWeight: 500,
+          fontSize: '14px',
           width: `${PLANNER_WIDTHS.AGENT_NAME}px`,
           minWidth: `${PLANNER_WIDTHS.AGENT_NAME}px`,
           display: 'flex',
@@ -81,7 +81,7 @@ export const PlanRow = React.memo(function PlanRow({
           flex: 1,
           display: 'flex',
           gap: '4px',
-          padding: '2px 10px 2px 0',
+          padding: '6px 10px 6px 0',
         }}
       >
         {weekDays.map((day) => {

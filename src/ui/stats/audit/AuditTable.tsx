@@ -76,7 +76,7 @@ export function AuditTable({ events }: Props) {
           Movimientos recientes del sistema
         </div>
         <div style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
-          {events.length} evento(s) registrados para consulta histórica.
+          {events.length} eventos registrados para consulta histórica.
         </div>
       </div>
       <div style={{ overflowX: 'auto' }}>

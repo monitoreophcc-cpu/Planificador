@@ -60,7 +60,7 @@ export function DailyEventsList({
     const confirmed = await showConfirm({
       title: `¿Eliminar incidencia?`,
       description: `Esto eliminará permanentemente la incidencia "${incident.note || INCIDENT_STYLES[incident.type].label
-        }" registrada para ${incident.repName}.`,
+        }" registrada para ${incident.repName}`,
       intent: 'danger',
       confirmLabel: 'Sí, eliminar',
     })
@@ -89,10 +89,31 @@ export function DailyEventsList({
         <span>{title}</span>
         {incidents.length > 0 && (
           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            {incidents.length} evento(s)
+            {incidents.length} eventos
           </span>
         )}
       </h3>
+      {title.includes('Monitor') ? (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            marginBottom: '10px',
+            fontSize: '12px',
+            color: 'var(--text-muted)',
+          }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6' }} />
+            Licencia
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }} />
+            Vacaciones
+          </span>
+        </div>
+      ) : null}
 
       <AnimatePresence mode="popLayout">
         {!hasItems && (

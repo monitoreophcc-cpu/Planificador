@@ -85,7 +85,7 @@ export function ShiftSection({
                             fontWeight: 600,
                         }}
                     >
-                        {representatives.length} representante(s)
+                        {representatives.length} representantes
                     </span>
                 </div>
             ) : null}
