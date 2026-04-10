@@ -152,7 +152,7 @@ export const PlanCell = React.memo(function PlanCell({
         {!showPrimaryPill && Icon && <Icon size={15} strokeWidth={2.4} />}
         {showPrimaryPill && (
           <span style={primaryPillStyle}>
-            {resolved.label === 'LIC' ? '✦' : resolved.label === 'AUS' ? '!' : ''}
+            {resolved.label === 'OFF' ? '◌' : resolved.label === 'LIC' ? '✦' : resolved.label === 'AUS' ? '!' : ''}
             {resolved.label}
           </span>
         )}

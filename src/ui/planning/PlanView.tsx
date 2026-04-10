@@ -262,14 +262,7 @@ export function PlanView({
             title={day.label}
             onClick={() => onEditDay(day)}
           >
-            <div
-              style={{
-                fontSize: '14px',
-                letterSpacing: '0.01em',
-                fontWeight: day.date === todayIso ? 600 : 500,
-                color: day.date === todayIso ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-              }}
-            >
+            <div style={{ fontSize: '14px', letterSpacing: '0.01em', fontWeight: 600 }}>
               {new Date(day.date + 'T12:00:00Z')
                 .toLocaleDateString('es-ES', { weekday: 'short' })
                 .replace('.', '')}
@@ -283,10 +276,20 @@ export function PlanView({
                 gap: '4px',
                 color: day.date === todayIso ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                 opacity: 0.8,
-                fontWeight: day.date === todayIso ? 600 : 500,
               }}
             >
               {day.date.split('-')[2]}
+              {day.date === todayIso && (
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '24px',
+                    height: '2px',
+                    borderRadius: '999px',
+                    backgroundColor: 'var(--color-primary)',
+                  }}
+                />
+              )}
             </div>
           </div>
         ))}

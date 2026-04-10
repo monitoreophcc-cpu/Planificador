@@ -58,7 +58,7 @@ export function DailyLogIncidentSubmit({
       >
         <AlertTriangle size={16} color="var(--text-warning)" />
         <strong style={{ fontSize: '16px', color: 'var(--text-warning)' }}>
-          Impacto: {preview.points} puntos
+          Impacto: {preview.points} punto(s)
         </strong>
       </div>
 
