@@ -1,6 +1,12 @@
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
 
 const config = [
+  {
+    ignores: [
+      '**/.next/**',
+      'docs/callcenter-analytics-app-main/**',
+    ],
+  },
   ...nextCoreWebVitals,
   {
     rules: {

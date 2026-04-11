@@ -6,20 +6,17 @@ import { selectOperationalReport } from '@/store/selectors/selectOperationalRepo
 import OperationalAnalysisView from './OperationalAnalysisView'
 import { OperationalInstitutionalView } from './OperationalInstitutionalView'
 import { OperationalReportModeToggle } from './OperationalReportModeToggle'
+import { CallCenterAnalysisView } from '@/ui/reports/analysis-beta/CallCenterAnalysisView'
 
 // ============================================================================
 // MAIN VIEW
 // ============================================================================
 
 export function OperationalReportView() {
-  const [mode, setMode] = useState<'INSTITUTIONAL' | 'ANALYSIS'>('INSTITUTIONAL')
+  const [mode, setMode] = useState<'INSTITUTIONAL' | 'ANALYSIS' | 'CALL_CENTER'>('INSTITUTIONAL')
   const [periodKind, setPeriodKind] = useState<'MONTH' | 'QUARTER'>('MONTH')
 
   const report = useAppStore(state => selectOperationalReport(state, periodKind))
-
-  if (!report) {
-    return <div className="app-shell-loading" style={{ margin: '24px' }}>Cargando reporte...</div>
-  }
 
   return (
     <div
@@ -35,12 +32,20 @@ export function OperationalReportView() {
       <OperationalReportModeToggle mode={mode} onChange={setMode} />
 
       {mode === 'INSTITUTIONAL' ? (
-        <OperationalInstitutionalView
-          report={report}
-          onPeriodChange={setPeriodKind}
-        />
-      ) : (
+        report ? (
+          <OperationalInstitutionalView
+            report={report}
+            onPeriodChange={setPeriodKind}
+          />
+        ) : (
+          <div className="app-shell-loading" style={{ margin: '24px 0' }}>
+            Cargando reporte...
+          </div>
+        )
+      ) : mode === 'ANALYSIS' ? (
         <OperationalAnalysisView />
+      ) : (
+        <CallCenterAnalysisView />
       )}
     </div>
   )
