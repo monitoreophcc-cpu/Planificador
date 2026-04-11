@@ -1,17 +1,21 @@
 'use client';
 
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import ShiftCard from "@/ui/reports/analysis-beta/kpis/ShiftCard";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import ShiftCard from '@/ui/reports/analysis-beta/kpis/ShiftCard';
 
 export default function ShiftGrid() {
-    const { metrics } = useOperationalDashboardStore();
+  const kpisByShift = useDashboardStore((s) => s.kpisByShift);
 
-    if (!metrics?.kpisByShift) return null;
+  const hasData =
+    kpisByShift.Día.recibidas > 0 || kpisByShift.Noche.recibidas > 0;
+  if (!hasData) {
+    return null;
+  }
 
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ShiftCard name="Turno Día" data={metrics.kpisByShift.Día} />
-            <ShiftCard name="Turno Noche" data={metrics.kpisByShift.Noche} />
-        </div>
-    );
+  return (
+    <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <ShiftCard name="Día" kpis={kpisByShift.Día} />
+      <ShiftCard name="Noche" kpis={kpisByShift.Noche} />
+    </section>
+  );
 }

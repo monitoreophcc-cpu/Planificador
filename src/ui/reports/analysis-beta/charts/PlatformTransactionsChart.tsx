@@ -1,45 +1,72 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useMemo } from "react";
-import { formatNumber } from "@/domain/call-center-analysis/utils/format";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { Bar } from 'react-chartjs-2';
+import { getTransactionsByPlatform } from '@/ui/reports/analysis-beta/services/chart.service';
+import '@/ui/reports/analysis-beta/lib/chart-setup';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 export default function PlatformTransactionsChart() {
-    const { data } = useOperationalDashboardStore();
+  const transactions = useDashboardStore((state) => state.transactions);
+  const chartData = getTransactionsByPlatform(transactions);
 
-    const chartData = useMemo(() => {
-        if (!data?.transactions) return [];
-        const platforms = new Map<string, number>();
+  const data = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        label: 'Órdenes válidas',
+        data: chartData.values,
+        backgroundColor: [
+          '#b91c1c', // Rojo Corporativo
+          '#0f172a', // Negro Corporativo
+          '#475569', // Slate-600
+          '#dc2626', // Red-600
+          '#1e293b', // Slate-800
+          '#94a3b8', // Slate-400
+        ],
+        borderRadius: 8,
+      },
+    ],
+  };
 
-        data.transactions.forEach(t => {
-            const p = t.plataforma || 'Otro';
-            platforms.set(p, (platforms.get(p) || 0) + 1);
-        });
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+    },
+  };
 
-        return Array.from(platforms.entries()).map(([name, value]) => ({ name, Transacciones: value }));
-    }, [data]);
+  if (transactions.length === 0) {
+    return null;
+  }
 
-    if (chartData.length === 0) return null;
-
-    return (
-        <Card className="col-span-1">
-            <CardHeader>
-                <CardTitle>Transacciones por Plataforma</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => typeof value === 'number' ? formatNumber(value) : value} />
-                        <Legend />
-                        <Bar dataKey="Transacciones" fill="#8884d8" />
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Transacciones: Monitoreo CC vs Plataformas</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-80 w-full">
+          <Bar options={options} data={data} />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
+

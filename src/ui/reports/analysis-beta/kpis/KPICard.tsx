@@ -1,24 +1,23 @@
-'use client';
-
-import { Card, CardContent } from "@/ui/reports/analysis-beta/ui/card";
-
 type Props = {
-    title: string;
-    value: number | string;
-    subValue?: string;
-    trend?: 'up' | 'down' | 'neutral';
-    color?: string;
-    highlight?: boolean;
+  title: string;
+  value: number | string;
+  status?: 'success' | 'danger' | 'neutral';
+  valueColor?: string;
 };
 
-export default function KPICard({ title, value, subValue, color = "text-foreground", highlight }: Props) {
-    return (
-        <Card className={highlight ? "border-primary/50 bg-primary/5" : ""}>
-            <CardContent className="p-4 flex flex-col items-start justify-center text-left">
-                <p className="text-xs text-muted-foreground mb-1">{title}</p>
-                <p className={`text-2xl font-bold ${color}`}>{value}</p>
-                {subValue && <p className="text-xs text-muted-foreground mt-1">{subValue}</p>}
-            </CardContent>
-        </Card>
-    );
+export default function KPICard({ title, value, status = 'neutral', valueColor }: Props) {
+  const borderColors = {
+    success: 'border-green-500',
+    danger: 'border-red-600',
+    neutral: 'border-slate-200'
+  };
+  
+  const borderColor = borderColors[status];
+  
+  return (
+    <div className={`rounded-xl bg-white p-6 shadow-md border-t-4 ${borderColor} flex flex-col items-center justify-center text-center space-y-4 transition-all hover:scale-105 duration-300`}>
+      <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">{title}</p>
+      <p className={`text-4xl font-black ${valueColor || 'text-red-700'}`}>{value}</p>
+    </div>
+  );
 }

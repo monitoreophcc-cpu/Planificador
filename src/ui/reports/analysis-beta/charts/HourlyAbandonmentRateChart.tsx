@@ -1,57 +1,116 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import { Line, LineChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useMemo } from "react";
-import { toTimeSlot } from "@/domain/call-center-analysis/time/shiftResolver";
-import { formatPercent } from "@/domain/call-center-analysis/utils/format";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { Line } from 'react-chartjs-2';
+import { aggregateByTimeSlot } from '@/ui/reports/analysis-beta/services/kpi.service';
+import '@/ui/reports/analysis-beta/lib/chart-setup';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { PillButton, PillToggleContainer } from '../ui/pills';
 
+// Hourly Abandonment Rate Chart Component
 export default function HourlyAbandonmentRateChart() {
-    const { data } = useOperationalDashboardStore();
+  const answeredCalls = useDashboardStore((state) => state.answeredCalls);
+  const abandonedCalls = useDashboardStore((state) => state.abandonedCalls);
+  const transactions = useDashboardStore((state) => state.transactions);
+  const hourlyChartShift = useDashboardStore((state) => state.hourlyChartShift);
+  const setHourlyChartShift = useDashboardStore((state) => state.setHourlyChartShift);
 
-    const chartData = useMemo(() => {
-        if (!data?.answered || !data?.abandoned?.clean) return [];
+  const timeSlotData = aggregateByTimeSlot(
+    answeredCalls,
+    abandonedCalls,
+    transactions
+  );
+  const chartDetails =
+    hourlyChartShift === 'Día' ? timeSlotData.day : timeSlotData.night;
 
-        // Get all unique time slots
-        const slots = new Set<string>();
-        data.answered.forEach(c => slots.add(toTimeSlot(c.hora)));
-        data.abandoned.clean.forEach(c => slots.add(toTimeSlot(c.hora)));
+  const data = {
+    labels: chartDetails.map((s) => s.hora),
+    datasets: [
+      {
+        label: '% Abandono',
+        data: chartDetails.map((s) => s.pctAband),
+        borderColor: '#b91c1c', // Rojo Corporativo
+        backgroundColor: 'rgba(185, 28, 28, 0.1)', // Rojo Corporativo con opacidad
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#b91c1c',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#b91c1c',
+      },
+    ],
+  };
 
-        // Aggregate by slot (same logic as ShiftDetailTable)
-        return Array.from(slots).sort().map(slot => {
-            const ans = data.answered.filter(c => c.periodo === slot);
-            const abn = data.abandoned.clean.filter(c => c.periodo === slot);
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += context.parsed.y.toFixed(2) + '%';
+            }
+            return label;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          callback: (value: string | number) => `${value}%`,
+        },
+      },
+    },
+  };
 
-            const answeredCount = ans.reduce((acc, c) => acc + c.llamadas, 0);
-            const total = answeredCount + abn.length;
+  if (answeredCalls.length === 0 && abandonedCalls.length === 0) {
+    return null;
+  }
 
-            return {
-                hour: slot,
-                Rate: total > 0 ? (abn.length / total) * 100 : 0
-            };
-        });
-    }, [data]);
-
-    if (chartData.length === 0) return null;
-
-    return (
-        <Card className="col-span-1">
-            <CardHeader>
-                <CardTitle>Tasa de Abandono por Hora (%)</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="hour" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => typeof value === 'number' ? formatPercent(value, 2) : value} />
-                        <Legend />
-                        <Line type="monotone" dataKey="Rate" stroke="#ff0000" />
-                    </LineChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <CardTitle>Tasa de Abandono por Hora</CardTitle>
+          <PillToggleContainer>
+            <PillButton
+              onClick={() => setHourlyChartShift('Día')}
+              isActive={hourlyChartShift === 'Día'}
+            >
+              Día
+            </PillButton>
+            <PillButton
+              onClick={() => setHourlyChartShift('Noche')}
+              isActive={hourlyChartShift === 'Noche'}
+            >
+              Noche
+            </PillButton>
+          </PillToggleContainer>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-80 w-full">
+          <Line options={options} data={data} />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
+

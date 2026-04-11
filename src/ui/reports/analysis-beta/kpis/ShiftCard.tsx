@@ -1,44 +1,94 @@
-'use client';
+import type { ShiftKPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
+import { cn } from '@/ui/reports/analysis-beta/lib/utils';
+import { Sun, Moon, Clock, AlertTriangle } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { ShiftKPIs } from "@/domain/call-center-analysis/dashboard.types";
-import { formatPercent } from "@/domain/call-center-analysis/utils/format";
+const KPIItem = ({ title, value, colorClass, isAlert }: { title: string; value: string | number; colorClass?: string; isAlert?: boolean }) => (
+  <div className={cn(
+    "rounded-xl p-3 text-center border shadow-sm flex flex-col justify-center min-h-[70px] transition-all hover:scale-105", 
+    isAlert ? "bg-red-600 border-red-700 text-white animate-pulse" : (colorClass ? colorClass : "bg-slate-50 border-slate-100")
+  )}>
+    <p className={cn("text-lg font-black tracking-tighter", isAlert ? "text-white" : (colorClass ? "" : "text-slate-900"))}>{value}</p>
+    <p className={cn("text-[8px] uppercase font-black mt-0.5 tracking-widest", isAlert ? "text-red-100" : (colorClass ? "" : "text-slate-400"))}>{title}</p>
+  </div>
+);
 
-interface ShiftCardProps {
-    name: string;
-    data: ShiftKPIs;
-}
+type ShiftCardProps = {
+  name: string;
+  kpis: ShiftKPIs;
+};
 
-export default function ShiftCard({ name, data }: ShiftCardProps) {
-    return (
-        <Card>
-            <CardHeader className="pb-4 text-center border-b bg-muted/20">
-                <CardTitle className="text-lg font-bold">{name}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-                <div className="grid grid-cols-3 gap-y-6 gap-x-4 text-center">
-                    <MetricBlock label="Recibidas" value={data.recibidas} />
-                    <MetricBlock label="Contestadas" value={data.contestadas} />
-                    <MetricBlock label="Transacciones" value={data.trans} />
+export default function ShiftCard({ name, kpis }: ShiftCardProps) {
+  const formatPercent = (value: number) => `${value.toFixed(1)}%`;
+  const isDay = name === 'Día';
+  const isAlertSL = kpis.recibidas > 0 && kpis.atencion < 92;
+  const isAlertAbandono = kpis.recibidas > 0 && kpis.abandonoPct >= 8;
+  
+  const getAtencionColor = (p: number) => {
+    if (p >= 96) return 'text-emerald-600';
+    if (p >= 92) return 'text-amber-500';
+    return 'text-red-600';
+  };
 
-                    <MetricBlock label="% Conversión" value={formatPercent(data.conv)} />
-                    <MetricBlock label="Abandonadas" value={data.abandonadas} />
-                    <MetricBlock label="Duplicadas" value={data.duplicadas} />
+  const getAbandonoColor = (p: number) => {
+    if (p <= 4) return 'text-emerald-600';
+    if (p < 8) return 'text-amber-500';
+    return 'text-red-600';
+  };
 
-                    <MetricBlock label="< 20s" value={data.lt20} />
-                    <MetricBlock label="% Atención" value={formatPercent(data.atencion)} />
-                    <MetricBlock label="% Abandono" value={formatPercent(data.abandonoPct)} />
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
+  const headerBg = isAlertSL || isAlertAbandono ? 'bg-red-700' : (isDay ? 'bg-red-600' : 'bg-slate-900');
+  const timeRange = isDay ? '09:00 - 15:30' : '16:00 - 23:30';
+  const Icon = isDay ? Sun : Moon;
 
-function MetricBlock({ label, value }: { label: string; value: string | number }) {
-    return (
-        <div className="flex flex-col gap-1 items-center justify-center p-2 rounded-lg bg-muted/40">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">{label}</span>
-            <span className="text-xl font-bold text-foreground">{value}</span>
+  return (
+    <div 
+      className={cn(
+        "rounded-2xl bg-white overflow-hidden border transition-all",
+        isAlertSL || isAlertAbandono ? "border-red-500 ring-2 ring-red-500" : "border-slate-200"
+      )}
+    >
+      <div className={`${headerBg} p-4 text-white flex justify-between items-center`}>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+            {isAlertSL || isAlertAbandono ? <AlertTriangle size={20} className="animate-bounce" /> : <Icon size={20} />}
+          </div>
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-widest">
+              Turno {name}
+            </h3>
+            <div className="flex items-center gap-1 text-[10px] font-bold opacity-70">
+              <Clock size={10} />
+              {timeRange}
+            </div>
+          </div>
         </div>
-    );
+        <div className="text-right">
+          <p className="text-[10px] font-bold uppercase opacity-70">Nivel de Servicio</p>
+          <p className={cn("text-xl font-black leading-none", isAlertSL && "text-white animate-pulse")}>{formatPercent(kpis.atencion)}</p>
+        </div>
+      </div>
+      <div className="p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          <KPIItem title="Recibidas" value={kpis.recibidas} />
+          <KPIItem title="Contestadas" value={kpis.contestadas} />
+          <KPIItem title="Transacciones" value={kpis.trans} />
+          <KPIItem title="% Conversión" value={formatPercent(kpis.conv)} />
+          <KPIItem title="Abandonadas" value={kpis.abandonadas} />
+          <KPIItem title="Duplicadas" value={kpis.duplicadas} />
+          <KPIItem title="< 20s" value={kpis.lt20} />
+          <KPIItem 
+            title="% Atención" 
+            value={formatPercent(kpis.atencion)} 
+            isAlert={isAlertSL} 
+            colorClass={!isAlertSL ? getAtencionColor(kpis.atencion) : ""}
+          />
+          <KPIItem 
+            title="% Abandono" 
+            value={formatPercent(kpis.abandonoPct)} 
+            isAlert={isAlertAbandono}
+            colorClass={!isAlertAbandono ? getAbandonoColor(kpis.abandonoPct) : ""}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }

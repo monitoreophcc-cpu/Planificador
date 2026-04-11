@@ -1,45 +1,114 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useMemo } from "react";
-import { formatCurrency } from "@/domain/call-center-analysis/utils/format";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { Bar } from 'react-chartjs-2';
+import {
+  getAggregatedSales,
+  getSalesByPlatform,
+} from '@/ui/reports/analysis-beta/services/chart.service';
+import '@/ui/reports/analysis-beta/lib/chart-setup';
+import type { TooltipItem } from 'chart.js';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { PillButton, PillToggleContainer } from '../ui/pills';
 
 export default function PlatformSalesChart() {
-    const { data } = useOperationalDashboardStore();
+  const transactions = useDashboardStore((state) => state.transactions);
+  const salesChartMode = useDashboardStore((state) => state.salesChartMode);
+  const setSalesChartMode = useDashboardStore((state) => state.setSalesChartMode);
 
-    const chartData = useMemo(() => {
-        if (!data?.transactions) return [];
-        const sales = new Map<string, number>();
+  const chartData =
+    salesChartMode === 'agg'
+      ? getAggregatedSales(transactions)
+      : getSalesByPlatform(transactions);
 
-        data.transactions.forEach(t => {
-            const p = t.plataforma || 'Otro';
-            sales.set(p, (sales.get(p) || 0) + t.valor);
-        });
+  const data = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        label: 'Ventas Totales',
+        data: chartData.values,
+        backgroundColor: [
+          '#b91c1c', // Rojo Corporativo
+          '#0f172a', // Negro Corporativo
+          '#475569', // Slate-600
+          '#dc2626', // Red-600
+          '#1e293b', // Slate-800
+          '#94a3b8', // Slate-400
+        ],
+        borderRadius: 8,
+      },
+    ],
+  };
 
-        return Array.from(sales.entries()).map(([name, value]) => ({ name, Ventas: value }));
-    }, [data]);
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: TooltipItem<'bar'>) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += new Intl.NumberFormat('es-ES', {
+                style: 'currency',
+                currency: 'DOP',
+              }).format(context.parsed.y);
+            }
+            return label;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+      x: {
+        grid: { display: false },
+      },
+    },
+  };
 
-    if (chartData.length === 0) return null;
+  if (transactions.length === 0) {
+    return null;
+  }
 
-    return (
-        <Card className="col-span-1">
-            <CardHeader>
-                <CardTitle>Ventas ($) por Plataforma</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => typeof value === 'number' ? formatCurrency(value) : value} />
-                        <Legend />
-                        <Bar dataKey="Ventas" fill="#82ca9d" />
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <CardTitle>Ventas totales</CardTitle>
+          <PillToggleContainer>
+            <PillButton
+              onClick={() => setSalesChartMode('agg')}
+              isActive={salesChartMode === 'agg'}
+            >
+              CC vs Resto
+            </PillButton>
+            <PillButton
+              onClick={() => setSalesChartMode('plat')}
+              isActive={salesChartMode === 'plat'}
+            >
+              Por Plataforma
+            </PillButton>
+          </PillToggleContainer>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-80 w-full">
+          <Bar options={options} data={data} />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
+

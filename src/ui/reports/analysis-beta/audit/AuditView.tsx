@@ -1,64 +1,119 @@
 'use client';
 
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetDescription
-} from "@/ui/reports/analysis-beta/ui/sheet";
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/ui/reports/analysis-beta/ui/table";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { calculateAuditData } from '@/ui/reports/analysis-beta/services/audit.service';
+import { ShieldCheck, Info } from 'lucide-react';
+
+const AuditTable = ({
+  data,
+  valueFormatter,
+}: {
+  data: Record<string, number>;
+  valueFormatter?: (value: number) => string | number;
+}) => {
+  const sortedData = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-100">
+      <table className="w-full text-xs border-collapse">
+        <tbody className="divide-y divide-slate-50">
+          {sortedData.map(([key, value]) => (
+            <tr key={key} className="hover:bg-slate-50 transition-colors">
+              <td className="p-2 text-slate-600 font-medium">{key}</td>
+              <td className="p-2 text-right font-black text-slate-900">
+                {valueFormatter
+                  ? valueFormatter(value)
+                  : value.toLocaleString('es-DO')}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 export default function AuditView() {
-    const { isAuditVisible, toggleAudit, data } = useOperationalDashboardStore();
+  const isAuditVisible = useDashboardStore((state) => state.isAuditVisible);
+  const allRaw = useDashboardStore((state) => state.rawTransactions);
+  const allValid = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
 
-    const transactions = data?.transactions?.length ?? 0;
-    const answered = data?.answered?.length ?? 0;
-    const abandoned = data?.abandoned?.clean?.length ?? 0;
-    const abandonedRaw = data?.abandoned?.raw?.length ?? 0;
+  if (!isAuditVisible || allRaw.length === 0) {
+    return null;
+  }
 
+  const rawTransactions = allRaw.filter(r => r.fecha === dataDate);
+  const validTransactions = allValid.filter(r => r.fecha === dataDate);
+
+  if (rawTransactions.length === 0) {
     return (
-        <Sheet open={isAuditVisible} onOpenChange={toggleAudit}>
-            <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle>Auditoría de Datos</SheetTitle>
-                    <SheetDescription>
-                        Resumen de los datos cargados en memoria.
-                    </SheetDescription>
-                </SheetHeader>
-
-                <div className="py-6 space-y-6">
-                    <div className="grid grid-cols-4 gap-4">
-                        <Stat label="Contestadas" value={answered} />
-                        <Stat label="Recibidas (Calc)" value={answered + abandonedRaw} />
-                        <Stat label="Aband. (Clean)" value={abandoned} />
-                        <Stat label="Aband. (Raw)" value={abandonedRaw} />
-                        <Stat label="Transacciones" value={transactions} />
-                    </div>
-
-                    <div className="border rounded-md p-4 bg-muted/50">
-                        <h4 className="text-sm font-medium mb-2">Estructura de Datos (Muestra)</h4>
-                        <pre className="text-xs overflow-x-auto">
-                            {JSON.stringify({
-                                answered: data?.answered?.slice(0, 1),
-                                abandonedClean: data?.abandoned?.clean?.slice(0, 1),
-                                abandonedRaw: data?.abandoned?.raw?.slice(0, 1),
-                                transactions: data?.transactions?.slice(0, 1)
-                            }, null, 2)}
-                        </pre>
-                    </div>
-                </div>
-            </SheetContent>
-        </Sheet>
+      <Card className="border-amber-200 bg-amber-50/30 shadow-sm">
+        <CardContent className="p-6 text-center text-xs font-bold text-amber-800">
+          No hay datos de auditoría para esta fecha.
+        </CardContent>
+      </Card>
     );
-}
+  }
 
-function Stat({ label, value }: { label: string, value: number }) {
-    return (
-        <div className="text-center p-3 border rounded bg-card">
-            <div className="text-2xl font-bold">{value}</div>
-            <div className="text-xs text-muted-foreground uppercase">{label}</div>
+  const auditData = calculateAuditData(rawTransactions, validTransactions);
+  const formatCurrency = (val: number) =>
+    val.toLocaleString('es-DO', {
+      style: 'currency',
+      currency: 'DOP',
+      minimumFractionDigits: 0,
+    });
+
+  return (
+    <Card className="border-amber-200 bg-amber-50/30 shadow-sm">
+      <CardHeader className="border-b border-amber-100 py-4">
+        <CardTitle className="text-xs font-black uppercase tracking-widest text-amber-900 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-amber-600" />
+          Auditoría de Datos
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-6">
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-amber-100 shadow-sm">
+            <Info className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Rango Detectado</p>
+              <p className="text-xs font-black text-slate-900">{auditData.dateRange}</p>
+            </div>
+          </div>
         </div>
-    );
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-center text-xs">
+            <span className="font-bold text-slate-500 uppercase tracking-tighter">Registros Totales</span>
+            <span className="font-black text-slate-900">{auditData.totalRecords.toLocaleString('es-DO')}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs">
+            <span className="font-bold text-slate-500 uppercase tracking-tighter">Registros Válidos</span>
+            <span className="font-black text-slate-900">{auditData.validRecords.toLocaleString('es-DO')}</span>
+          </div>
+          <div className="h-px bg-amber-100" />
+          <div className="flex justify-between items-center text-xs">
+            <span className="font-bold text-slate-500 uppercase tracking-tighter">Monto Total</span>
+            <span className="font-black text-red-600">{formatCurrency(auditData.totalValue)}</span>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estatus Crudos</h4>
+          <AuditTable data={auditData.byStatus} />
+        </div>
+
+        <div className="space-y-3">
+          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ticket Promedio</h4>
+          <AuditTable
+            data={auditData.aovByPlatform}
+            valueFormatter={(v) => formatCurrency(v)}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
+
