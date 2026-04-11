@@ -25,30 +25,14 @@ const OperationalReportView = dynamic(
 
 export function StatsView() {
   const [activeTab, setActiveTab] = useState<ExtendedStatsTab>('monthly')
-  const activeMeta =
-    activeTab === 'monthly'
-      ? {
-          eyebrow: 'Resumen del mes',
-          title: 'Resumen y alertas del mes',
-          description:
-            'Una vista para entender rápido dónde se está tensando la operación y qué personas conviene revisar.',
-        }
-      : activeTab === 'points'
-        ? {
-            eyebrow: 'Seguimiento de incidencias',
-            title: 'Incidencias y puntos del mes',
-            description:
-              'Seguimiento mensual por rol y turno para leer acumulados sin perder claridad.',
-          }
-        : {
-            eyebrow: 'Lectura general',
-            title: 'Comparativos y lectura general',
-            description:
-              'Vistas comparativas y reportes para entender mejor cómo cambió la operación en el período.',
-          }
+  const tabs: { id: ExtendedStatsTab; label: string }[] = [
+    { id: 'monthly', label: 'Resumen Mensual' },
+    { id: 'points', label: 'Incidencias y puntos' },
+    { id: 'executive', label: 'Comparativos' },
+  ]
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: '11px 16px',
+    padding: '10px 16px',
     cursor: 'pointer',
     border: `1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent'}`,
     color: isActive ? 'var(--accent-strong)' : 'var(--text-muted)',
@@ -66,109 +50,50 @@ export function StatsView() {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '22px',
+        gap: '16px',
       }}
     >
-      <section
-        style={{
-          borderRadius: '26px',
-          border: '1px solid var(--shell-border)',
-          background:
-            'linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-tint) 58%, rgba(var(--accent-rgb), 0.08) 100%)',
-          boxShadow: 'var(--shadow-md)',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '18px',
-        }}
-      >
-        <div>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 12px',
-              borderRadius: '999px',
-              border: '1px solid rgba(var(--accent-rgb), 0.16)',
-              background: 'rgba(var(--accent-rgb), 0.08)',
-              color: 'var(--accent-strong)',
-              fontSize: '11px',
-              fontWeight: 800,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {activeMeta.eyebrow}
-          </div>
-          <h2
-            style={{
-              margin: '12px 0 0',
-              fontSize: '1.55rem',
-              lineHeight: 1.08,
-              color: 'var(--text-main)',
-              letterSpacing: '-0.03em',
-            }}
-          >
-            {activeMeta.title}
-          </h2>
-          <p
-            style={{
-              margin: '10px 0 0',
-              maxWidth: '68ch',
-              color: 'var(--text-muted)',
-              fontSize: '14px',
-              lineHeight: 1.7,
-            }}
-          >
-            {activeMeta.description}
-          </p>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '10px',
-            flexWrap: 'wrap',
-            padding: '6px',
-            borderRadius: '20px',
-            border: '1px solid var(--shell-border)',
-            background: 'var(--surface-tint)',
-            width: 'fit-content',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
-          }}
-        >
-          <button
-            style={tabStyle(activeTab === 'monthly')}
-            onClick={() => setActiveTab('monthly')}
-          >
-            Resumen Mensual
-          </button>
-          <button
-            style={tabStyle(activeTab === 'points')}
-            onClick={() => setActiveTab('points')}
-          >
-            Incidencias y puntos
-          </button>
-          <button
-            style={tabStyle(activeTab === 'executive')}
-            onClick={() => setActiveTab('executive')}
-          >
-            Comparativos
-          </button>
-        </div>
-      </section>
-
       <div
         style={{
           background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--bg-panel) 100%)',
           borderRadius: '26px',
           border: '1px solid var(--shell-border)',
-          minHeight: '80vh',
           boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden',
         }}
       >
+        <div
+          style={{
+            padding: '18px 24px 0',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              flexWrap: 'wrap',
+              padding: '6px',
+              borderRadius: '20px',
+              border: '1px solid var(--shell-border)',
+              background: 'var(--surface-tint)',
+              width: 'fit-content',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+            }}
+          >
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                style={tabStyle(activeTab === tab.id)}
+                aria-pressed={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {activeTab === 'monthly' && <MonthlySummaryView />}
         {activeTab === 'points' && <PointsReportView />}
         {activeTab === 'executive' && <OperationalReportView />}
@@ -176,4 +101,3 @@ export function StatsView() {
     </div>
   )
 }
-

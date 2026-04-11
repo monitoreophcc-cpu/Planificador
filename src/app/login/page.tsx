@@ -14,8 +14,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className={styles.wrapper}>
       <section className={styles.card}>
-        <h1 className={styles.title}>Planificador</h1>
-        <p className={styles.subtitle}>Sistema de gestión operativa</p>
+        <h1 className={styles.title}>Nexo</h1>
+        <p className={styles.subtitle}>Control Operativo</p>
         {error ? (
           <p className={styles.error}>No se pudo autenticar. Intenta de nuevo.</p>
         ) : null}

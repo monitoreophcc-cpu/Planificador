@@ -3,10 +3,10 @@ import type { GuideAccordionItem } from './GuideAccordion'
 export const quickGuideItems: GuideAccordionItem[] = [
   {
     id: 'what-is',
-    title: '¿Qué es Control Operativo?',
+    title: '¿Qué es Nexo?',
     content: (
       <>
-        Control Operativo registra hechos reales y muestra su impacto.
+        Nexo registra hechos reales y muestra su impacto.
         <br />
         <br />
         No predice.

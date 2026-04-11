@@ -1,4 +1,4 @@
-# Release Notes - Control Operativo v1.0.0
+# Release Notes - Nexo — Control Operativo v1.0.0
 
 **Fecha:** 2026-01-12  
 **Tipo:** Initial Production Release  
@@ -8,7 +8,7 @@
 
 ## 📋 Resumen
 
-Control Operativo es una herramienta de gestión operativa para equipos de representantes, diseñada para registro diario de incidencias, planificación semanal, y análisis ejecutivo de desempeño. Esta versión inicial establece la base sólida de una PWA (Progressive Web App) profesional, instalable, y funcional offline.
+Nexo — Control Operativo es una herramienta de gestión operativa para equipos de representantes, diseñada para registro diario de incidencias, planificación semanal, y análisis ejecutivo de desempeño. Esta versión inicial establece la base sólida de una PWA (Progressive Web App) profesional, instalable, y funcional offline.
 
 ---
 

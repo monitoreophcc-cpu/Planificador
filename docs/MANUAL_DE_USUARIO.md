@@ -1,4 +1,4 @@
-# 🧭 Guía Rápida — Control Operativo
+# 🧭 Guía Rápida — Nexo — Control Operativo
 
 > **(3 minutos para empezar, el resto es automático)**
 >

@@ -5,8 +5,8 @@ import './globals.css'
 import '../ui/theme/theme.css'
 
 export const metadata: Metadata = {
-  title: 'Control Operativo - Incidencias y Horarios',
-  description: 'Sistema de gestión de turnos y control operativo',
+  title: 'Nexo — Control Operativo',
+  description: 'Operación diaria y planificación en un solo lugar.',
   icons: {
     icon: '/icon_final.jpg',
     apple: '/icon_final.jpg',

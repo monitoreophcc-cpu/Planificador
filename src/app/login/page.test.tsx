@@ -43,8 +43,8 @@ describe('LoginPage', () => {
   it('renders the login shell', async () => {
     await renderLoginPage(root)
 
-    expect(container.textContent).toContain('Planificador')
-    expect(container.textContent).toContain('Sistema de gestión operativa')
+    expect(container.textContent).toContain('Nexo')
+    expect(container.textContent).toContain('Control Operativo')
     expect(container.textContent).toContain('LOGIN_BUTTON')
     expect(container.textContent).not.toContain('No se pudo autenticar')
   })

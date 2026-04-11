@@ -14,10 +14,10 @@ export function AppShellHeaderBrand() {
       </div>
 
       <div className="app-shell-header__brand-copy">
-        <div className="app-shell-header__eyebrow">Centro de control</div>
+        <div className="app-shell-header__eyebrow">Nexo</div>
         <span className="app-shell-header__title">Control Operativo</span>
         <p className="app-shell-header__caption">
-          Operación diaria, planificación y respaldo híbrido en una sola superficie.
+          Operación diaria y planificación en un solo lugar.
         </p>
       </div>
     </div>
