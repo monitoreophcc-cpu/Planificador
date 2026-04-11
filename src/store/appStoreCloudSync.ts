@@ -182,7 +182,9 @@ export function shouldHydrateFromCloud(args: {
 
   if (pendingOperations > 0) return false
   if (!remoteHasData) return false
-  if (!localHasData) return true
+  // Boot hydration must stay conservative: local data may include unsynced
+  // edits from a prior online failure that never entered the pending queue.
+  if (localHasData) return false
 
   return localSignature !== remoteSignature
 }

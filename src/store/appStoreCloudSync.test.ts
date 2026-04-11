@@ -9,13 +9,25 @@ describe('appStoreCloudSync', () => {
   it('hydrates from cloud when remote data exists and local snapshot is stale', () => {
     expect(
       shouldHydrateFromCloud({
-        localHasData: true,
+        localHasData: false,
         remoteHasData: true,
         pendingOperations: 0,
         localSignature: 'local-v1',
         remoteSignature: 'remote-v2',
       })
     ).toBe(true)
+  })
+
+  it('does not replace a non-empty local snapshot during bootstrap', () => {
+    expect(
+      shouldHydrateFromCloud({
+        localHasData: true,
+        remoteHasData: true,
+        pendingOperations: 0,
+        localSignature: 'local-v1',
+        remoteSignature: 'remote-v2',
+      })
+    ).toBe(false)
   })
 
   it('keeps local state when the cloud snapshot is still empty', () => {
