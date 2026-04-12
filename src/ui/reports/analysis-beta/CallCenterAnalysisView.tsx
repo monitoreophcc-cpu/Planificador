@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { CalendarRange, History } from 'lucide-react';
 import KPISummary from '@/ui/reports/analysis-beta/kpis/KPISummary';
 import FileLoadButtons from '@/ui/reports/analysis-beta/header/FileLoadButtons';
 import ShiftGrid from '@/ui/reports/analysis-beta/shifts/ShiftGrid';
@@ -16,7 +17,6 @@ import {
 import ShiftTablesContainer from '@/ui/reports/analysis-beta/tables/ShiftTablesContainer';
 import AgentPerformanceTable from '@/ui/reports/analysis-beta/tables/AgentPerformanceTable';
 import DateRangeBadge from '@/ui/reports/analysis-beta/header/DateRangeBadge';
-import DateSelector from '@/ui/reports/analysis-beta/header/DateSelector';
 import DailyHistoryPanel from '@/ui/reports/analysis-beta/header/DailyHistoryPanel';
 import ComparisonPanel from '@/ui/reports/analysis-beta/header/ComparisonPanel';
 import CallCenterBrand from '@/ui/reports/analysis-beta/header/CallCenterBrand';
@@ -71,6 +71,7 @@ export function CallCenterAnalysisView() {
   const kpis = useDashboardStore((s) => s.kpis);
   const kpisByShift = useDashboardStore((s) => s.kpisByShift);
   const dataDate = useDashboardStore((s) => s.dataDate);
+  const availableDates = useDashboardStore((s) => s.availableDates);
 
   useEffect(() => {
     setMounted(true);
@@ -111,8 +112,9 @@ export function CallCenterAnalysisView() {
             <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1">
               <DateRangeBadge />
             </div>
-            <DateSelector />
-            
+            <DailyHistoryPanel />
+            <ComparisonPanel />
+             
             <PDFExportButton kpis={kpis} kpisByShift={kpisByShift} date={dataDate} />
 
             <FileLoadButtons />
@@ -121,6 +123,34 @@ export function CallCenterAnalysisView() {
       </header>
 
       <div className="w-full px-4 md:px-8 mt-8 space-y-10">
+        {!dataDate ? (
+          <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white px-6 py-12 shadow-sm">
+            <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <CalendarRange className="h-6 w-6" />
+              </div>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Vista limpia
+              </span>
+              <h2 className="text-2xl font-black text-slate-900">
+                La vista principal está vacía, pero el historial sigue guardado.
+              </h2>
+              <p className="max-w-2xl text-sm text-slate-500">
+                Usa el botón de historial para volver a una fecha ya cargada o sube nuevos archivos para trabajar otra jornada sin perder los datos anteriores.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2">
+                  <History className="h-4 w-4 text-slate-400" />
+                  {availableDates.length} fechas guardadas
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2">
+                  <CalendarRange className="h-4 w-4 text-slate-400" />
+                  Selecciona una fecha para continuar
+                </span>
+              </div>
+            </div>
+          </section>
+        ) : (
         <Tabs defaultValue="main" className="w-full">
           <div className="flex justify-center mb-10">
             <TabsList>
@@ -134,8 +164,6 @@ export function CallCenterAnalysisView() {
           </div>
 
           <TabsContent value="main" className="space-y-10 focus-visible:outline-none">
-            <DailyHistoryPanel />
-            <ComparisonPanel />
             <section>
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-4 w-1 bg-red-600 rounded-full" />
@@ -179,6 +207,7 @@ export function CallCenterAnalysisView() {
             </div>
           </TabsContent>
         </Tabs>
+        )}
       </div>
 
       <KPIObserver />

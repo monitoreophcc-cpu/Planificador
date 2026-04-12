@@ -81,8 +81,9 @@ type DashboardState = {
   runComparison: () => void;
   clearComparison: () => void;
   
+  clearCurrentView: () => void;
   clearAllData: () => void;
-  clearCurrentDate: () => void;
+  removeHistoryDate: (date: string) => void;
   
   // Hydration state
   _hasHydrated: boolean;
@@ -109,6 +110,32 @@ const initialKpis: KPIs = {
   conversion: 0,
   transaccionesCC: 0,
 };
+
+const initialComparisonConfig: ComparisonConfig = {
+  baseDate: null,
+  targetDate: null,
+  periodMode: 'full_day',
+  shift: 'Día',
+  startTime: '09:00',
+  endTime: '23:30',
+};
+
+function sanitizeComparisonConfig(
+  config: ComparisonConfig,
+  availableDates: string[]
+): ComparisonConfig {
+  return {
+    ...config,
+    baseDate:
+      config.baseDate && availableDates.includes(config.baseDate)
+        ? config.baseDate
+        : null,
+    targetDate:
+      config.targetDate && availableDates.includes(config.targetDate)
+        ? config.targetDate
+        : null,
+  };
+}
 
 const rebuildDailyHistory = (state: Pick<
   DashboardState,
@@ -153,14 +180,7 @@ export const useDashboardStore = create<DashboardState>()(
       },
       
       dataDate: null,
-      comparisonConfig: {
-        baseDate: null,
-        targetDate: null,
-        periodMode: 'full_day',
-        shift: 'Día',
-        startTime: '09:00',
-        endTime: '23:30',
-      },
+      comparisonConfig: initialComparisonConfig,
       comparisonResult: null,
       selectedHour: null,
       hourlyChartShift: 'Día',
@@ -291,6 +311,16 @@ export const useDashboardStore = create<DashboardState>()(
         set({ comparisonResult: result });
       },
       clearComparison: () => set({ comparisonResult: null }),
+
+      clearCurrentView: () =>
+        set({
+          dataDate: null,
+          comparisonResult: null,
+          selectedHour: null,
+          isAuditVisible: false,
+          kpis: initialKpis,
+          kpisByShift: { Día: initialShiftKPIs, Noche: initialShiftKPIs },
+        }),
       
       clearAllData: () => set({
         answeredCalls: [],
@@ -301,13 +331,15 @@ export const useDashboardStore = create<DashboardState>()(
         availableDates: [],
         dailyHistory: {},
         dataDate: null,
+        comparisonConfig: initialComparisonConfig,
         comparisonResult: null,
+        selectedHour: null,
+        isAuditVisible: false,
         kpis: initialKpis,
-        kpisByShift: { Día: initialShiftKPIs, Noche: initialShiftKPIs }
+        kpisByShift: { Día: initialShiftKPIs, Noche: initialShiftKPIs },
       }),
 
-      clearCurrentDate: () => {
-        const date = getStore().dataDate;
+      removeHistoryDate: (date) => {
         if (!date) return;
         
         const filteredAns = getStore().answeredCalls.filter(r => r.fecha !== date);
@@ -318,6 +350,11 @@ export const useDashboardStore = create<DashboardState>()(
         
         const remainingDates = getStore().availableDates.filter(d => d !== date);
         const nextHistory = { ...getStore().dailyHistory };
+        const currentDate = getStore().dataDate;
+        const nextComparisonConfig = sanitizeComparisonConfig(
+          getStore().comparisonConfig,
+          remainingDates
+        );
         delete nextHistory[date];
         
         set({
@@ -328,7 +365,10 @@ export const useDashboardStore = create<DashboardState>()(
           rawTransactions: filteredTrxRaw,
           dailyHistory: nextHistory,
           availableDates: remainingDates,
-          dataDate: remainingDates[0] || null
+          dataDate: currentDate === date ? remainingDates[0] || null : currentDate,
+          comparisonConfig: nextComparisonConfig,
+          comparisonResult: null,
+          selectedHour: null,
         });
       },
 
@@ -352,6 +392,17 @@ export const useDashboardStore = create<DashboardState>()(
               dataDate: state.dataDate && rebuilt.allDates.includes(state.dataDate)
                 ? state.dataDate
                 : rebuilt.allDates[0] || null,
+              comparisonConfig: sanitizeComparisonConfig(
+                state.comparisonConfig ?? initialComparisonConfig,
+                rebuilt.allDates
+              ),
+            });
+          } else {
+            useDashboardStore.setState({
+              comparisonConfig: sanitizeComparisonConfig(
+                state.comparisonConfig ?? initialComparisonConfig,
+                state.availableDates ?? []
+              ),
             });
           }
         }

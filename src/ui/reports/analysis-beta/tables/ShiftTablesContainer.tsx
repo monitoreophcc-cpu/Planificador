@@ -8,16 +8,27 @@ export default function ShiftTablesContainer() {
   const answeredCalls = useDashboardStore((state) => state.answeredCalls);
   const abandonedCalls = useDashboardStore((state) => state.abandonedCalls);
   const transactions = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
 
-  const hasData = answeredCalls.length > 0 || abandonedCalls.length > 0;
+  const filteredAnswered = dataDate
+    ? answeredCalls.filter((record) => record.fecha === dataDate)
+    : [];
+  const filteredAbandoned = dataDate
+    ? abandonedCalls.filter((record) => record.fecha === dataDate)
+    : [];
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
+
+  const hasData = filteredAnswered.length > 0 || filteredAbandoned.length > 0;
   if (!hasData) {
     return null;
   }
 
   const { day, night } = aggregateByTimeSlot(
-    answeredCalls,
-    abandonedCalls,
-    transactions
+    filteredAnswered,
+    filteredAbandoned,
+    filteredTransactions
   );
 
   return (

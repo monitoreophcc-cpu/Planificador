@@ -29,13 +29,17 @@ if (typeof window !== 'undefined') {
 
 export default function PlatformAovChart() {
   const transactions = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
   const aovChartMode = useDashboardStore((state) => state.aovChartMode);
   const setAovChartMode = useDashboardStore((state) => state.setAovChartMode);
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
 
   const chartData =
     aovChartMode === 'agg'
-      ? getAggregatedAov(transactions)
-      : getAovByPlatform(transactions);
+      ? getAggregatedAov(filteredTransactions)
+      : getAovByPlatform(filteredTransactions);
 
   const data = {
     labels: chartData.labels,
@@ -94,7 +98,7 @@ export default function PlatformAovChart() {
     },
   };
 
-  if (transactions.length === 0) {
+  if (filteredTransactions.length === 0) {
     return null;
   }
 

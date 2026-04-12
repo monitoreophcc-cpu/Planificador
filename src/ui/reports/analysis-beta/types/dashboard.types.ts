@@ -120,9 +120,20 @@ export type ComparisonMetric = {
   direction: 'up' | 'down' | 'equal';
 };
 
+export type ComparisonPeriodSummary = {
+  label: string;
+  start: string;
+  end: string;
+  loadedDays: number;
+  expectedDays: number;
+  isComplete: boolean;
+};
+
 export type ComparisonResult = {
   generatedAt: string;
   config: ComparisonConfig;
+  basePeriod: ComparisonPeriodSummary;
+  targetPeriod: ComparisonPeriodSummary;
   metrics: ComparisonMetric[];
   slotDeltas: Array<{
     hora: string;

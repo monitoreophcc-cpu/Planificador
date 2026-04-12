@@ -3,16 +3,12 @@
 import { useRef } from 'react';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import {
-  Upload,
   Beaker,
   Search,
   Trash2,
-  FileText,
-  FileSpreadsheet,
   PhoneCall,
   PhoneOff,
   Coins,
-  Printer,
 } from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import {
@@ -27,9 +23,18 @@ import {
   demoTransactions,
 } from '@/ui/reports/analysis-beta/lib/demo-data';
 import { useToast } from '@/ui/reports/analysis-beta/hooks/use-toast';
-import { exportToCsv, exportToXlsx } from '@/ui/reports/analysis-beta/services/export.service';
 
 import ExportModal from './ExportModal';
+
+function summarizeLoadedDates(dates: string[]): string {
+  const sortedDates = [...dates].sort();
+
+  if (sortedDates.length <= 3) {
+    return sortedDates.join(', ');
+  }
+
+  return `${sortedDates.length} fechas (${sortedDates[0]} a ${sortedDates[sortedDates.length - 1]})`;
+}
 
 export default function FileLoadButtons() {
   const addAnsweredCalls = useDashboardStore((state) => state.addAnsweredCalls);
@@ -37,8 +42,7 @@ export default function FileLoadButtons() {
   const addTransactions = useDashboardStore((state) => state.addTransactions);
   const toggleAudit = useDashboardStore((state) => state.toggleAudit);
   const dataDate = useDashboardStore((state) => state.dataDate);
-  const clearAllData = useDashboardStore((state) => state.clearAllData);
-  const clearCurrentDate = useDashboardStore((state) => state.clearCurrentDate);
+  const clearCurrentView = useDashboardStore((state) => state.clearCurrentView);
   const { toast } = useToast();
 
   const answeredInputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +94,7 @@ export default function FileLoadButtons() {
 
       toast({
         title: 'Archivo Cargado',
-        description: `${file.name} ha sido procesado exitosamente. Se actualizaron los datos para: ${uniqueDates.join(', ')}`,
+        description: `${file.name} ha sido procesado exitosamente. Se actualizaron los datos para: ${summarizeLoadedDates(uniqueDates)}`,
       });
     } catch (error) {
       const message =
@@ -127,19 +131,13 @@ export default function FileLoadButtons() {
     toast({ title: 'Datos de Demostración Cargados' });
   };
 
-  const handleClearAllData = () => {
-    clearAllData();
+  const handleClearCurrentView = () => {
+    clearCurrentView();
     toast({
-      title: 'Historial Limpiado',
-      description: 'Todos los datos han sido eliminados.',
-    });
-  };
-
-  const handleClearCurrentDate = () => {
-    clearCurrentDate();
-    toast({
-      title: 'Día Limpiado',
-      description: `Los datos del día ${dataDate} han sido eliminados.`,
+      title: 'Vista limpiada',
+      description: dataDate
+        ? `La vista principal de ${dataDate} se limpió, pero el historial sigue guardado.`
+        : 'La vista principal se limpió. El historial sigue guardado.',
     });
   };
 
@@ -214,12 +212,12 @@ export default function FileLoadButtons() {
           variant="ghost" 
           size="icon" 
           className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700 h-9 w-9"
-          onClick={handleClearCurrentDate}
-          onDoubleClick={handleClearAllData}
-          title="Click: Limpiar Día | Doble Click: Limpiar Todo"
+          onClick={handleClearCurrentView}
+          disabled={!dataDate}
+          title="Limpiar vista principal"
         >
           <Trash2 className="h-4 w-4 text-slate-400" />
-          <span className="sr-only">Limpiar</span>
+          <span className="sr-only">Limpiar vista</span>
         </Button>
         
         <Button

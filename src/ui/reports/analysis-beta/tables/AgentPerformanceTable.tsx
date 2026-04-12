@@ -46,7 +46,7 @@ export default function AgentPerformanceTable() {
   const agentData = useMemo(() => {
     const filtered = dataDate
       ? transactions.filter((tx) => tx.fecha === dataDate)
-      : transactions;
+      : [];
     return aggregateByAgent(filtered);
   }, [transactions, dataDate]);
 

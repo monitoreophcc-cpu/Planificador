@@ -27,7 +27,11 @@ if (typeof window !== 'undefined') {
 
 export default function TopBranchesChart() {
   const transactions = useDashboardStore((state) => state.transactions);
-  const { labels, values } = getTopSucursales(transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
+  const { labels, values } = getTopSucursales(filteredTransactions);
 
   const data = {
     labels,
@@ -71,7 +75,7 @@ export default function TopBranchesChart() {
     },
   };
 
-  if (transactions.length === 0) {
+  if (filteredTransactions.length === 0) {
     return null;
   }
 

@@ -4,6 +4,8 @@ import type {
   Transaction,
   ComparisonConfig,
   ComparisonMetric,
+  ComparisonPeriodMode,
+  ComparisonPeriodSummary,
   ComparisonResult,
   Shift,
 } from '@/ui/reports/analysis-beta/types/dashboard.types';
@@ -16,6 +18,12 @@ type DailyDataset = {
   transactions: Transaction[];
 };
 
+export type ComparisonSelectionOption = {
+  value: string;
+  label: string;
+  summary: ComparisonPeriodSummary;
+};
+
 function parseDate(dateStr: string): Date {
   const [year, month, day] = dateStr.split('-').map(Number);
   return new Date(Date.UTC(year, (month || 1) - 1, day || 1));
@@ -23,6 +31,15 @@ function parseDate(dateStr: string): Date {
 
 function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function formatMonthYear(dateStr: string): string {
+  const date = parseDate(dateStr);
+  return new Intl.DateTimeFormat('es-DO', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
 }
 
 function getWeekRange(dateStr: string): { start: string; end: string } {
@@ -43,6 +60,138 @@ function getMonthRange(dateStr: string): { start: string; end: string } {
   const first = new Date(Date.UTC(y, m, 1));
   const last = new Date(Date.UTC(y, m + 1, 0));
   return { start: formatDate(first), end: formatDate(last) };
+}
+
+function getExpectedDays(start: string, end: string): number {
+  const diff = parseDate(end).getTime() - parseDate(start).getTime();
+  return Math.floor(diff / (24 * 60 * 60 * 1000)) + 1;
+}
+
+function buildPeriodLabel(
+  periodMode: ComparisonPeriodMode,
+  range: { start: string; end: string }
+): string {
+  if (periodMode === 'month') {
+    return formatMonthYear(range.start);
+  }
+
+  if (periodMode === 'week') {
+    return `${range.start} a ${range.end}`;
+  }
+
+  return range.start;
+}
+
+export function resolveComparisonRange(
+  dateStr: string,
+  periodMode: ComparisonPeriodMode
+): { start: string; end: string } {
+  if (periodMode === 'week') return getWeekRange(dateStr);
+  if (periodMode === 'month') return getMonthRange(dateStr);
+  return { start: dateStr, end: dateStr };
+}
+
+export function buildComparisonPeriodSummary(params: {
+  anchorDate: string;
+  periodMode: ComparisonPeriodMode;
+  loadedDates: string[];
+}): ComparisonPeriodSummary {
+  const range = resolveComparisonRange(params.anchorDate, params.periodMode);
+  const loadedDays = params.loadedDates.filter(
+    (date) => date >= range.start && date <= range.end
+  ).length;
+  const expectedDays = getExpectedDays(range.start, range.end);
+
+  return {
+    label: buildPeriodLabel(params.periodMode, range),
+    start: range.start,
+    end: range.end,
+    loadedDays,
+    expectedDays,
+    isComplete: loadedDays >= expectedDays,
+  };
+}
+
+export function buildComparisonSelectionOptions(params: {
+  availableDates: string[];
+  periodMode: ComparisonPeriodMode;
+}): ComparisonSelectionOption[] {
+  const sortedDates = [...new Set(params.availableDates)].sort();
+
+  if (
+    params.periodMode === 'full_day' ||
+    params.periodMode === 'shift' ||
+    params.periodMode === 'custom_range'
+  ) {
+    return [...sortedDates]
+      .sort()
+      .reverse()
+      .map((date) => ({
+        value: date,
+        label: date,
+        summary: buildComparisonPeriodSummary({
+          anchorDate: date,
+          periodMode: params.periodMode,
+          loadedDates: sortedDates,
+        }),
+      }));
+  }
+
+  const grouped = new Map<string, ComparisonSelectionOption>();
+
+  sortedDates.forEach((date) => {
+    const summary = buildComparisonPeriodSummary({
+      anchorDate: date,
+      periodMode: params.periodMode,
+      loadedDates: sortedDates,
+    });
+    const key = `${summary.start}:${summary.end}`;
+
+    if (grouped.has(key)) {
+      return;
+    }
+
+    const label =
+      params.periodMode === 'week'
+        ? `Semana ${summary.start} a ${summary.end} · ${summary.loadedDays}/${summary.expectedDays} dias`
+        : `${summary.label} · ${summary.loadedDays}/${summary.expectedDays} dias`;
+
+    grouped.set(key, {
+      value: date,
+      label,
+      summary,
+    });
+  });
+
+  return [...grouped.values()].sort((left, right) =>
+    right.summary.start.localeCompare(left.summary.start)
+  );
+}
+
+export function resolveComparisonSelectionValue(params: {
+  selectedDate: string | null;
+  options: ComparisonSelectionOption[];
+  periodMode: ComparisonPeriodMode;
+}): string | undefined {
+  const selectedDate = params.selectedDate;
+
+  if (!selectedDate) {
+    return undefined;
+  }
+
+  if (
+    params.periodMode === 'full_day' ||
+    params.periodMode === 'shift' ||
+    params.periodMode === 'custom_range'
+  ) {
+    return params.options.find((option) => option.value === params.selectedDate)?.value;
+  }
+
+  return params.options.find(
+    (option) =>
+      selectedDate >= option.summary.start &&
+      selectedDate <= option.summary.end
+  )?.value;
 }
 
 function safeDeltaPct(baseValue: number, delta: number): number | null {
@@ -102,15 +251,25 @@ export function buildComparisonResult(params: {
   const { config, allAnswered, allAbandoned, allTransactions } = params;
 
   if (!config.baseDate || !config.targetDate) return null;
-
-  const getDateRange = (date: string) => {
-    if (config.periodMode === 'week') return getWeekRange(date);
-    if (config.periodMode === 'month') return getMonthRange(date);
-    return { start: date, end: date };
-  };
-
-  const baseRange = getDateRange(config.baseDate);
-  const targetRange = getDateRange(config.targetDate);
+  const loadedDates = [
+    ...new Set([
+      ...allAnswered.map((record) => record.fecha),
+      ...allAbandoned.map((record) => record.fecha),
+      ...allTransactions.map((record) => record.fecha),
+    ]),
+  ];
+  const baseRange = resolveComparisonRange(config.baseDate, config.periodMode);
+  const targetRange = resolveComparisonRange(config.targetDate, config.periodMode);
+  const basePeriod = buildComparisonPeriodSummary({
+    anchorDate: config.baseDate,
+    periodMode: config.periodMode,
+    loadedDates,
+  });
+  const targetPeriod = buildComparisonPeriodSummary({
+    anchorDate: config.targetDate,
+    periodMode: config.periodMode,
+    loadedDates,
+  });
 
   const baseDay = applyPeriodFilter(
     {
@@ -180,7 +339,9 @@ export function buildComparisonResult(params: {
 
   return {
     generatedAt: new Date().toISOString(),
-    config,
+    config: { ...config },
+    basePeriod,
+    targetPeriod,
     metrics,
     slotDeltas,
   };

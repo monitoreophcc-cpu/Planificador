@@ -13,13 +13,17 @@ import { PillButton, PillToggleContainer } from '../ui/pills';
 
 export default function PlatformSalesChart() {
   const transactions = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
   const salesChartMode = useDashboardStore((state) => state.salesChartMode);
   const setSalesChartMode = useDashboardStore((state) => state.setSalesChartMode);
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
 
   const chartData =
     salesChartMode === 'agg'
-      ? getAggregatedSales(transactions)
-      : getSalesByPlatform(transactions);
+      ? getAggregatedSales(filteredTransactions)
+      : getSalesByPlatform(filteredTransactions);
 
   const data = {
     labels: chartData.labels,
@@ -78,7 +82,7 @@ export default function PlatformSalesChart() {
     },
   };
 
-  if (transactions.length === 0) {
+  if (filteredTransactions.length === 0) {
     return null;
   }
 

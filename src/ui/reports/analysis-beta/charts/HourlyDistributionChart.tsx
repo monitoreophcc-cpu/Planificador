@@ -12,15 +12,25 @@ export default function HourlyDistributionChart() {
   const answeredCalls = useDashboardStore((state) => state.answeredCalls);
   const abandonedCalls = useDashboardStore((state) => state.abandonedCalls);
   const transactions = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
   const hourlyChartShift = useDashboardStore((state) => state.hourlyChartShift);
   const setHourlyChartShift = useDashboardStore((state) => state.setHourlyChartShift);
   const selectedHour = useDashboardStore((state) => state.selectedHour);
   const setSelectedHour = useDashboardStore((state) => state.setSelectedHour);
+  const filteredAnswered = dataDate
+    ? answeredCalls.filter((record) => record.fecha === dataDate)
+    : [];
+  const filteredAbandoned = dataDate
+    ? abandonedCalls.filter((record) => record.fecha === dataDate)
+    : [];
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
 
   const timeSlotData = aggregateByTimeSlot(
-    answeredCalls,
-    abandonedCalls,
-    transactions
+    filteredAnswered,
+    filteredAbandoned,
+    filteredTransactions
   );
   const chartDetails =
     hourlyChartShift === 'Día' ? timeSlotData.day : timeSlotData.night;
@@ -91,7 +101,7 @@ export default function HourlyDistributionChart() {
     },
   };
 
-  if (answeredCalls.length === 0 && abandonedCalls.length === 0) {
+  if (filteredAnswered.length === 0 && filteredAbandoned.length === 0) {
     return null;
   }
 

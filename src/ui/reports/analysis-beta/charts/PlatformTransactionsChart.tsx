@@ -8,7 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 export default function PlatformTransactionsChart() {
   const transactions = useDashboardStore((state) => state.transactions);
-  const chartData = getTransactionsByPlatform(transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
+  const chartData = getTransactionsByPlatform(filteredTransactions);
 
   const data = {
     labels: chartData.labels,
@@ -52,7 +56,7 @@ export default function PlatformTransactionsChart() {
     },
   };
 
-  if (transactions.length === 0) {
+  if (filteredTransactions.length === 0) {
     return null;
   }
 
