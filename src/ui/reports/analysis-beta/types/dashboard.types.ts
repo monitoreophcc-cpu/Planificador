@@ -46,6 +46,16 @@ export type KPIs = {
   nivelDeServicio: number;
   conversion: number;
   transaccionesCC: number;
+  ventasValidas: number;
+  ticketPromedio: number;
+};
+
+export type SourceCoverage = {
+  answeredLoaded: boolean;
+  abandonedLoaded: boolean;
+  transactionsLoaded: boolean;
+  loadedSources: number;
+  isComplete: boolean;
 };
 
 export type DailySnapshot = {
@@ -61,6 +71,7 @@ export type DailySnapshot = {
     abandonedCalls: number;
     transactions: number;
   };
+  coverage: SourceCoverage;
 };
 
 export type Shift = 'Día' | 'Noche';
@@ -98,6 +109,39 @@ export type AgentKPIs = {
   transacciones: number;
   ventas: number;
   ticketPromedio: number;
+};
+
+export type WorkspaceView = 'executive' | 'operation' | 'analysis';
+
+export type CommercialView = 'day' | 'month' | 'platforms';
+
+export type ComparisonPreset = 'manual' | 'day_previous' | 'week_previous' | 'month_previous';
+
+export type DataQualityLevel = 'ok' | 'warning' | 'critical';
+
+export type DataQualitySummary = {
+  level: DataQualityLevel;
+  label: string;
+  detail: string;
+  issues: string[];
+};
+
+export type KPIDelta = {
+  key: keyof KPIs | 'abandonoPct';
+  label: string;
+  currentValue: number;
+  previousValue: number | null;
+  delta: number | null;
+  deltaPct: number | null;
+  direction: 'up' | 'down' | 'equal' | 'none';
+  format: 'number' | 'percent' | 'currency';
+};
+
+export type ExecutiveFinding = {
+  id: string;
+  title: string;
+  detail: string;
+  tone: 'critical' | 'warning' | 'positive' | 'neutral';
 };
 
 export type ComparisonPeriodMode = 'full_day' | 'shift' | 'custom_range' | 'week' | 'month';

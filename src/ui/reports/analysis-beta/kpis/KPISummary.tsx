@@ -1,111 +1,149 @@
 'use client';
 
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  CreditCard,
+  Percent,
+  PhoneCall,
+  PhoneIncoming,
+  PhoneOff,
+  ShoppingCart,
+  Target,
+} from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import { cn } from '@/ui/reports/analysis-beta/lib/utils';
-import { 
-  PhoneCall, 
-  PhoneOff, 
-  PhoneIncoming, 
-  Percent, 
-  TrendingUp, 
-  CreditCard, 
-  Target,
-  AlertTriangle
-} from 'lucide-react';
+import {
+  buildKpiDeltas,
+  getPreviousSnapshot,
+} from '@/ui/reports/analysis-beta/services/executive.service';
 
-type KPICardProps = {
-  label: string;
-  value: string | number;
-  icon: React.ReactNode;
-  delay?: number;
-  isAlert?: boolean;
-  valueColorClass?: string;
+const KPI_ICONS: Record<string, LucideIcon> = {
+  'Total Recibidas': PhoneIncoming,
+  'Total Contestadas': PhoneCall,
+  'Total Abandonadas': PhoneOff,
+  '% Atención': Target,
+  '% Abandono': Percent,
+  'Transacciones CC': ShoppingCart,
+  '% Conversión': CreditCard,
 };
 
-function KPICard({ label, value, icon, delay = 0, isAlert = false, valueColorClass }: KPICardProps) {
-  return (
-    <div 
-      className={cn(
-        "bg-white rounded-2xl shadow-sm border p-5 flex flex-col items-center justify-between gap-3 relative overflow-hidden group hover:shadow-md transition-all",
-        isAlert ? "border-red-500 shadow-red-100 ring-1 ring-red-500" : "border-gray-100"
-      )}
-    >
-      {/* Top color bar */}
-      <div className={cn(
-        "absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl",
-        isAlert ? "bg-red-600" : "bg-gradient-to-r from-red-600 via-red-500 to-red-400"
-      )} />
+function formatValue(value: number, format: 'number' | 'percent' | 'currency') {
+  if (format === 'currency') {
+    return `RD$ ${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
 
-      <div className={cn(
-        "p-2 rounded-lg group-hover:scale-110 transition-transform",
-        isAlert ? "bg-red-600 text-white animate-pulse" : "bg-red-50 text-red-600"
-      )}>
-        {isAlert ? <AlertTriangle size={18} /> : icon}
-      </div>
+  if (format === 'percent') {
+    return `${value.toFixed(1)}%`;
+  }
 
-      <p className={cn(
-        "text-[10px] font-bold tracking-widest uppercase text-center",
-        isAlert ? "text-red-600" : "text-gray-400"
-      )}>
-        {label}
-      </p>
-      <p className={cn(
-        "text-3xl font-black leading-none",
-        valueColorClass ? valueColorClass : (isAlert ? "text-red-700" : "text-slate-900")
-      )}>
-        {value}
-      </p>
-    </div>
-  );
+  return value.toLocaleString('en-US');
+}
+
+function getValueTone(label: string, value: number) {
+  if (label === '% Atención') {
+    if (value >= 96) return 'text-emerald-700';
+    if (value >= 92) return 'text-amber-600';
+    return 'text-red-700';
+  }
+
+  if (label === '% Abandono') {
+    if (value <= 4) return 'text-emerald-700';
+    if (value < 8) return 'text-amber-600';
+    return 'text-red-700';
+  }
+
+  return 'text-slate-900';
+}
+
+function getDeltaTone(label: string, delta: number | null) {
+  if (delta == null || delta === 0) {
+    return {
+      label: 'Sin variación',
+      className: 'bg-slate-100 text-slate-500',
+      Icon: null,
+    };
+  }
+
+  const lowerIsBetter = label === '% Abandono';
+  const improved = lowerIsBetter ? delta < 0 : delta > 0;
+
+  return improved
+    ? {
+        label: 'Mejora vs. fecha previa',
+        className: 'bg-emerald-50 text-emerald-700',
+        Icon: ArrowUpRight,
+      }
+    : {
+        label: 'Retroceso vs. fecha previa',
+        className: 'bg-red-50 text-red-700',
+        Icon: ArrowDownRight,
+      };
 }
 
 export default function KPISummary() {
-  const kpis = useDashboardStore((s) => s.kpis);
+  const selectedDate = useDashboardStore((state) => state.dataDate);
+  const dailyHistory = useDashboardStore((state) => state.dailyHistory);
+  const currentSnapshot = selectedDate ? dailyHistory[selectedDate] ?? null : null;
+  const previousSnapshot = getPreviousSnapshot(dailyHistory, selectedDate);
+  const deltas = buildKpiDeltas({
+    current: currentSnapshot,
+    previous: previousSnapshot,
+  });
 
-  const fmt = (n: number) => n.toLocaleString('es-DO');
-  const pct = (n: number) => `${n.toFixed(1)}%`;
-
-  const abandonmentRate = kpis.recibidas > 0 ? (kpis.abandonadas / kpis.recibidas) * 100 : 0;
-
-  const getAtencionColor = (p: number) => {
-    if (p >= 96) return 'text-emerald-600';
-    if (p >= 92) return 'text-amber-500';
-    return 'text-red-600';
-  };
-
-  const getAbandonoColor = (p: number) => {
-    if (p <= 4) return 'text-emerald-600';
-    if (p < 8) return 'text-amber-500';
-    return 'text-red-600';
-  };
-
-  const cards = [
-    { label: 'Total Recibidas',     value: fmt(kpis.recibidas), icon: <PhoneIncoming size={18} /> },
-    { label: 'Total Contestadas',   value: fmt(kpis.contestadas), icon: <PhoneCall size={18} /> },
-    { label: 'Total Abandonadas',   value: fmt(kpis.abandonadas), icon: <PhoneOff size={18} /> },
-    { 
-      label: '% Atención',          
-      value: pct(kpis.nivelDeServicio), 
-      icon: <Target size={18} />,
-      isAlert: kpis.recibidas > 0 && kpis.nivelDeServicio < 92,
-      valueColorClass: getAtencionColor(kpis.nivelDeServicio)
-    },
-    { 
-      label: '% Abandono',          
-      value: pct(abandonmentRate), 
-      icon: <Percent size={18} />,
-      isAlert: kpis.recibidas > 0 && abandonmentRate >= 8,
-      valueColorClass: getAbandonoColor(abandonmentRate)
-    },
-    { label: 'Transacciones CC',    value: fmt(kpis.transaccionesCC), icon: <CreditCard size={18} /> },
-    { label: '% Conversión',        value: pct(kpis.conversion), icon: <TrendingUp size={18} /> },
-  ];
+  if (!currentSnapshot || deltas.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-      {cards.map((card, idx) => (
-        <KPICard key={card.label} {...card} delay={idx * 0.05} />
-      ))}
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+      {deltas.map((delta) => {
+        const Icon = KPI_ICONS[delta.label] ?? Percent;
+        const deltaTone = getDeltaTone(delta.label, delta.delta);
+
+        return (
+          <article
+            key={delta.label}
+            className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  {delta.label}
+                </p>
+                <p className={cn('text-3xl font-black leading-none', getValueTone(delta.label, delta.currentValue))}>
+                  {formatValue(delta.currentValue, delta.format)}
+                </p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <Icon className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <div
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em]',
+                  deltaTone.className
+                )}
+              >
+                {deltaTone.Icon ? <deltaTone.Icon className="h-3.5 w-3.5" /> : null}
+                {deltaTone.label}
+              </div>
+
+              <p className="text-xs font-medium text-slate-500">
+                {delta.previousValue == null
+                  ? 'No hay una fecha previa cargada para calcular delta.'
+                  : `Antes: ${formatValue(delta.previousValue, delta.format)} · Delta: ${formatValue(Math.abs(delta.delta ?? 0), delta.format)}`}
+              </p>
+            </div>
+          </article>
+        );
+      })}
     </section>
   );
 }

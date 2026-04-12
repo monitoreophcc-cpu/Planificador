@@ -1,5 +1,6 @@
 'use client';
 
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import { FileSpreadsheet, FileText, Printer, Download } from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import { exportToCsv, exportToXlsx } from '@/ui/reports/analysis-beta/services/export.service';
 import { useToast } from '@/ui/reports/analysis-beta/hooks/use-toast';
+import { CallCenterReport } from '@/ui/reports/analysis-beta/reports/CallCenterReport';
 
 export default function ExportModal() {
   const allAns = useDashboardStore((state) => state.answeredCalls);
@@ -19,6 +21,8 @@ export default function ExportModal() {
   const allRawAbn = useDashboardStore((state) => state.rawAbandonedCalls);
   const allTrx = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const kpis = useDashboardStore((state) => state.kpis);
+  const kpisByShift = useDashboardStore((state) => state.kpisByShift);
   const { toast } = useToast();
 
   const hasData = dataDate !== null;
@@ -74,28 +78,45 @@ export default function ExportModal() {
     }
   };
 
-  const handleExportPdf = () => {
-    window.print();
-  };
-
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          variant="ghost"
-          size="sm"
-          className="bg-slate-800 hover:bg-slate-700 text-white border-slate-700 whitespace-nowrap"
+          variant="outline"
+          className="h-10 rounded-2xl border-slate-200 bg-white px-4 hover:bg-slate-50"
           disabled={!hasData}
         >
-          <Download className="mr-2 h-4 w-4 text-blue-400" />
-          Exportar
+          <Download className="h-4 w-4 text-slate-500" />
+          <span className="flex flex-col items-start leading-none">
+            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
+              Exportar
+            </span>
+            <span className="text-[11px] font-black text-slate-900">
+              PDF, Excel o CSV
+            </span>
+          </span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-white rounded-2xl">
+      <DialogContent className="sm:max-w-[425px] rounded-[2rem] bg-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-900">Opciones de Exportación</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <PDFDownloadLink
+            document={<CallCenterReport kpis={kpis} kpisByShift={kpisByShift} date={dataDate} />}
+            fileName={`Reporte_MonitoreoCC_${dataDate || 'General'}.pdf`}
+          >
+            {({ loading }) => (
+              <Button
+                variant="outline"
+                className="flex h-14 w-full items-center justify-start border-slate-200 text-lg font-semibold transition-all hover:bg-slate-50 hover:text-slate-900"
+                disabled={loading}
+              >
+                <Printer className="mr-4 h-6 w-6 text-slate-500" />
+                {loading ? 'Generando PDF...' : 'PDF (.pdf)'}
+              </Button>
+            )}
+          </PDFDownloadLink>
           <Button
             variant="outline"
             className="flex items-center justify-start h-14 text-lg font-semibold border-slate-200 hover:bg-slate-50 hover:text-green-600 transition-all"
@@ -112,17 +133,8 @@ export default function ExportModal() {
             <FileText className="mr-4 h-6 w-6 text-blue-500" />
             CSV (.csv)
           </Button>
-          <Button
-            variant="outline"
-            className="flex items-center justify-start h-14 text-lg font-semibold border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"
-            onClick={handleExportPdf}
-          >
-            <Printer className="mr-4 h-6 w-6 text-slate-500" />
-            PDF (Imprimir)
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-

@@ -173,6 +173,11 @@ interface CallCenterReportProps {
 export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportProps) => {
   const fmt = (n: number) => n.toLocaleString('es-DO');
   const pct = (n: number) => `${n.toFixed(1)}%`;
+  const currency = (n: number) =>
+    `RD$ ${n.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   const abandonmentRate = kpis.recibidas > 0 ? (kpis.abandonadas / kpis.recibidas) * 100 : 0;
 
   return (
@@ -225,6 +230,14 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
           <View style={styles.kpiCard}>
             <Text style={styles.kpiLabel}>Transacciones</Text>
             <Text style={styles.kpiValue}>{fmt(kpis.transaccionesCC)}</Text>
+          </View>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiLabel}>Ventas válidas</Text>
+            <Text style={styles.kpiValue}>{currency(kpis.ventasValidas)}</Text>
+          </View>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiLabel}>Ticket prom.</Text>
+            <Text style={styles.kpiValue}>{currency(kpis.ticketPromedio)}</Text>
           </View>
           <View style={styles.kpiCard}>
             <Text style={styles.kpiLabel}>% Conversión</Text>

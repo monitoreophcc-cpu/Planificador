@@ -11,6 +11,9 @@ import type {
   DailySnapshot,
   ComparisonConfig,
   ComparisonResult,
+  CommercialView,
+  ComparisonPreset,
+  WorkspaceView,
 } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import { buildDailySnapshot } from '@/ui/reports/analysis-beta/services/kpi.service';
 import { buildComparisonResult } from '@/ui/reports/analysis-beta/services/comparison.service';
@@ -77,9 +80,16 @@ type DashboardState = {
   setDataDate: (date: string | null) => void;
   comparisonConfig: ComparisonConfig;
   comparisonResult: ComparisonResult | null;
+  comparisonPreset: ComparisonPreset;
   setComparisonConfig: (config: Partial<ComparisonConfig>) => void;
+  setComparisonPreset: (preset: ComparisonPreset) => void;
   runComparison: () => void;
   clearComparison: () => void;
+
+  activeWorkspaceView: WorkspaceView;
+  commercialView: CommercialView;
+  setActiveWorkspaceView: (view: WorkspaceView) => void;
+  setCommercialView: (view: CommercialView) => void;
   
   clearCurrentView: () => void;
   clearAllData: () => void;
@@ -109,6 +119,8 @@ const initialKpis: KPIs = {
   nivelDeServicio: 0,
   conversion: 0,
   transaccionesCC: 0,
+  ventasValidas: 0,
+  ticketPromedio: 0,
 };
 
 const initialComparisonConfig: ComparisonConfig = {
@@ -139,12 +151,19 @@ function sanitizeComparisonConfig(
 
 const rebuildDailyHistory = (state: Pick<
   DashboardState,
-  'answeredCalls' | 'abandonedCalls' | 'rawAbandonedCalls' | 'transactions' | 'availableDates'
+  | 'answeredCalls'
+  | 'abandonedCalls'
+  | 'rawAbandonedCalls'
+  | 'transactions'
+  | 'rawTransactions'
+  | 'availableDates'
 >) => {
   const datesFromRecords = new Set<string>([
     ...state.answeredCalls.map((record) => record.fecha),
     ...state.abandonedCalls.map((record) => record.fecha),
+    ...state.rawAbandonedCalls.map((record) => record.fecha),
     ...state.transactions.map((record) => record.fecha),
+    ...state.rawTransactions.map((record) => record.fecha),
   ]);
   const allDates = [...new Set([...state.availableDates, ...datesFromRecords])].sort();
   const nextHistory: Record<string, DailySnapshot> = {};
@@ -156,6 +175,7 @@ const rebuildDailyHistory = (state: Pick<
       abandoned: state.abandonedCalls.filter((record) => record.fecha === date),
       rawAbandoned: state.rawAbandonedCalls.filter((record) => record.fecha === date),
       transactions: state.transactions.filter((record) => record.fecha === date),
+      rawTransactions: state.rawTransactions.filter((record) => record.fecha === date),
     });
   });
 
@@ -186,6 +206,9 @@ export const useDashboardStore = create<DashboardState>()(
       hourlyChartShift: 'Día',
       salesChartMode: 'agg',
       aovChartMode: 'agg',
+      comparisonPreset: 'manual',
+      activeWorkspaceView: 'executive',
+      commercialView: 'day',
       isAuditVisible: false,
       _hasHydrated: false,
 
@@ -199,6 +222,7 @@ export const useDashboardStore = create<DashboardState>()(
         const abandonedCalls = getStore().abandonedCalls;
         const rawAbandonedCalls = getStore().rawAbandonedCalls;
         const transactions = getStore().transactions;
+        const rawTransactions = getStore().rawTransactions;
         const nextHistory = { ...currentHistory };
 
         dates.forEach((date) => {
@@ -208,6 +232,7 @@ export const useDashboardStore = create<DashboardState>()(
             abandoned: abandonedCalls.filter((r) => r.fecha === date),
             rawAbandoned: rawAbandonedCalls.filter((r) => r.fecha === date),
             transactions: transactions.filter((r) => r.fecha === date),
+            rawTransactions: rawTransactions.filter((r) => r.fecha === date),
           });
         });
 
@@ -233,6 +258,7 @@ export const useDashboardStore = create<DashboardState>()(
         const currentHistory = getStore().dailyHistory;
         const answeredCalls = getStore().answeredCalls;
         const transactions = getStore().transactions;
+        const rawTransactions = getStore().rawTransactions;
         const nextHistory = { ...currentHistory };
 
         dates.forEach((date) => {
@@ -242,6 +268,7 @@ export const useDashboardStore = create<DashboardState>()(
             abandoned: updatedClean.filter((r) => r.fecha === date),
             rawAbandoned: updatedRaw.filter((r) => r.fecha === date),
             transactions: transactions.filter((r) => r.fecha === date),
+            rawTransactions: rawTransactions.filter((r) => r.fecha === date),
           });
         });
 
@@ -278,6 +305,7 @@ export const useDashboardStore = create<DashboardState>()(
             abandoned: abandonedCalls.filter((r) => r.fecha === date),
             rawAbandoned: rawAbandonedCalls.filter((r) => r.fecha === date),
             transactions: updatedClean.filter((r) => r.fecha === date),
+            rawTransactions: updatedRaw.filter((r) => r.fecha === date),
           });
         });
 
@@ -300,6 +328,7 @@ export const useDashboardStore = create<DashboardState>()(
       setDataDate: (date) => set({ dataDate: date }),
       setComparisonConfig: (config) =>
         set((state) => ({ comparisonConfig: { ...state.comparisonConfig, ...config } })),
+      setComparisonPreset: (preset) => set({ comparisonPreset: preset }),
       runComparison: () => {
         const state = getStore();
         const result = buildComparisonResult({
@@ -311,11 +340,15 @@ export const useDashboardStore = create<DashboardState>()(
         set({ comparisonResult: result });
       },
       clearComparison: () => set({ comparisonResult: null }),
+      setActiveWorkspaceView: (view) => set({ activeWorkspaceView: view }),
+      setCommercialView: (view) => set({ commercialView: view }),
 
       clearCurrentView: () =>
         set({
           dataDate: null,
+          comparisonConfig: initialComparisonConfig,
           comparisonResult: null,
+          comparisonPreset: 'manual',
           selectedHour: null,
           isAuditVisible: false,
           kpis: initialKpis,
@@ -333,7 +366,10 @@ export const useDashboardStore = create<DashboardState>()(
         dataDate: null,
         comparisonConfig: initialComparisonConfig,
         comparisonResult: null,
+        comparisonPreset: 'manual',
         selectedHour: null,
+        activeWorkspaceView: 'executive',
+        commercialView: 'day',
         isAuditVisible: false,
         kpis: initialKpis,
         kpisByShift: { Día: initialShiftKPIs, Noche: initialShiftKPIs },
@@ -368,6 +404,7 @@ export const useDashboardStore = create<DashboardState>()(
           dataDate: currentDate === date ? remainingDates[0] || null : currentDate,
           comparisonConfig: nextComparisonConfig,
           comparisonResult: null,
+          comparisonPreset: 'manual',
           selectedHour: null,
         });
       },
@@ -381,9 +418,17 @@ export const useDashboardStore = create<DashboardState>()(
         if (state) {
           const rebuilt = rebuildDailyHistory(state);
           const missingDates = rebuilt.allDates.some((date) => !state.dailyHistory?.[date]);
+          const missingCoverage = rebuilt.allDates.some(
+            (date) => !state.dailyHistory?.[date]?.coverage
+          );
           const shouldRebuildHistory =
             rebuilt.allDates.length > 0 &&
-            (!state.dailyHistory || Object.keys(state.dailyHistory).length === 0 || missingDates);
+            (
+              !state.dailyHistory ||
+              Object.keys(state.dailyHistory).length === 0 ||
+              missingDates ||
+              missingCoverage
+            );
 
           if (shouldRebuildHistory) {
             useDashboardStore.setState({
@@ -396,6 +441,9 @@ export const useDashboardStore = create<DashboardState>()(
                 state.comparisonConfig ?? initialComparisonConfig,
                 rebuilt.allDates
               ),
+              comparisonPreset: state.comparisonPreset ?? 'manual',
+              activeWorkspaceView: state.activeWorkspaceView ?? 'executive',
+              commercialView: state.commercialView ?? 'day',
             });
           } else {
             useDashboardStore.setState({
@@ -403,6 +451,9 @@ export const useDashboardStore = create<DashboardState>()(
                 state.comparisonConfig ?? initialComparisonConfig,
                 state.availableDates ?? []
               ),
+              comparisonPreset: state.comparisonPreset ?? 'manual',
+              activeWorkspaceView: state.activeWorkspaceView ?? 'executive',
+              commercialView: state.commercialView ?? 'day',
             });
           }
         }
@@ -418,9 +469,12 @@ export const useDashboardStore = create<DashboardState>()(
         dailyHistory: state.dailyHistory,
         dataDate: state.dataDate,
         comparisonConfig: state.comparisonConfig,
+        comparisonPreset: state.comparisonPreset,
         hourlyChartShift: state.hourlyChartShift,
         salesChartMode: state.salesChartMode,
         aovChartMode: state.aovChartMode,
+        activeWorkspaceView: state.activeWorkspaceView,
+        commercialView: state.commercialView,
       }),
     }
   )

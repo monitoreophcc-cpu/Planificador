@@ -92,6 +92,18 @@ function buildExportSheets({
       shiftKpis.Noche.trans,
     ],
     [
+      'Ventas válidas',
+      +globalKpis.ventasValidas.toFixed(2),
+      null,
+      null,
+    ],
+    [
+      'Ticket promedio',
+      +globalKpis.ticketPromedio.toFixed(2),
+      null,
+      null,
+    ],
+    [
       '% Conversión CC',
       +globalKpis.conversion.toFixed(1),
       +shiftKpis.Día.conv.toFixed(1),
@@ -209,4 +221,3 @@ export function exportToCsv(exportData: ExportData) {
   link.click();
   document.body.removeChild(link);
 }
-

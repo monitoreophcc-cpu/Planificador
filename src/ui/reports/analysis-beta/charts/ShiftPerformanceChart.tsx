@@ -26,6 +26,24 @@ export default function ShiftPerformanceChart() {
         borderRadius: 8,
         barThickness: 40,
       },
+      {
+        type: 'line' as const,
+        label: 'Meta 92%',
+        data: [92, 92],
+        borderColor: '#f59e0b',
+        borderDash: [6, 6],
+        pointRadius: 0,
+        borderWidth: 2,
+      },
+      {
+        type: 'line' as const,
+        label: 'Meta 96%',
+        data: [96, 96],
+        borderColor: '#10b981',
+        borderDash: [6, 6],
+        pointRadius: 0,
+        borderWidth: 2,
+      },
     ],
   };
 
@@ -99,7 +117,7 @@ export default function ShiftPerformanceChart() {
         </CardHeader>
         <CardContent className="pt-6">
           <div className="h-80 w-full">
-            <Bar options={options} data={data} />
+            <Bar options={options as any} data={data as any} />
           </div>
         </CardContent>
       </Card>

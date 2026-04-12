@@ -27,6 +27,8 @@ export function calculateGlobalKpis(
   const transaccionesCC = transactions.filter(
     (t) => t.plataforma === 'Monitoreo Call Center'
   ).length;
+  const ventasValidas = transactions.reduce((sum, transaction) => sum + transaction.valor, 0);
+  const ticketPromedio = transactions.length > 0 ? ventasValidas / transactions.length : 0;
   const conversion =
     contestadas > 0 ? (transaccionesCC / contestadas) * 100 : 0;
 
@@ -37,6 +39,8 @@ export function calculateGlobalKpis(
     nivelDeServicio,
     conversion,
     transaccionesCC,
+    ventasValidas,
+    ticketPromedio,
   };
 }
 
@@ -95,10 +99,32 @@ export function buildDailySnapshot(params: {
   abandoned: AbandonedCall[];
   rawAbandoned: AbandonedCall[];
   transactions: Transaction[];
+  rawTransactions?: Transaction[];
 }): DailySnapshot {
-  const { date, answered, abandoned, rawAbandoned, transactions } = params;
+  const {
+    date,
+    answered,
+    abandoned,
+    rawAbandoned,
+    transactions,
+    rawTransactions = transactions,
+  } = params;
   const kpis = calculateGlobalKpis(answered, abandoned, transactions);
   const shiftKpis = calculateKPIsByShift(answered, rawAbandoned, transactions);
+  const coverage = {
+    answeredLoaded: answered.length > 0,
+    abandonedLoaded: rawAbandoned.length > 0 || abandoned.length > 0,
+    transactionsLoaded: rawTransactions.length > 0 || transactions.length > 0,
+    loadedSources: 0,
+    isComplete: false,
+  };
+
+  coverage.loadedSources = [
+    coverage.answeredLoaded,
+    coverage.abandonedLoaded,
+    coverage.transactionsLoaded,
+  ].filter(Boolean).length;
+  coverage.isComplete = coverage.loadedSources === 3;
 
   return {
     date,
@@ -110,6 +136,7 @@ export function buildDailySnapshot(params: {
       abandonedCalls: abandoned.length,
       transactions: transactions.length,
     },
+    coverage,
   };
 }
 
@@ -177,6 +204,43 @@ export function aggregateByAgent(
     ventas: data.ventas,
     ticketPromedio: data.transacciones > 0 ? data.ventas / data.transacciones : 0,
   }));
+}
+
+export function buildMonthlyRepresentativeSnapshot(
+  transactions: Transaction[],
+  referenceDate: string | null
+): {
+  monthLabel: string;
+  loadedDays: number;
+  expectedDays: number;
+  rows: AgentKPIs[];
+} | null {
+  if (!referenceDate) {
+    return null;
+  }
+
+  const monthKey = referenceDate.slice(0, 7);
+  const monthlyTransactions = transactions.filter((tx) =>
+    tx.fecha.startsWith(`${monthKey}-`)
+  );
+  const loadedDays = new Set(monthlyTransactions.map((tx) => tx.fecha)).size;
+  const [year, month] = monthKey.split('-').map(Number);
+  const expectedDays = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const monthLabel = new Intl.DateTimeFormat('es-DO', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+  const rows = aggregateByAgent(monthlyTransactions).filter(
+    (item) => item.tipo === 'agente'
+  );
+
+  return {
+    monthLabel,
+    loadedDays,
+    expectedDays,
+    rows,
+  };
 }
 
 export function aggregateByTimeSlot(

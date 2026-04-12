@@ -9,11 +9,13 @@ import {
   ChevronRight,
   CalendarRange,
   AlertTriangle,
+  Wand2,
 } from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import {
   buildComparisonPeriodSummary,
   buildComparisonSelectionOptions,
+  resolveComparisonRange,
   resolveComparisonSelectionValue,
 } from '@/ui/reports/analysis-beta/services/comparison.service';
 import {
@@ -33,7 +35,11 @@ import {
   DialogTrigger,
 } from '@/ui/reports/analysis-beta/ui/dialog';
 import { cn } from '@/ui/reports/analysis-beta/lib/utils';
-import type { ComparisonPeriodMode } from '@/ui/reports/analysis-beta/types/dashboard.types';
+import type {
+  ComparisonConfig,
+  ComparisonPeriodMode,
+  ComparisonPreset,
+} from '@/ui/reports/analysis-beta/types/dashboard.types';
 
 const periodLabels: Record<ComparisonPeriodMode, string> = {
   full_day: 'Dia completo',
@@ -43,11 +49,106 @@ const periodLabels: Record<ComparisonPeriodMode, string> = {
   month: 'Mes completo',
 };
 
+const presetLabels: Record<Exclude<ComparisonPreset, 'manual'>, string> = {
+  day_previous: 'Día anterior',
+  week_previous: 'Semana anterior',
+  month_previous: 'Mes anterior',
+};
+
+function parseDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function shiftUtcDate(dateStr: string, days: number) {
+  const date = parseDate(dateStr);
+  date.setUTCDate(date.getUTCDate() + days);
+  return formatDate(date);
+}
+
+function shiftUtcMonth(dateStr: string, months: number) {
+  const date = parseDate(dateStr);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return formatDate(date);
+}
+
+function findLoadedDateInRange(
+  availableDates: string[],
+  start: string,
+  end: string
+): string | null {
+  const matches = availableDates.filter((date) => date >= start && date <= end).sort();
+  return matches[matches.length - 1] ?? null;
+}
+
 function formatValue(label: string, value: number): string {
-  if (label === 'Nivel de servicio' || label === 'Conversión') {
+  if (
+    label === 'Nivel de servicio' ||
+    label === '% Conversión' ||
+    label === '% Abandono'
+  ) {
     return `${value.toFixed(1)}%`;
   }
+
+  if (label === 'Ventas válidas' || label === 'Ticket promedio') {
+    return `RD$ ${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
   return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function buildPresetConfig(
+  preset: Exclude<ComparisonPreset, 'manual'>,
+  referenceDate: string,
+  availableDates: string[]
+): ComparisonConfig {
+  if (preset === 'day_previous') {
+    const ordered = [...availableDates].sort();
+    const currentIndex = ordered.indexOf(referenceDate);
+    const previousLoaded = currentIndex > 0 ? ordered[currentIndex - 1] : null;
+
+    return {
+      baseDate: previousLoaded ?? shiftUtcDate(referenceDate, -1),
+      targetDate: referenceDate,
+      periodMode: 'full_day',
+      shift: 'Día',
+      startTime: '09:00',
+      endTime: '23:30',
+    };
+  }
+
+  if (preset === 'week_previous') {
+    const anchor = shiftUtcDate(referenceDate, -7);
+    const range = resolveComparisonRange(anchor, 'week');
+
+    return {
+      baseDate: findLoadedDateInRange(availableDates, range.start, range.end) ?? anchor,
+      targetDate: referenceDate,
+      periodMode: 'week',
+      shift: 'Día',
+      startTime: '09:00',
+      endTime: '23:30',
+    };
+  }
+
+  const anchor = shiftUtcMonth(referenceDate, -1);
+  const range = resolveComparisonRange(anchor, 'month');
+
+  return {
+    baseDate: findLoadedDateInRange(availableDates, range.start, range.end) ?? anchor,
+    targetDate: referenceDate,
+    periodMode: 'month',
+    shift: 'Día',
+    startTime: '09:00',
+    endTime: '23:30',
+  };
 }
 
 function PeriodSummaryCard({
@@ -91,13 +192,17 @@ function PeriodSummaryCard({
 
 export default function ComparisonPanel() {
   const availableDates = useDashboardStore((s) => s.availableDates);
+  const dataDate = useDashboardStore((s) => s.dataDate);
   const comparisonConfig = useDashboardStore((s) => s.comparisonConfig);
   const comparisonResult = useDashboardStore((s) => s.comparisonResult);
+  const comparisonPreset = useDashboardStore((s) => s.comparisonPreset);
   const setComparisonConfig = useDashboardStore((s) => s.setComparisonConfig);
+  const setComparisonPreset = useDashboardStore((s) => s.setComparisonPreset);
   const runComparison = useDashboardStore((s) => s.runComparison);
 
   const sortedDates = useMemo(() => [...availableDates].sort().reverse(), [availableDates]);
   const hasEnoughDates = sortedDates.length >= 2;
+  const referenceDate = dataDate ?? sortedDates[0] ?? null;
   const periodOptions = useMemo(
     () =>
       buildComparisonSelectionOptions({
@@ -165,21 +270,37 @@ export default function ComparisonPanel() {
         ? 'Mes'
         : 'Fecha';
 
+  const handlePreset = (preset: Exclude<ComparisonPreset, 'manual'>) => {
+    if (!referenceDate) {
+      return;
+    }
+
+    const nextConfig = buildPresetConfig(preset, referenceDate, availableDates);
+    setComparisonPreset(preset);
+    setComparisonConfig(nextConfig);
+    runComparison();
+  };
+
+  const handleManualCompare = () => {
+    setComparisonPreset('manual');
+    runComparison();
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
           variant="outline"
           disabled={!hasEnoughDates}
-          className="h-9 rounded-xl border-slate-200 bg-white px-3 text-left hover:bg-slate-50"
+          className="h-10 rounded-2xl border-slate-200 bg-white px-4 text-left hover:bg-slate-50"
         >
           <GitCompareArrows className="h-4 w-4 text-slate-500" />
           <span className="flex flex-col items-start leading-none">
             <span className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-              Comparación
+              Comparar
             </span>
             <span className="text-[11px] font-black text-slate-900">
-              {comparisonResult ? 'Resultado listo' : 'Comparar periodos'}
+              {comparisonResult ? 'Resultado listo' : 'Abrir comparación'}
             </span>
           </span>
           <span
@@ -190,20 +311,24 @@ export default function ComparisonPanel() {
                 : 'bg-slate-100 text-slate-500'
             )}
           >
-            {comparisonResult ? resultModeLabel : `${sortedDates.length} dias`}
+            {comparisonPreset !== 'manual'
+              ? presetLabels[comparisonPreset]
+              : comparisonResult
+                ? resultModeLabel
+                : `${sortedDates.length} dias`}
           </span>
           <ChevronRight className="h-4 w-4 text-slate-400" />
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-[960px] overflow-hidden rounded-2xl bg-white p-0">
+      <DialogContent className="max-w-[1080px] overflow-hidden rounded-[2rem] bg-white p-0">
         <DialogHeader className="border-b border-slate-100 px-6 py-5">
           <DialogTitle className="flex items-center gap-2 text-xl font-black text-slate-900">
             <GitCompareArrows className="h-5 w-5 text-red-600" />
             Comparación entre periodos
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-500">
-            Compara días, turnos, rangos horarios, semanas completas o meses completos sin invadir la vista principal.
+            Usa presets rápidos para comparar contra el día, la semana o el mes anterior, o baja al modo avanzado cuando necesites más control.
           </DialogDescription>
         </DialogHeader>
 
@@ -214,8 +339,46 @@ export default function ComparisonPanel() {
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                      Presets rápidos
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(Object.keys(presetLabels) as Array<Exclude<ComparisonPreset, 'manual'>>).map(
+                        (preset) => (
+                          <Button
+                            key={preset}
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className={cn(
+                              'rounded-xl border border-transparent bg-white px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-600 shadow-sm hover:bg-white',
+                              comparisonPreset === preset && 'border-red-200 text-red-600'
+                            )}
+                            onClick={() => handlePreset(preset)}
+                          >
+                            <Wand2 className="h-4 w-4" />
+                            {presetLabels[preset]}
+                          </Button>
+                        )
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Referencia activa:{' '}
+                      <span className="font-black text-slate-700">
+                        {referenceDate ?? 'Sin fecha seleccionada'}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 xl:max-w-sm">
+                    Si cargas archivos con varias fechas, cada día se acumula por separado y aquí se agrupa automáticamente por semana o por mes.
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
                   <Select
                     value={baseSelectValue}
                     onValueChange={(value) => setComparisonConfig({ baseDate: value })}
@@ -304,18 +467,12 @@ export default function ComparisonPanel() {
 
                   <Button
                     className="h-10 rounded-xl bg-red-600 text-xs font-black uppercase tracking-[0.16em] hover:bg-red-700"
-                    onClick={runComparison}
+                    onClick={handleManualCompare}
                     disabled={!comparisonConfig.baseDate || !comparisonConfig.targetDate}
                   >
                     Comparar
                   </Button>
                 </div>
-
-                {isMultiDayMode ? (
-                  <div className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-500">
-                    Si cargas archivos con varias fechas, cada día se acumula por separado en el historial y aquí se agrupa automáticamente por semana o por mes.
-                  </div>
-                ) : null}
               </div>
 
               {basePeriod || targetPeriod ? (
@@ -347,14 +504,14 @@ export default function ComparisonPanel() {
                 <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <p>
-                    La comparación usa solo los días que ya están cargados en el historial. Si ves menos días de los esperados, el total será parcial.
+                    La comparación usa solo los días cargados en el historial. Si la cobertura es menor a la esperada, el total mostrado es parcial.
                   </p>
                 </div>
               ) : null}
 
               {comparisonResult ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
                     {comparisonResult.metrics.map((metric) => (
                       <article
                         key={metric.label}
@@ -393,7 +550,7 @@ export default function ComparisonPanel() {
                                   : 'text-slate-600'
                             )}
                           >
-                            Delta {formatValue(metric.label, metric.delta)}
+                            Delta {formatValue(metric.label, Math.abs(metric.delta))}
                             {metric.deltaPct !== null && ` (${metric.deltaPct.toFixed(1)}%)`}
                           </span>
                         </div>
@@ -454,7 +611,7 @@ export default function ComparisonPanel() {
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
                   <p className="text-sm font-bold text-slate-500">
-                    Configura los periodos y presiona comparar para ver el resultado.
+                    Usa un preset rápido o configura el modo avanzado para ver el resultado.
                   </p>
                 </div>
               )}

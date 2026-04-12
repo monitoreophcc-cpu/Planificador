@@ -16,6 +16,12 @@ function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
+const coverageLabels = [
+  { key: 'answeredLoaded', label: 'Contestadas' },
+  { key: 'abandonedLoaded', label: 'Abandonadas' },
+  { key: 'transactionsLoaded', label: 'Transacciones' },
+] as const;
+
 export default function DailyHistoryPanel() {
   const [open, setOpen] = useState(false);
   const dailyHistory = useDashboardStore((state) => state.dailyHistory);
@@ -175,6 +181,26 @@ export default function DailyHistoryPanel() {
                   <span>{snapshot.kpis.recibidas.toLocaleString('en-US')} rec.</span>
                   <span>{formatPercent(snapshot.kpis.nivelDeServicio)} atn.</span>
                   <span>{formatPercent(snapshot.kpis.conversion)} conv.</span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {coverageLabels.map((coverage) => {
+                    const loaded = snapshot.coverage[coverage.key];
+
+                    return (
+                      <span
+                        key={`${snapshot.date}-${coverage.key}`}
+                        className={cn(
+                          'rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]',
+                          loaded
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-red-50 text-red-700'
+                        )}
+                      >
+                        {coverage.label}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             );

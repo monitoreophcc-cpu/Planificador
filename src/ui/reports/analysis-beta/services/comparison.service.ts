@@ -291,14 +291,20 @@ export function buildComparisonResult(params: {
 
   const baseKpis = calculateGlobalKpis(baseDay.answered, baseDay.abandoned, baseDay.transactions);
   const targetKpis = calculateGlobalKpis(targetDay.answered, targetDay.abandoned, targetDay.transactions);
+  const baseAbandonmentRate =
+    baseKpis.recibidas > 0 ? (baseKpis.abandonadas / baseKpis.recibidas) * 100 : 0;
+  const targetAbandonmentRate =
+    targetKpis.recibidas > 0 ? (targetKpis.abandonadas / targetKpis.recibidas) * 100 : 0;
 
   const metrics: ComparisonMetric[] = [
     metric('Recibidas', baseKpis.recibidas, targetKpis.recibidas),
     metric('Contestadas', baseKpis.contestadas, targetKpis.contestadas),
-    metric('Abandonadas', baseKpis.abandonadas, targetKpis.abandonadas),
     metric('Nivel de servicio', baseKpis.nivelDeServicio, targetKpis.nivelDeServicio),
-    metric('Conversión', baseKpis.conversion, targetKpis.conversion),
+    metric('% Abandono', baseAbandonmentRate, targetAbandonmentRate),
+    metric('% Conversión', baseKpis.conversion, targetKpis.conversion),
     metric('Transacciones CC', baseKpis.transaccionesCC, targetKpis.transaccionesCC),
+    metric('Ventas válidas', baseKpis.ventasValidas, targetKpis.ventasValidas),
+    metric('Ticket promedio', baseKpis.ticketPromedio, targetKpis.ticketPromedio),
   ];
 
   const baseSlotsAgg = aggregateByTimeSlot(baseDay.answered, baseDay.abandoned, baseDay.transactions);

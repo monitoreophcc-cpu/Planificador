@@ -48,6 +48,22 @@ export default function HourlyAbandonmentRateChart() {
         pointHoverBackgroundColor: '#fff',
         pointHoverBorderColor: '#b91c1c',
       },
+      {
+        label: 'Meta 4%',
+        data: chartDetails.map(() => 4),
+        borderColor: '#10b981',
+        borderDash: [6, 6],
+        pointRadius: 0,
+        tension: 0,
+      },
+      {
+        label: 'Alerta 8%',
+        data: chartDetails.map(() => 8),
+        borderColor: '#f59e0b',
+        borderDash: [6, 6],
+        pointRadius: 0,
+        tension: 0,
+      },
     ],
   };
 
