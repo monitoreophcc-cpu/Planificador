@@ -28,6 +28,8 @@ export type Transaction = {
   id: string;
   sucursal: string;
   agente?: string;
+  agenteTipo?: 'agente' | 'plataforma' | 'sin_registro';
+  agenteCodigo?: string;
   canalReal: string;
   plataforma: string;
   plataformaCode: string;
@@ -91,6 +93,8 @@ export type TimeSlotKpi = {
 
 export type AgentKPIs = {
   agente: string;
+  tipo: 'agente' | 'plataforma' | 'sin_registro';
+  codigo?: string;
   transacciones: number;
   ventas: number;
   ticketPromedio: number;

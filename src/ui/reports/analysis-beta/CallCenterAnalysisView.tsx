@@ -1,14 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { cn } from '@/ui/reports/analysis-beta/lib/utils';
 import KPISummary from '@/ui/reports/analysis-beta/kpis/KPISummary';
 import FileLoadButtons from '@/ui/reports/analysis-beta/header/FileLoadButtons';
 import ShiftGrid from '@/ui/reports/analysis-beta/shifts/ShiftGrid';
 import KPIObserver from '@/ui/reports/analysis-beta/kpis/KPIObserver';
-import { Target, Download, FileText } from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import {
   Tabs,
@@ -16,17 +13,13 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/ui/reports/analysis-beta/ui/tabs';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/ui/reports/analysis-beta/ui/popover';
 import ShiftTablesContainer from '@/ui/reports/analysis-beta/tables/ShiftTablesContainer';
 import AgentPerformanceTable from '@/ui/reports/analysis-beta/tables/AgentPerformanceTable';
 import DateRangeBadge from '@/ui/reports/analysis-beta/header/DateRangeBadge';
 import DateSelector from '@/ui/reports/analysis-beta/header/DateSelector';
 import DailyHistoryPanel from '@/ui/reports/analysis-beta/header/DailyHistoryPanel';
 import ComparisonPanel from '@/ui/reports/analysis-beta/header/ComparisonPanel';
+import CallCenterBrand from '@/ui/reports/analysis-beta/header/CallCenterBrand';
 import { Toaster } from '@/ui/reports/analysis-beta/ui/toaster';
 
 const PDFExportButton = dynamic(() => import('@/ui/reports/analysis-beta/reports/PDFExportButton'), { 
@@ -101,21 +94,7 @@ export function CallCenterAnalysisView() {
       <header className="bg-white border-b border-slate-200 px-4 md:px-8 py-6 sticky top-0 z-50 backdrop-blur-md bg-white/80">
         <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center shadow-lg shadow-red-200 overflow-hidden">
-                <Image 
-                  src="/icons/logo.svg"
-                  alt="Pizza Hut Logo"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
-                Monitoreo Call Center
-              </h1>
-            </div>
+            <CallCenterBrand />
             <div className="flex items-center gap-3 text-slate-400 text-[10px] font-bold uppercase tracking-[0.15em]">
               <span>Sistema de análisis de llamadas y transacciones</span>
               <span className="w-1 h-1 bg-slate-300 rounded-full" />

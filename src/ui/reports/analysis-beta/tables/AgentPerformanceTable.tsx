@@ -36,6 +36,12 @@ export default function AgentPerformanceTable() {
   const dataDate = useDashboardStore((state) => state.dataDate);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'ventas', direction: 'desc' });
+  const formatCount = (value: number) => value.toLocaleString('en-US');
+  const formatCurrency = (value: number) =>
+    `RD$ ${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   const agentData = useMemo(() => {
     const filtered = dataDate
@@ -97,13 +103,13 @@ export default function AgentPerformanceTable() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-2">
           <div className="h-4 w-1 bg-red-600 rounded-full" />
-          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Rendimiento por Agente</h2>
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Rendimiento por Registro</h2>
         </div>
 
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           <Input
-            placeholder="Buscar agente..."
+            placeholder="Buscar agente o plataforma..."
             className="pl-9 bg-white border-slate-200 rounded-xl text-xs font-bold focus-visible:ring-red-600"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -115,7 +121,7 @@ export default function AgentPerformanceTable() {
         <CardHeader className="bg-slate-50 border-b border-slate-200 p-4">
           <CardTitle className="text-slate-900 text-xs font-black uppercase tracking-widest flex items-center gap-2">
             <Users size={14} className="text-red-600" />
-            Transacciones y Ventas por Agente
+            Transacciones y Ventas por Registro
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -125,7 +131,7 @@ export default function AgentPerformanceTable() {
                 <TableRow className="hover:bg-transparent border-b border-slate-200">
                   <TableHead className="cursor-pointer hover:text-red-600 transition-colors py-4" onClick={() => handleSort('agente')}>
                     <div className="flex items-center text-[10px] font-black uppercase tracking-widest">
-                      Agente <SortIcon columnKey="agente" />
+                      Registro <SortIcon columnKey="agente" />
                     </div>
                   </TableHead>
                   <TableHead className="cursor-pointer hover:text-red-600 transition-colors py-4 text-center" onClick={() => handleSort('transacciones')}>
@@ -145,26 +151,51 @@ export default function AgentPerformanceTable() {
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {filteredAndSortedData.length > 0 ? (
-                  filteredAndSortedData.map((agent, idx) => (
-                    <TableRow key={agent.agente} className={cn(idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30', 'hover:bg-slate-100 transition-colors')}>
+                <TableBody>
+                  {filteredAndSortedData.length > 0 ? (
+                    filteredAndSortedData.map((agent, idx) => (
+                      <TableRow
+                        key={`${agent.tipo}-${agent.codigo || agent.agente}`}
+                        className={cn(idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30', 'hover:bg-slate-100 transition-colors')}
+                      >
                       <TableCell className="py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-[10px] font-black uppercase">
+                          <div
+                            className={cn(
+                              'w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase',
+                              agent.tipo === 'plataforma'
+                                ? 'bg-amber-100 text-amber-700'
+                                : agent.tipo === 'sin_registro'
+                                  ? 'bg-slate-200 text-slate-600'
+                                  : 'bg-red-100 text-red-600'
+                            )}
+                          >
                             {agent.agente.substring(0, 2)}
                           </div>
-                          <span className="text-xs font-black text-slate-900">{agent.agente}</span>
+                          <div className="min-w-0">
+                            <span
+                              className={cn(
+                                'block truncate text-xs font-black',
+                                agent.tipo === 'plataforma'
+                                  ? 'text-amber-800'
+                                  : agent.tipo === 'sin_registro'
+                                    ? 'text-slate-500'
+                                    : 'text-slate-900'
+                              )}
+                            >
+                              {agent.agente}
+                            </span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-center py-3">
-                        <span className="text-xs font-bold text-slate-600">{agent.transacciones}</span>
+                        <span className="text-xs font-bold text-slate-600">{formatCount(agent.transacciones)}</span>
                       </TableCell>
                       <TableCell className="text-center py-3">
-                        <span className="text-xs font-bold text-slate-600">RD$ {agent.ventas.toFixed(2)}</span>
+                        <span className="text-xs font-bold text-slate-600">{formatCurrency(agent.ventas)}</span>
                       </TableCell>
                       <TableCell className="text-center py-3">
-                        <span className="text-xs font-bold text-slate-600">RD$ {agent.ticketPromedio.toFixed(2)}</span>
+                        <span className="text-xs font-bold text-slate-600">{formatCurrency(agent.ticketPromedio)}</span>
                       </TableCell>
                     </TableRow>
                   ))
@@ -173,7 +204,7 @@ export default function AgentPerformanceTable() {
                     <TableCell colSpan={4} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-2 text-slate-400">
                         <Users size={24} className="opacity-20" />
-                        <p className="text-xs font-bold uppercase tracking-widest">No se encontraron agentes</p>
+                        <p className="text-xs font-bold uppercase tracking-widest">No se encontraron registros</p>
                       </div>
                     </TableCell>
                   </TableRow>

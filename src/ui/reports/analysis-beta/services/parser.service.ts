@@ -609,21 +609,27 @@ function resolveTransactionPlatform(
   registro: string,
   platformLabels: Record<string, string>
 ): string {
-  if (plataformaCode) {
-    return platformLabels[plataformaCode] || plataformaCode;
+  const normalizedPlatformCode = String(plataformaCode || '').trim().toUpperCase();
+  if (normalizedPlatformCode) {
+    return platformLabels[normalizedPlatformCode] || normalizedPlatformCode;
   }
 
-  const normalizedRegistro = registro.toLowerCase();
-  if (normalizedRegistro.includes('whatsapp') || normalizedRegistro.includes('wa')) {
+  const normalizedRegistro = registro.trim().toUpperCase();
+  if (normalizedRegistro in platformLabels) {
+    return platformLabels[normalizedRegistro];
+  }
+
+  const registroWords = normalizedRegistro.toLowerCase();
+  if (registroWords.includes('whatsapp')) {
     return platformLabels.WA;
   }
-  if (normalizedRegistro.includes('web')) {
+  if (registroWords.includes('web')) {
     return platformLabels.WEB;
   }
-  if (normalizedRegistro.includes('app')) {
+  if (registroWords.includes('app')) {
     return platformLabels.APP;
   }
-  if (normalizedRegistro.includes('agregador')) {
+  if (registroWords.includes('agregador')) {
     return platformLabels.AG;
   }
 
@@ -734,6 +740,7 @@ export function processTransactions(raw: any[]): {
   clean: Transaction[];
   raw: Transaction[];
 } {
+  const DIGITAL_PLATFORM_CODES = ['WA', 'WEB', 'AG', 'APP'] as const;
   const PLATFORM_LABELS: { [key: string]: string } = {
     CC: 'Monitoreo Call Center',
     APP: 'App',
@@ -753,8 +760,11 @@ export function processTransactions(raw: any[]): {
     return v || '';
   };
 
-  const resolveAgent = (row: any): string | undefined => {
-    const fromKnownFields = String(
+  const normalizeRegistro = (value: string) => value.trim().replace(/\s+/g, ' ');
+
+  const resolveAgentFieldFallback = (row: any): string | undefined => {
+    const fromKnownFields = normalizeRegistro(
+      String(
       mapRawFields(row, [
         'agente',
         'agent',
@@ -768,7 +778,8 @@ export function processTransactions(raw: any[]): {
         'nom_vendedor',
         'nombre_vendedor',
       ]) || ''
-    ).trim();
+    )
+    );
     if (fromKnownFields) return fromKnownFields;
 
     const rawKeys = Object.keys(row || {});
@@ -789,19 +800,95 @@ export function processTransactions(raw: any[]): {
       );
     });
 
-    return fuzzyKey ? String(row[fuzzyKey] || '').trim() || undefined : undefined;
+    return fuzzyKey
+      ? normalizeRegistro(String(row[fuzzyKey] || '')) || undefined
+      : undefined;
+  };
+
+  const resolveTransactionActor = (
+    row: any,
+    plataformaCode: string
+  ): Pick<Transaction, 'agente' | 'agenteTipo' | 'agenteCodigo'> => {
+    const registro = normalizeRegistro(
+      String(mapRawFields(row, ['registro', 'descripcion', 'detalle']) || '')
+    );
+    const normalizedRegistro = registro.toUpperCase();
+
+    if (
+      normalizedRegistro &&
+      DIGITAL_PLATFORM_CODES.includes(
+        normalizedRegistro as (typeof DIGITAL_PLATFORM_CODES)[number]
+      )
+    ) {
+      return {
+        agente: PLATFORM_LABELS[normalizedRegistro] || normalizedRegistro,
+        agenteTipo: 'plataforma',
+        agenteCodigo: normalizedRegistro,
+      };
+    }
+
+    if (registro) {
+      return {
+        agente: registro,
+        agenteTipo: 'agente',
+      };
+    }
+
+    const fallback = resolveAgentFieldFallback(row);
+    if (fallback) {
+      const normalizedFallback = fallback.toUpperCase();
+      if (
+        DIGITAL_PLATFORM_CODES.includes(
+          normalizedFallback as (typeof DIGITAL_PLATFORM_CODES)[number]
+        )
+      ) {
+        return {
+          agente: PLATFORM_LABELS[normalizedFallback] || normalizedFallback,
+          agenteTipo: 'plataforma',
+          agenteCodigo: normalizedFallback,
+        };
+      }
+
+      return {
+        agente: fallback,
+        agenteTipo: 'agente',
+      };
+    }
+
+    if (
+      DIGITAL_PLATFORM_CODES.includes(
+        plataformaCode as (typeof DIGITAL_PLATFORM_CODES)[number]
+      )
+    ) {
+      return {
+        agente: PLATFORM_LABELS[plataformaCode] || plataformaCode,
+        agenteTipo: 'plataforma',
+        agenteCodigo: plataformaCode,
+      };
+    }
+
+    return {
+      agente: undefined,
+      agenteTipo: 'sin_registro',
+      agenteCodigo: undefined,
+    };
   };
 
   const allTransactions = raw.map((r, index) => {
-    const plataforma = (
+    const plataforma = String(
       mapRawFields(r, ['canal', 'plataforma']) || ''
-    ).toUpperCase();
-    const registro = String(
+    )
+      .trim()
+      .toUpperCase();
+    const registro = normalizeRegistro(
+      String(
       mapRawFields(r, ['registro', 'descripcion', 'detalle']) || ''
-    ).trim();
+      )
+    );
+    const actor = resolveTransactionActor(r, plataforma);
     return {
       id: `trx-${index}`,
-      agente: resolveAgent(r),
+      ...actor,
       sucursal: mapRawFields(r, [
         'nom_unidad',
         'nomunidad',

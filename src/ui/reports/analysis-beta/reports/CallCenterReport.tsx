@@ -1,6 +1,6 @@
 'use client';
 
-import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { KPIs, ShiftKPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
 
 // Register fonts if needed, but standard ones are fine for now
@@ -25,20 +25,30 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
   },
-  logo: {
-    width: 40,
-    height: 40,
+  brandImage: {
+    width: 54,
+    height: 54,
+    marginRight: 12,
   },
   titleContainer: {
     flexDirection: 'column',
+    justifyContent: 'center',
   },
-  mainTitle: {
-    fontSize: 18,
+  mainTitleTop: {
+    fontSize: 17,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: '#1b243d',
     textTransform: 'uppercase',
+    lineHeight: 1,
+  },
+  mainTitleBottom: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#1b243d',
+    textTransform: 'uppercase',
+    marginTop: 1,
+    lineHeight: 1,
   },
   subTitle: {
     fontSize: 8,
@@ -146,6 +156,11 @@ const styles = StyleSheet.create({
   }
 });
 
+const REPORT_BRAND_IMAGE =
+  typeof window === 'undefined'
+    ? '/call-center-brand-logo.png'
+    : new URL('/call-center-brand-logo.png', window.location.origin).toString();
+
 interface CallCenterReportProps {
   kpis: KPIs;
   kpisByShift: {
@@ -167,12 +182,10 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            <Image 
-              src="/icons/logo.svg" 
-              style={styles.logo} 
-            />
+            <Image src={REPORT_BRAND_IMAGE} style={styles.brandImage} />
             <View style={styles.titleContainer}>
-              <Text style={styles.mainTitle}>Monitoreo Call Center</Text>
+              <Text style={styles.mainTitleTop}>Monitoreo Call</Text>
+              <Text style={styles.mainTitleBottom}>Center</Text>
             </View>
           </View>
           <View style={styles.reportMeta}>

@@ -127,27 +127,52 @@ export function aggregateByAgent(
   const agg = new Map<
     string,
     {
+      agente: string;
+      tipo: AgentKPIs['tipo'];
+      codigo?: string;
       transacciones: number;
       ventas: number;
     }
   >();
 
   transactions.forEach((tx) => {
-    if (tx.plataforma !== 'Monitoreo Call Center' || tx.estatus === 'A') return;
-    const agent = tx.agente || 'Sin agente';
-    if (!agg.has(agent)) {
-      agg.set(agent, {
+    if (tx.estatus !== 'N') return;
+
+    const tipo =
+      tx.agenteTipo ??
+      (tx.agente
+        ? tx.plataformaCode && tx.plataformaCode !== 'CC'
+          ? 'plataforma'
+          : 'agente'
+        : 'sin_registro');
+    const agent =
+      tx.agente ||
+      (tipo === 'plataforma'
+        ? tx.plataforma || tx.plataformaCode || 'Plataforma digital'
+        : 'Sin registro');
+    const codigo =
+      tx.agenteCodigo ||
+      (tipo === 'plataforma' && tx.plataformaCode ? tx.plataformaCode : undefined);
+    const key = `${tipo}:${codigo || agent.toLowerCase()}`;
+
+    if (!agg.has(key)) {
+      agg.set(key, {
+        agente: agent,
+        tipo,
+        codigo,
         transacciones: 0,
         ventas: 0,
       });
     }
-    const b = agg.get(agent)!;
+    const b = agg.get(key)!;
     b.transacciones += 1;
     b.ventas += tx.valor || 0;
   });
 
-  return Array.from(agg.entries()).map(([agent, data]) => ({
-    agente: agent,
+  return Array.from(agg.values()).map((data) => ({
+    agente: data.agente,
+    tipo: data.tipo,
+    codigo: data.codigo,
     transacciones: data.transacciones,
     ventas: data.ventas,
     ticketPromedio: data.transacciones > 0 ? data.ventas / data.transacciones : 0,
