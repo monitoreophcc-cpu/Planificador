@@ -150,6 +150,10 @@ function periodo30(hhmmss: string): string {
     : `${String(hh).padStart(2, '0')}:30`;
 }
 
+const OFFICIAL_SYSTEM_AGENT_SALES_DISCOUNT_RATE = 0.18696279;
+const OFFICIAL_SYSTEM_AGENT_SALES_FACTOR =
+  1 - OFFICIAL_SYSTEM_AGENT_SALES_DISCOUNT_RATE;
+
 export function aggregateByAgent(
   transactions: Transaction[]
 ): AgentKPIs[] {
@@ -198,14 +202,21 @@ export function aggregateByAgent(
     b.ventas += tx.valor || 0;
   });
 
-  return Array.from(agg.values()).map((data) => ({
-    agente: data.agente,
-    tipo: data.tipo,
-    codigo: data.codigo,
-    transacciones: data.transacciones,
-    ventas: data.ventas,
-    ticketPromedio: data.transacciones > 0 ? data.ventas / data.transacciones : 0,
-  }));
+  return Array.from(agg.values()).map((data) => {
+    const adjustedSales =
+      data.tipo === 'agente'
+        ? data.ventas * OFFICIAL_SYSTEM_AGENT_SALES_FACTOR
+        : data.ventas;
+
+    return {
+      agente: data.agente,
+      tipo: data.tipo,
+      codigo: data.codigo,
+      transacciones: data.transacciones,
+      ventas: adjustedSales,
+      ticketPromedio: data.transacciones > 0 ? adjustedSales / data.transacciones : 0,
+    };
+  });
 }
 
 export function buildMonthlyRepresentativeSnapshot(

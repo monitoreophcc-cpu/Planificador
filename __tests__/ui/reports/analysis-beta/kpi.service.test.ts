@@ -81,22 +81,25 @@ describe('buildMonthlyRepresentativeSnapshot', () => {
         expectedDays: 31,
       })
     );
-    expect(snapshot?.rows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          agente: 'rafael ramirez',
-          transacciones: 2,
-          ventas: 2400,
-          ticketPromedio: 1200,
-        }),
-        expect.objectContaining({
-          agente: 'nicole araujo',
-          transacciones: 1,
-          ventas: 2000,
-          ticketPromedio: 2000,
-        }),
-      ])
+    const rafael = snapshot?.rows.find((row) => row.agente === 'rafael ramirez');
+    const nicole = snapshot?.rows.find((row) => row.agente === 'nicole araujo');
+
+    expect(rafael).toEqual(
+      expect.objectContaining({
+        transacciones: 2,
+      })
     );
+    expect(rafael?.ventas).toBeCloseTo(1951.289304, 6);
+    expect(rafael?.ticketPromedio).toBeCloseTo(975.644652, 6);
+
+    expect(nicole).toEqual(
+      expect.objectContaining({
+        transacciones: 1,
+      })
+    );
+    expect(nicole?.ventas).toBeCloseTo(1626.07442, 6);
+    expect(nicole?.ticketPromedio).toBeCloseTo(1626.07442, 6);
+
     expect(snapshot?.rows.some((row) => row.agente === 'WhatsApp')).toBe(false);
   });
 });
