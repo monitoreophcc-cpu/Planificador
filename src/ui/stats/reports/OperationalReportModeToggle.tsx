@@ -57,7 +57,7 @@ export function OperationalReportModeToggle({
         onClick={() => onChange('CALL_CENTER')}
         style={buttonStyle('CALL_CENTER')}
       >
-        △ Call Center Beta
+        △ Análisis de llamadas
       </button>
     </div>
   )
