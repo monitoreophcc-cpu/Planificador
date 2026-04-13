@@ -136,12 +136,12 @@ export default function KPISummary({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500 xl:text-[13px]">
                   {delta.label}
                 </p>
                 <p
                   className={cn(
-                    'text-[2.15rem] font-black leading-none',
+                    'text-[2.3rem] font-black leading-none xl:text-[2.5rem]',
                     getValueTone(delta.label, delta.currentValue)
                   )}
                 >
