@@ -54,8 +54,18 @@ export function buildKpiDeltas(params: {
   current: DailySnapshot | null;
   previous: DailySnapshot | null;
 }): KPIDelta[] {
-  const currentKpis = params.current?.kpis;
-  const previousKpis = params.previous?.kpis ?? null;
+  return buildKpiDeltasFromKpis({
+    current: params.current?.kpis ?? null,
+    previous: params.previous?.kpis ?? null,
+  });
+}
+
+export function buildKpiDeltasFromKpis(params: {
+  current: KPIs | null;
+  previous: KPIs | null;
+}): KPIDelta[] {
+  const currentKpis = params.current;
+  const previousKpis = params.previous;
 
   if (!currentKpis) {
     return [];

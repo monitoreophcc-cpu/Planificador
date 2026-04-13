@@ -66,6 +66,10 @@ export type DailySnapshot = {
     Día: ShiftKPIs;
     Noche: ShiftKPIs;
   };
+  operationalDetail: {
+    day: TimeSlotKpi[];
+    night: TimeSlotKpi[];
+  };
   records: {
     answeredCalls: number;
     abandonedCalls: number;
@@ -92,6 +96,7 @@ export type TimeSlotKpi = {
   hora: string;
   recibidas: number;
   contestadas: number;
+  transacciones: number;
   conexionSum: number;
   conexionAvg: number;
   pctAtencion: number;
@@ -186,4 +191,76 @@ export type ComparisonResult = {
     baseConversion: number;
     targetConversion: number;
   }>;
+};
+
+export type MonthlyOperationalSnapshot = {
+  monthKey: string;
+  monthLabel: string;
+  startDate: string;
+  endDate: string;
+  loadedDays: number;
+  expectedDays: number;
+  loadedDates: string[];
+  kpis: KPIs;
+  shiftKpis: {
+    Día: ShiftKPIs;
+    Noche: ShiftKPIs;
+  };
+  operationalDetail: {
+    day: TimeSlotKpi[];
+    night: TimeSlotKpi[];
+  };
+};
+
+export type ReportGlobalKpiSyncRow = {
+  user_id: string;
+  report_date: string;
+  recibidas: number;
+  contestadas: number;
+  abandonadas: number;
+  nivel_servicio: number;
+  abandono_pct: number;
+  transacciones_cc: number;
+  conversion_pct: number;
+  ventas_validas: number;
+  ticket_promedio: number;
+  answered_loaded: boolean;
+  abandoned_loaded: boolean;
+  transactions_loaded: boolean;
+  loaded_sources: number;
+  is_complete: boolean;
+  source_updated_at: string;
+};
+
+export type ReportShiftKpiSyncRow = {
+  user_id: string;
+  report_date: string;
+  shift: 'DAY' | 'NIGHT';
+  recibidas: number;
+  contestadas: number;
+  transacciones_cc: number;
+  conversion_pct: number;
+  abandonadas: number;
+  duplicadas: number;
+  lt20: number;
+  nivel_servicio: number;
+  abandono_pct: number;
+};
+
+export type ReportOperationalDetailSyncRow = {
+  user_id: string;
+  report_date: string;
+  shift: 'DAY' | 'NIGHT';
+  slot_start: string;
+  recibidas: number;
+  contestadas: number;
+  transacciones_cc: number;
+  conexion_sum: number;
+  conexion_avg: number;
+  pct_atencion: number;
+  abandonadas: number;
+  aband_conn_sum: number;
+  aband_avg: number;
+  pct_abandono: number;
+  conversion_pct: number;
 };

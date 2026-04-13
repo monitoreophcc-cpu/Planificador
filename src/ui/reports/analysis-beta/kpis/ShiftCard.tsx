@@ -33,9 +33,14 @@ const KPIItem = ({
 type ShiftCardProps = {
   name: string;
   kpis: ShiftKPIs;
+  showReadings?: boolean;
 };
 
-export default function ShiftCard({ name, kpis }: ShiftCardProps) {
+export default function ShiftCard({
+  name,
+  kpis,
+  showReadings = false,
+}: ShiftCardProps) {
   const formatPercent = (value: number) => `${value.toFixed(1)}%`;
   const isDay = name === 'Día';
   const isAlertSL = kpis.recibidas > 0 && kpis.atencion < 92;
@@ -91,22 +96,24 @@ export default function ShiftCard({ name, kpis }: ShiftCardProps) {
         </div>
       </div>
       <div className={cn('p-6', accentTone)}>
-        <div className="mb-4 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-          <span className="rounded-full bg-white px-2.5 py-1 shadow-sm">
-            {kpis.recibidas.toLocaleString('en-US')} recibidas
-          </span>
-          <span className="rounded-full bg-white px-2.5 py-1 shadow-sm">
-            {kpis.trans.toLocaleString('en-US')} transacciones
-          </span>
-          <span
-            className={cn(
-              'rounded-full px-2.5 py-1 shadow-sm',
-              isAlertAbandono ? 'bg-red-100 text-red-700' : 'bg-white'
-            )}
-          >
-            {formatPercent(kpis.abandonoPct)} abandono
-          </span>
-        </div>
+        {showReadings ? (
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+            <span className="rounded-full bg-white px-2.5 py-1 shadow-sm">
+              {kpis.recibidas.toLocaleString('en-US')} recibidas
+            </span>
+            <span className="rounded-full bg-white px-2.5 py-1 shadow-sm">
+              {kpis.trans.toLocaleString('en-US')} transacciones
+            </span>
+            <span
+              className={cn(
+                'rounded-full px-2.5 py-1 shadow-sm',
+                isAlertAbandono ? 'bg-red-100 text-red-700' : 'bg-white'
+              )}
+            >
+              {formatPercent(kpis.abandonoPct)} abandono
+            </span>
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           <KPIItem title="Recibidas" value={kpis.recibidas.toLocaleString('en-US')} />

@@ -1,40 +1,39 @@
 'use client';
 
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
-import { aggregateByTimeSlot } from '@/ui/reports/analysis-beta/services/kpi.service';
+import type { TimeSlotKpi } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import ShiftDetailTable from './ShiftDetailTable';
 
-export default function ShiftTablesContainer() {
-  const answeredCalls = useDashboardStore((state) => state.answeredCalls);
-  const abandonedCalls = useDashboardStore((state) => state.abandonedCalls);
-  const transactions = useDashboardStore((state) => state.transactions);
+type ShiftTablesContainerProps = {
+  detail?: {
+    day: TimeSlotKpi[];
+    night: TimeSlotKpi[];
+  } | null;
+};
+
+export default function ShiftTablesContainer({ detail }: ShiftTablesContainerProps) {
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const dailyHistory = useDashboardStore((state) => state.dailyHistory);
 
-  const filteredAnswered = dataDate
-    ? answeredCalls.filter((record) => record.fecha === dataDate)
-    : [];
-  const filteredAbandoned = dataDate
-    ? abandonedCalls.filter((record) => record.fecha === dataDate)
-    : [];
-  const filteredTransactions = dataDate
-    ? transactions.filter((record) => record.fecha === dataDate)
-    : [];
+  const resolvedDetail =
+    detail ?? (dataDate ? dailyHistory[dataDate]?.operationalDetail ?? null : null);
 
-  const hasData = filteredAnswered.length > 0 || filteredAbandoned.length > 0;
+  if (!resolvedDetail) {
+    return null;
+  }
+
+  const hasData =
+    resolvedDetail.day.some((row) => row.recibidas > 0 || row.abandonadas > 0) ||
+    resolvedDetail.night.some((row) => row.recibidas > 0 || row.abandonadas > 0);
+
   if (!hasData) {
     return null;
   }
 
-  const { day, night } = aggregateByTimeSlot(
-    filteredAnswered,
-    filteredAbandoned,
-    filteredTransactions
-  );
-
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <ShiftDetailTable title="Turno Día" data={day} />
-      <ShiftDetailTable title="Turno Noche" data={night} />
+      <ShiftDetailTable title="Turno Día" data={resolvedDetail.day} />
+      <ShiftDetailTable title="Turno Noche" data={resolvedDetail.night} />
     </section>
   );
 }

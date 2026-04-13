@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { CalendarRange, History } from 'lucide-react';
+import { CalendarRange, Eye, EyeOff, History } from 'lucide-react';
 import KPISummary from '@/ui/reports/analysis-beta/kpis/KPISummary';
 import ShiftGrid from '@/ui/reports/analysis-beta/shifts/ShiftGrid';
 import KPIObserver from '@/ui/reports/analysis-beta/kpis/KPIObserver';
@@ -21,6 +21,8 @@ import ComparisonPanel from '@/ui/reports/analysis-beta/header/ComparisonPanel';
 import CallCenterBrand from '@/ui/reports/analysis-beta/header/CallCenterBrand';
 import ExportModal from '@/ui/reports/analysis-beta/header/ExportModal';
 import DataManagementPanel from '@/ui/reports/analysis-beta/header/DataManagementPanel';
+import MonthlyOperationalReport from '@/ui/reports/analysis-beta/operation/MonthlyOperationalReport';
+import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Toaster } from '@/ui/reports/analysis-beta/ui/toaster';
 
 const PerformanceChart = dynamic(() => import('@/ui/reports/analysis-beta/charts/ShiftPerformanceChart'), { 
@@ -77,6 +79,8 @@ function buildAnalyzedPeriodLabel(dates: string[]) {
 export function CallCenterAnalysisView() {
   const [mounted, setMounted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [showGlobalReadings, setShowGlobalReadings] = useState(false);
+  const [showShiftReadings, setShowShiftReadings] = useState(false);
   const _hasHydrated = useDashboardStore((s) => s._hasHydrated);
   const dataDate = useDashboardStore((s) => s.dataDate);
   const availableDates = useDashboardStore((s) => s.availableDates);
@@ -223,20 +227,48 @@ export function CallCenterAnalysisView() {
                 <div className="mb-4 flex items-center gap-2">
                   <div className="h-4 w-1 rounded-full bg-red-600" />
                   <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                    Matriz ejecutiva
+                    Rendimiento global
                   </h2>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    onClick={() => setShowGlobalReadings((current) => !current)}
+                  >
+                    {showGlobalReadings ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    {showGlobalReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
+                  </Button>
                 </div>
-                <KPISummary />
+                <KPISummary showReadings={showGlobalReadings} />
               </section>
 
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-1 rounded-full bg-red-600" />
                   <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                    KPIs por turno
+                    Rendimiento por turno
                   </h2>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    onClick={() => setShowShiftReadings((current) => !current)}
+                  >
+                    {showShiftReadings ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    {showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
+                  </Button>
                 </div>
-                <ShiftGrid />
+                <ShiftGrid showReadings={showShiftReadings} />
               </section>
 
               <section className="space-y-4">
@@ -272,10 +304,24 @@ export function CallCenterAnalysisView() {
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-1 rounded-full bg-red-600" />
                   <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                    KPIs por turno
+                    Rendimiento por turno
                   </h2>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    onClick={() => setShowShiftReadings((current) => !current)}
+                  >
+                    {showShiftReadings ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    {showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
+                  </Button>
                 </div>
-                <ShiftGrid />
+                <ShiftGrid showReadings={showShiftReadings} />
               </section>
 
               <section className="space-y-4">
@@ -287,6 +333,11 @@ export function CallCenterAnalysisView() {
                 </div>
                 <ShiftTablesContainer />
               </section>
+
+              <MonthlyOperationalReport
+                showGlobalReadings={showGlobalReadings}
+                showShiftReadings={showShiftReadings}
+              />
 
               <CommercialPerformancePanel />
             </TabsContent>

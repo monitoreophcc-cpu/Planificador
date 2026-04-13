@@ -421,13 +421,17 @@ export const useDashboardStore = create<DashboardState>()(
           const missingCoverage = rebuilt.allDates.some(
             (date) => !state.dailyHistory?.[date]?.coverage
           );
+          const missingOperationalDetail = rebuilt.allDates.some(
+            (date) => !state.dailyHistory?.[date]?.operationalDetail
+          );
           const shouldRebuildHistory =
             rebuilt.allDates.length > 0 &&
             (
               !state.dailyHistory ||
               Object.keys(state.dailyHistory).length === 0 ||
               missingDates ||
-              missingCoverage
+              missingCoverage ||
+              missingOperationalDetail
             );
 
           if (shouldRebuildHistory) {

@@ -111,6 +111,7 @@ export function buildDailySnapshot(params: {
   } = params;
   const kpis = calculateGlobalKpis(answered, abandoned, transactions);
   const shiftKpis = calculateKPIsByShift(answered, rawAbandoned, transactions);
+  const operationalDetail = aggregateByTimeSlot(answered, abandoned, transactions);
   const coverage = {
     answeredLoaded: answered.length > 0,
     abandonedLoaded: rawAbandoned.length > 0 || abandoned.length > 0,
@@ -131,6 +132,7 @@ export function buildDailySnapshot(params: {
     updatedAt: new Date().toISOString(),
     kpis,
     shiftKpis,
+    operationalDetail,
     records: {
       answeredCalls: answered.length,
       abandonedCalls: abandoned.length,
@@ -334,6 +336,7 @@ export function aggregateByTimeSlot(
       hora: slot,
       recibidas,
       contestadas,
+      transacciones: transactionsInSlot,
       conexionSum: x.connSum,
       conexionAvg: conexionAvg,
       pctAtencion,

@@ -158,8 +158,8 @@ const styles = StyleSheet.create({
 
 const REPORT_BRAND_IMAGE =
   typeof window === 'undefined'
-    ? '/call-center-brand-logo.png'
-    : new URL('/call-center-brand-logo.png', window.location.origin).toString();
+    ? '/pizza-hut-symbol-official.png'
+    : new URL('/pizza-hut-symbol-official.png', window.location.origin).toString();
 
 interface CallCenterReportProps {
   kpis: KPIs;
@@ -189,6 +189,7 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image src={REPORT_BRAND_IMAGE} style={styles.brandImage} />
             <View style={styles.titleContainer}>
+              <Text style={styles.subTitle}>Pizza Hut</Text>
               <Text style={styles.mainTitleTop}>Monitoreo Call</Text>
               <Text style={styles.mainTitleBottom}>Center</Text>
             </View>

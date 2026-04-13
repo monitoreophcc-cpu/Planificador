@@ -8,11 +8,8 @@ import {
 } from '@/ui/reports/analysis-beta/services/kpi.service';
 
 export default function KPIObserver() {
-  const allAnswered = useDashboardStore((state) => state.answeredCalls);
-  const allAbandoned = useDashboardStore((state) => state.abandonedCalls);
-  const allRawAbandoned = useDashboardStore((state) => state.rawAbandonedCalls);
-  const allTransactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const dailyHistory = useDashboardStore((state) => state.dailyHistory);
   const setKPIs = useDashboardStore((state) => state.setKPIs);
   const setKPIsByShift = useDashboardStore((state) => state.setKPIsByShift);
 
@@ -23,31 +20,19 @@ export default function KPIObserver() {
       return;
     }
 
-    // Filter data by selected date
-    const answeredCalls = allAnswered.filter((r) => r.fecha === dataDate);
-    const abandonedCalls = allAbandoned.filter((r) => r.fecha === dataDate);
-    const rawAbandonedCalls = allRawAbandoned.filter((r) => r.fecha === dataDate);
-    const transactions = allTransactions.filter((r) => r.fecha === dataDate);
+    const snapshot = dailyHistory[dataDate];
 
-    const globalKpis = calculateGlobalKpis(
-      answeredCalls,
-      abandonedCalls,
-      transactions
-    );
-    setKPIs(globalKpis);
+    if (!snapshot) {
+      setKPIs(calculateGlobalKpis([], [], []));
+      setKPIsByShift(calculateKPIsByShift([], [], []));
+      return;
+    }
 
-    const shiftKpis = calculateKPIsByShift(
-      answeredCalls,
-      rawAbandonedCalls,
-      transactions
-    );
-    setKPIsByShift(shiftKpis);
+    setKPIs(snapshot.kpis);
+    setKPIsByShift(snapshot.shiftKpis);
   }, [
-    allAnswered,
-    allAbandoned,
-    allRawAbandoned,
-    allTransactions,
     dataDate,
+    dailyHistory,
     setKPIs,
     setKPIsByShift,
   ]);
