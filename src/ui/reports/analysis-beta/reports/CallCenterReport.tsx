@@ -181,7 +181,7 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
   const abandonmentRate = kpis.recibidas > 0 ? (kpis.abandonadas / kpis.recibidas) * 100 : 0;
 
   return (
-    <Document title={`Reporte Monitoreo Call Center - ${date || 'General'}`}>
+    <Document title={`Reporte Análisis de llamadas - ${date || 'General'}`}>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
@@ -189,13 +189,13 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image src={REPORT_BRAND_IMAGE} style={styles.brandImage} />
             <View style={styles.titleContainer}>
-              <Text style={styles.subTitle}>Pizza Hut</Text>
-              <Text style={styles.mainTitleTop}>Monitoreo Call</Text>
-              <Text style={styles.mainTitleBottom}>Center</Text>
+              <Text style={styles.subTitle}>Reporte</Text>
+              <Text style={styles.mainTitleTop}>Análisis de</Text>
+              <Text style={styles.mainTitleBottom}>Llamadas</Text>
             </View>
           </View>
           <View style={styles.reportMeta}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0f172a' }}>Reporte Operativo</Text>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0f172a' }}>Análisis de llamadas</Text>
             <Text style={styles.dateText}>Fecha de Datos: {date || 'N/A'}</Text>
             <Text style={styles.dateText}>Generado: {new Date().toLocaleString('es-DO')}</Text>
           </View>
@@ -282,7 +282,7 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
         <View style={{ marginTop: 40, padding: 15, backgroundColor: '#fff7ed', borderRadius: 8, borderWidth: 1, borderColor: '#ffedd5' }}>
           <Text style={{ fontSize: 9, color: '#9a3412', fontWeight: 'bold', marginBottom: 5 }}>Nota del Sistema:</Text>
           <Text style={{ fontSize: 8, color: '#c2410c', lineHeight: 1.4 }}>
-            Este reporte ha sido generado automáticamente por el sistema de Monitoreo Call Center. 
+            Este reporte ha sido generado automáticamente por el sistema de análisis de llamadas. 
             Los datos reflejan el estado de la operación para la fecha seleccionada. 
             Para cualquier discrepancia, favor consultar los archivos fuente originales.
           </Text>
@@ -290,7 +290,7 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text>Pizza Hut - Monitoreo Call Center v1.0.4</Text>
+          <Text>Análisis de llamadas v1.0.4</Text>
           <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
       </Page>

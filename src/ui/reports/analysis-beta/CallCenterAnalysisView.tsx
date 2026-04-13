@@ -201,7 +201,7 @@ export function CallCenterAnalysisView() {
               <TabsList>
                 <TabsTrigger value="executive">Resumen ejecutivo</TabsTrigger>
                 <TabsTrigger value="operation">Operación</TabsTrigger>
-                <TabsTrigger value="analysis">Análisis</TabsTrigger>
+                <TabsTrigger value="analysis">Gráficas</TabsTrigger>
               </TabsList>
             </div>
 
