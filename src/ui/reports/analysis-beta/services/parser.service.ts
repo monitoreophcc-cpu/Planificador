@@ -742,7 +742,7 @@ export function processTransactions(raw: any[]): {
 } {
   const DIGITAL_PLATFORM_CODES = ['WA', 'WEB', 'AG', 'APP'] as const;
   const PLATFORM_LABELS: { [key: string]: string } = {
-    CC: 'Monitoreo Call Center',
+    CC: 'Call center',
     APP: 'App',
     WA: 'WhatsApp',
     WEB: 'Web',

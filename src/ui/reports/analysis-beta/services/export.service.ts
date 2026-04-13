@@ -146,14 +146,14 @@ function buildExportSheets({
   const aovPlat = getAovByPlatform(transactions);
 
   const ventasSheet: (string | number)[][] = [['Categoría', 'Valor']];
-  ventasSheet.push(['Monitoreo Call Center', salesAgg.values[0]]);
+  ventasSheet.push(['Call center', salesAgg.values[0]]);
   ventasSheet.push(['Resto plataformas', salesAgg.values[1]]);
   salesPlat.labels.forEach((l, i) => {
     ventasSheet.push([l, salesPlat.values[i]]);
   });
 
   const aovSheet: (string | number)[][] = [['Categoría', 'AOV']];
-  aovSheet.push(['Monitoreo Call Center', +aovAgg.values[0].toFixed(2)]);
+  aovSheet.push(['Call center', +aovAgg.values[0].toFixed(2)]);
   aovSheet.push(['Resto plataformas', +aovAgg.values[1].toFixed(2)]);
   aovPlat.labels.forEach((l, i) => {
     aovSheet.push([l, +aovPlat.values[i].toFixed(2)]);

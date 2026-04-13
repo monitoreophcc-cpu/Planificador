@@ -13,8 +13,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/ui/reports/analysis-beta/ui/tabs';
-import ShiftTablesContainer from '@/ui/reports/analysis-beta/tables/ShiftTablesContainer';
-import CommercialPerformancePanel from '@/ui/reports/analysis-beta/tables/CommercialPerformancePanel';
 import DateRangeBadge from '@/ui/reports/analysis-beta/header/DateRangeBadge';
 import DailyHistoryPanel from '@/ui/reports/analysis-beta/header/DailyHistoryPanel';
 import ComparisonPanel from '@/ui/reports/analysis-beta/header/ComparisonPanel';
@@ -88,33 +86,10 @@ export function CallCenterAnalysisView() {
   const activeWorkspaceView = useDashboardStore((s) => s.activeWorkspaceView);
   const setActiveWorkspaceView = useDashboardStore((s) => s.setActiveWorkspaceView);
 
-  const currentSnapshot = dataDate ? dailyHistory[dataDate] ?? null : null;
   const analyzedPeriodLabel = useMemo(
     () => buildAnalyzedPeriodLabel(availableDates),
     [availableDates]
   );
-  const bestShiftInsight = useMemo(() => {
-    if (!currentSnapshot) {
-      return null;
-    }
-
-    const dayShift = currentSnapshot.shiftKpis.Día;
-    const nightShift = currentSnapshot.shiftKpis.Noche;
-    const bestShift =
-      dayShift.atencion === nightShift.atencion
-        ? dayShift.abandonoPct <= nightShift.abandonoPct
-          ? 'Día'
-          : 'Noche'
-        : dayShift.atencion > nightShift.atencion
-          ? 'Día'
-          : 'Noche';
-    const bestKpis = currentSnapshot.shiftKpis[bestShift];
-
-    return {
-      title: `Turno ${bestShift} sostuvo mejor el servicio`,
-      detail: `Atención ${bestKpis.atencion.toFixed(1)}% · Abandono ${bestKpis.abandonoPct.toFixed(1)}% · ${bestKpis.trans.toLocaleString('en-US')} transacciones CC.`,
-    };
-  }, [currentSnapshot]);
 
   useEffect(() => {
     setMounted(true);
@@ -288,58 +263,10 @@ export function CallCenterAnalysisView() {
             </TabsContent>
 
             <TabsContent value="operation" className="space-y-10 focus-visible:outline-none">
-              {bestShiftInsight ? (
-                <section className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50/70 p-5 shadow-sm">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">
-                    Insight operativo
-                  </p>
-                  <h2 className="mt-2 text-xl font-black text-slate-900">
-                    {bestShiftInsight.title}
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-600">{bestShiftInsight.detail}</p>
-                </section>
-              ) : null}
-
-              <section className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-1 rounded-full bg-red-600" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                    Rendimiento por turno
-                  </h2>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                    onClick={() => setShowShiftReadings((current) => !current)}
-                  >
-                    {showShiftReadings ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                    {showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
-                  </Button>
-                </div>
-                <ShiftGrid showReadings={showShiftReadings} />
-              </section>
-
-              <section className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-1 rounded-full bg-red-600" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                    Detalle operativo
-                  </h2>
-                </div>
-                <ShiftTablesContainer />
-              </section>
-
               <MonthlyOperationalReport
                 showGlobalReadings={showGlobalReadings}
                 showShiftReadings={showShiftReadings}
               />
-
-              <CommercialPerformancePanel />
             </TabsContent>
 
             <TabsContent value="analysis" className="focus-visible:outline-none">

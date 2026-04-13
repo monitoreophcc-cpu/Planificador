@@ -136,7 +136,7 @@ describe('processTransactions', () => {
     expect(clean[0]).toMatchObject({
       agente: 'adrian cedeño',
       agenteTipo: 'agente',
-      plataforma: 'Monitoreo Call Center',
+      plataforma: 'Call center',
       estatus: 'N',
     });
     expect(clean[1]).toMatchObject({
