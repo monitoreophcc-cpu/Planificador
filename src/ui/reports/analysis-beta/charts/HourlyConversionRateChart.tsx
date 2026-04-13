@@ -1,56 +1,124 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import { Line, LineChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useMemo } from "react";
-import { toTimeSlot } from "@/domain/call-center-analysis/time/shiftResolver";
-import { formatPercent } from "@/domain/call-center-analysis/utils/format";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { Line } from 'react-chartjs-2';
+import { aggregateByTimeSlot } from '@/ui/reports/analysis-beta/services/kpi.service';
+import '@/ui/reports/analysis-beta/lib/chart-setup';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { PillButton, PillToggleContainer } from '../ui/pills';
 
 export default function HourlyConversionRateChart() {
-    const { data } = useOperationalDashboardStore();
+  const answeredCalls = useDashboardStore((state) => state.answeredCalls);
+  const abandonedCalls = useDashboardStore((state) => state.abandonedCalls);
+  const transactions = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
+  const hourlyChartShift = useDashboardStore((state) => state.hourlyChartShift);
+  const setHourlyChartShift = useDashboardStore((state) => state.setHourlyChartShift);
+  const filteredAnswered = dataDate
+    ? answeredCalls.filter((record) => record.fecha === dataDate)
+    : [];
+  const filteredAbandoned = dataDate
+    ? abandonedCalls.filter((record) => record.fecha === dataDate)
+    : [];
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
 
-    const chartData = useMemo(() => {
-        if (!data?.answered || !data.transactions) return [];
+  const timeSlotData = aggregateByTimeSlot(
+    filteredAnswered,
+    filteredAbandoned,
+    filteredTransactions
+  );
+  const chartDetails =
+    hourlyChartShift === 'Día' ? timeSlotData.day : timeSlotData.night;
 
-        // Get all unique time slots
-        const slots = new Set<string>();
-        data.answered.forEach(c => slots.add(toTimeSlot(c.hora)));
-        data.transactions.forEach(t => t.hora && slots.add(toTimeSlot(t.hora)));
+  const data = {
+    labels: chartDetails.map((s) => s.hora),
+    datasets: [
+      {
+        label: '% Conversión',
+        data: chartDetails.map((s) => s.conversionRate),
+        borderColor: '#0f172a', // Negro Corporativo
+        backgroundColor: 'rgba(15, 23, 42, 0.1)', // Negro Corporativo con opacidad
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#0f172a',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#0f172a',
+      },
+    ],
+  };
 
-        // Aggregate by slot (same logic as ShiftDetailTable)
-        return Array.from(slots).sort().map(slot => {
-            const ans = data.answered.filter(c => c.periodo === slot);
-            const trx = data.transactions.filter(t => t.periodo === slot);
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += context.parsed.y.toFixed(2) + '%';
+            }
+            return label;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value: string | number) => `${value}%`,
+        },
+      },
+    },
+  };
 
-            const answeredCount = ans.reduce((acc, c) => acc + c.llamadas, 0);
+  if (filteredAnswered.length === 0 && filteredTransactions.length === 0) {
+    return null;
+  }
 
-            return {
-                hour: slot,
-                Conversion: answeredCount > 0 ? (trx.length / answeredCount) * 100 : 0
-            };
-        });
-    }, [data]);
-
-    if (chartData.length === 0) return null;
-
-    return (
-        <Card className="col-span-1">
-            <CardHeader>
-                <CardTitle>Conversión por Hora (%)</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="hour" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => typeof value === 'number' ? formatPercent(value, 2) : value} />
-                        <Legend />
-                        <Line type="monotone" dataKey="Conversion" stroke="#82ca9d" />
-                    </LineChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <CardTitle>Tasa de Conversión por Hora</CardTitle>
+          <PillToggleContainer>
+            <PillButton
+              onClick={() => setHourlyChartShift('Día')}
+              isActive={hourlyChartShift === 'Día'}
+            >
+              Día
+            </PillButton>
+            <PillButton
+              onClick={() => setHourlyChartShift('Noche')}
+              isActive={hourlyChartShift === 'Noche'}
+            >
+              Noche
+            </PillButton>
+          </PillToggleContainer>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-80 w-full">
+          <Line options={options} data={data} />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
+

@@ -1,37 +1,180 @@
 'use client';
 
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import KPICard from "./KPICard";
-import { formatPercent } from "@/domain/call-center-analysis/utils/format";
+import { useMemo } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  CreditCard,
+  Percent,
+  PhoneCall,
+  PhoneIncoming,
+  PhoneOff,
+  ShoppingCart,
+  Target,
+} from 'lucide-react';
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { cn } from '@/ui/reports/analysis-beta/lib/utils';
+import {
+  buildKpiDeltas,
+  buildKpiDeltasFromKpis,
+  getPreviousSnapshot,
+} from '@/ui/reports/analysis-beta/services/executive.service';
+import type { KPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
 
-export default function KPISummary() {
-    const { metrics } = useOperationalDashboardStore();
-    const kpis = metrics?.kpis;
+const KPI_ICONS: Record<string, LucideIcon> = {
+  'Total Recibidas': PhoneIncoming,
+  'Total Contestadas': PhoneCall,
+  'Total Abandonadas': PhoneOff,
+  '% Atención': Target,
+  '% Abandono': Percent,
+  'Transacciones CC': ShoppingCart,
+  '% Conversión': CreditCard,
+};
 
-    if (!kpis) return null;
+function formatValue(value: number, format: 'number' | 'percent' | 'currency') {
+  if (format === 'currency') {
+    return `RD$ ${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
 
-    return (
+  if (format === 'percent') {
+    return `${value.toFixed(1)}%`;
+  }
 
-        <div className="grid grid-cols-2 lg:grid-cols-7 gap-4">
-            <KPICard title="Total Recibidas" value={kpis.recibidas} />
-            <KPICard title="Total Contestadas" value={kpis.contestadas} highlight />
-            <KPICard
-                title="Total Abandonadas"
-                value={kpis.abandonadas}
-                color={kpis.abandonadas > 0 ? "text-red-500" : "text-green-600"}
-            />
-            <KPICard
-                title="% Atención"
-                value={formatPercent(kpis.nivelDeServicio)}
-                color={kpis.nivelDeServicio > 0.9 ? "text-green-600" : "text-yellow-600"}
-            />
-            <KPICard
-                title="% Abandono"
-                value={formatPercent(kpis.abandonoPct)}
-                color={kpis.abandonoPct < 0.05 ? "text-green-600" : "text-red-500"}
-            />
-            <KPICard title="Transacciones CC" value={kpis.transaccionesCC} />
-            <KPICard title="% Conversión" value={formatPercent(kpis.conversion)} />
-        </div>
-    );
+  return value.toLocaleString('en-US');
+}
+
+function getValueTone(label: string, value: number) {
+  if (label === '% Atención') {
+    if (value >= 96) return 'text-emerald-700';
+    if (value >= 92) return 'text-amber-600';
+    return 'text-red-700';
+  }
+
+  if (label === '% Abandono') {
+    if (value <= 4) return 'text-emerald-700';
+    if (value < 8) return 'text-amber-600';
+    return 'text-red-700';
+  }
+
+  return 'text-slate-900';
+}
+
+function getDeltaTone(label: string, delta: number | null) {
+  if (delta == null || delta === 0) {
+    return {
+      label: 'Sin variación',
+      className: 'bg-slate-100 text-slate-500',
+      Icon: null,
+    };
+  }
+
+  const lowerIsBetter = label === '% Abandono';
+  const improved = lowerIsBetter ? delta < 0 : delta > 0;
+
+  return improved
+    ? {
+        label: 'Mejora vs. fecha previa',
+        className: 'bg-emerald-50 text-emerald-700',
+        Icon: ArrowUpRight,
+      }
+    : {
+        label: 'Retroceso vs. fecha previa',
+        className: 'bg-red-50 text-red-700',
+        Icon: ArrowDownRight,
+      };
+}
+
+type KPISummaryProps = {
+  currentKpis?: KPIs | null;
+  previousKpis?: KPIs | null;
+  showReadings?: boolean;
+};
+
+export default function KPISummary({
+  currentKpis,
+  previousKpis,
+  showReadings = false,
+}: KPISummaryProps) {
+  const selectedDate = useDashboardStore((state) => state.dataDate);
+  const dailyHistory = useDashboardStore((state) => state.dailyHistory);
+  const currentSnapshot =
+    currentKpis === undefined ? (selectedDate ? dailyHistory[selectedDate] ?? null : null) : null;
+  const previousSnapshot =
+    currentKpis === undefined ? getPreviousSnapshot(dailyHistory, selectedDate) : null;
+  const deltas = useMemo(
+    () =>
+      currentKpis !== undefined
+        ? buildKpiDeltasFromKpis({
+            current: currentKpis,
+            previous: previousKpis ?? null,
+          })
+        : buildKpiDeltas({
+            current: currentSnapshot,
+            previous: previousSnapshot,
+          }),
+    [currentKpis, currentSnapshot, previousKpis, previousSnapshot]
+  );
+
+  if (deltas.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      {deltas.map((delta) => {
+        const Icon = KPI_ICONS[delta.label] ?? Percent;
+        const deltaTone = getDeltaTone(delta.label, delta.delta);
+
+        return (
+          <article
+            key={delta.label}
+            className="rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  {delta.label}
+                </p>
+                <p
+                  className={cn(
+                    'text-[2.15rem] font-black leading-none',
+                    getValueTone(delta.label, delta.currentValue)
+                  )}
+                >
+                  {formatValue(delta.currentValue, delta.format)}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <Icon className="h-5 w-5" />
+              </div>
+            </div>
+
+            {showReadings ? (
+              <div className="mt-4 space-y-2">
+                <div
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em]',
+                    deltaTone.className
+                  )}
+                >
+                  {deltaTone.Icon ? <deltaTone.Icon className="h-3.5 w-3.5" /> : null}
+                  {deltaTone.label}
+                </div>
+
+                <p className="text-xs font-medium text-slate-500">
+                  {delta.previousValue == null
+                    ? 'No hay una fecha previa cargada para calcular delta.'
+                    : `Antes: ${formatValue(delta.previousValue, delta.format)} · Delta: ${formatValue(Math.abs(delta.delta ?? 0), delta.format)}`}
+                </p>
+              </div>
+            ) : null}
+          </article>
+        );
+      })}
+    </section>
+  );
 }

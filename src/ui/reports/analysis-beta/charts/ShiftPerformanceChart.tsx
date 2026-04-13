@@ -1,99 +1,125 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { formatNumber } from "@/domain/call-center-analysis/utils/format";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { Bar } from 'react-chartjs-2';
+import '@/ui/reports/analysis-beta/lib/chart-setup';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/reports/analysis-beta/ui/card';
+import { BarChart3 } from 'lucide-react';
 
 export default function ShiftPerformanceChart() {
-    const { metrics, data: storeData, showPrediction } = useOperationalDashboardStore();
-    const day = metrics?.kpisByShift?.Día;
-    const night = metrics?.kpisByShift?.Noche;
+  const kpisByShift = useDashboardStore((state) => state.kpisByShift);
 
-    const getExtremes = (shift: 'DAY' | 'NIGHT') => {
-        const relevant = storeData?.predictedLoad?.filter(p => p.shift === shift) || [];
-        const min = relevant.reduce((sum, p) => sum + (p.minExpected || 0), 0);
-        const max = relevant.reduce((sum, p) => sum + (p.maxExpected || 0), 0);
-        const trend = relevant[0]?.trend || 'STABLE';
-        return { min, max, trend };
-    };
+  const data = {
+    labels: ['Día', 'Noche'],
+    datasets: [
+      {
+        label: '% Atención',
+        data: [kpisByShift['Día'].atencion, kpisByShift['Noche'].atencion],
+        backgroundColor: '#000000', // Negro
+        borderRadius: 8,
+        barThickness: 40,
+      },
+      {
+        label: '% Abandono',
+        data: [kpisByShift['Día'].abandonoPct, kpisByShift['Noche'].abandonoPct],
+        backgroundColor: '#dc2626', // Rojo 600
+        borderRadius: 8,
+        barThickness: 40,
+      },
+      {
+        type: 'line' as const,
+        label: 'Meta 92%',
+        data: [92, 92],
+        borderColor: '#f59e0b',
+        borderDash: [6, 6],
+        pointRadius: 0,
+        borderWidth: 2,
+      },
+      {
+        type: 'line' as const,
+        label: 'Meta 96%',
+        data: [96, 96],
+        borderColor: '#10b981',
+        borderDash: [6, 6],
+        pointRadius: 0,
+        borderWidth: 2,
+      },
+    ],
+  };
 
-    const extremesDay = getExtremes('DAY');
-    const extremesNight = getExtremes('NIGHT');
-
-    const data = [
-        {
-            name: 'Día',
-            Recibidas: day.recibidas,
-            Contestadas: day.contestadas,
-            Abandonadas: day.abandonadas,
-            Predicción: showPrediction ? (extremesDay.min + extremesDay.max) / 2 : 0,
-            range: extremesDay,
-        },
-        {
-            name: 'Noche',
-            Recibidas: night.recibidas,
-            Contestadas: night.contestadas,
-            Abandonadas: night.abandonadas,
-            Predicción: showPrediction ? (extremesNight.min + extremesNight.max) / 2 : 0,
-            range: extremesNight,
-        },
-    ];
-
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            const dataItem = payload[0].payload;
-            return (
-                <div className="bg-white p-3 border rounded shadow-lg text-xs space-y-1">
-                    <p className="font-bold border-bottom pb-1 mb-1">{label}</p>
-                    {payload.map((entry: any) => (
-                        <div key={entry.name} className="flex justify-between gap-4">
-                            <span style={{ color: entry.fill }}>{entry.name}:</span>
-                            <span className="font-mono font-bold">{formatNumber(entry.value)}</span>
-                        </div>
-                    ))}
-                    {showPrediction && dataItem.range && (
-                        <div className="mt-2 pt-2 border-t border-gray-100 italic text-indigo-600">
-                            <p>Rango Teórico: {formatNumber(dataItem.range.min)} - {formatNumber(dataItem.range.max)}</p>
-                            <p>Tendencia: {dataItem.range.trend === 'UP' ? '↑ Alza' : dataItem.range.trend === 'DOWN' ? '↓ Baja' : '→ Estable'}</p>
-                        </div>
-                    )}
-                </div>
-            );
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 11,
+            weight: 'bold' as any,
+          }
         }
-        return null;
-    };
+      },
+      tooltip: {
+        backgroundColor: '#1e293b',
+        padding: 12,
+        titleFont: { size: 14, weight: 'bold' as any },
+        bodyFont: { size: 13 },
+        cornerRadius: 8,
+        callbacks: {
+          label: function (context: any) {
+            let label = context.dataset.label || '';
+            if (label) label += ': ';
+            if (context.parsed.y !== null) label += context.parsed.y.toFixed(2) + '%';
+            return label;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        grid: {
+          color: '#f1f5f9',
+        },
+        ticks: {
+          font: { size: 10, weight: 'bold' as any },
+          color: '#64748b',
+          callback: (value: string | number) => `${value}%`,
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: { size: 11, weight: 'bold' as any },
+          color: '#1e293b',
+        }
+      },
+    },
+  };
 
-    return (
-        <Card className="col-span-1">
-            <CardHeader>
-                <CardTitle>Rendimiento por Turno</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend />
-                        <Bar dataKey="Recibidas" fill="#8884d8" name="Recibidas" />
-                        <Bar dataKey="Contestadas" fill="#82ca9d" name="Contestadas" />
-                        <Bar dataKey="Abandonadas" fill="#ff8042" name="Abandonadas" />
-                        {showPrediction && (
-                            <Bar
-                                dataKey="Predicción"
-                                fill="#8b5cf6"
-                                fillOpacity={0.15}
-                                stroke="#7c3aed"
-                                strokeWidth={2}
-                                strokeDasharray="4 4"
-                                name="Escenario Teórico (7d)"
-                            />
-                        )}
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
+  const hasData = kpisByShift['Día'].recibidas > 0 || kpisByShift['Noche'].recibidas > 0;
+
+  if (!hasData) return null;
+
+  return (
+    <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="border-b border-slate-50 bg-slate-50/50 py-4">
+          <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-red-600" />
+            Rendimiento por Turno
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="h-80 w-full">
+            <Bar options={options as any} data={data as any} />
+          </div>
+        </CardContent>
+      </Card>
+  );
 }

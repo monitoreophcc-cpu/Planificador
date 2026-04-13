@@ -1,0 +1,266 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/ui/reports/analysis-beta/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/reports/analysis-beta/ui/card';
+import { Input } from '@/ui/reports/analysis-beta/ui/input';
+import {
+  Users,
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Receipt,
+  DollarSign,
+  ShoppingCart,
+} from 'lucide-react';
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { aggregateByAgent } from '@/ui/reports/analysis-beta/services/kpi.service';
+import { AgentKPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
+import { cn } from '@/ui/reports/analysis-beta/lib/utils';
+
+type SortConfig = {
+  key: keyof AgentKPIs;
+  direction: 'asc' | 'desc';
+} | null;
+
+type AgentPerformanceTableProps = {
+  title?: string;
+  subtitle?: string;
+  searchPlaceholder?: string;
+  filter?: 'all' | 'agents' | 'platforms';
+  embedded?: boolean;
+};
+
+export default function AgentPerformanceTable({
+  title = 'Representantes del día',
+  subtitle = 'Transacciones y ventas válidas por representante',
+  searchPlaceholder = 'Buscar representante...',
+  filter = 'agents',
+  embedded = false,
+}: AgentPerformanceTableProps) {
+  const transactions = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'ventas', direction: 'desc' });
+  const formatCount = (value: number) => value.toLocaleString('en-US');
+  const formatCurrency = (value: number) =>
+    `RD$ ${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  const agentData = useMemo(() => {
+    const filtered = dataDate
+      ? transactions.filter((tx) => tx.fecha === dataDate)
+      : [];
+    const aggregated = aggregateByAgent(filtered);
+
+    if (filter === 'agents') {
+      return aggregated.filter((item) => item.tipo === 'agente');
+    }
+
+    if (filter === 'platforms') {
+      return aggregated.filter((item) => item.tipo === 'plataforma');
+    }
+
+    return aggregated;
+  }, [transactions, dataDate, filter]);
+
+  const handleSort = (key: keyof AgentKPIs) => {
+    let direction: 'asc' | 'desc' = 'desc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredAndSortedData = useMemo(() => {
+    let result = [...agentData];
+
+    if (searchTerm) {
+      result = result.filter((agent) =>
+        agent.agente.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (sortConfig) {
+      result.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortConfig.direction === 'asc'
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
+        return 0;
+      });
+    }
+
+    return result;
+  }, [agentData, searchTerm, sortConfig]);
+
+  const SortIcon = ({ columnKey }: { columnKey: keyof AgentKPIs }) => {
+    if (sortConfig?.key !== columnKey) return <ArrowUpDown size={12} className="ml-1 opacity-50" />;
+    return sortConfig.direction === 'asc'
+      ? <ArrowUp size={12} className="ml-1 text-red-600" />
+      : <ArrowDown size={12} className="ml-1 text-red-600" />;
+  };
+
+  if (agentData.length === 0) return null;
+
+  const table = (
+    <Card className="overflow-hidden rounded-2xl border-slate-200 shadow-sm">
+      <CardHeader className="border-b border-slate-200 bg-slate-50 p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-900">
+              <Users size={14} className={filter === 'platforms' ? 'text-amber-600' : 'text-red-600'} />
+              {title}
+            </CardTitle>
+            <p className="text-sm text-slate-500">{subtitle}</p>
+          </div>
+
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder={searchPlaceholder}
+              className="rounded-xl border-slate-200 bg-white pl-9 text-xs font-bold focus-visible:ring-red-600"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-slate-50/50">
+              <TableRow className="border-b border-slate-200 hover:bg-transparent">
+                <TableHead className="cursor-pointer py-4 transition-colors hover:text-red-600" onClick={() => handleSort('agente')}>
+                  <div className="flex items-center text-[10px] font-black uppercase tracking-widest">
+                    {filter === 'platforms' ? 'Plataforma' : 'Representante'} <SortIcon columnKey="agente" />
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer py-4 text-center transition-colors hover:text-red-600" onClick={() => handleSort('transacciones')}>
+                  <div className="flex items-center justify-center text-[10px] font-black uppercase tracking-widest">
+                    <ShoppingCart size={12} className="mr-1" /> Transacciones <SortIcon columnKey="transacciones" />
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer py-4 text-center transition-colors hover:text-red-600" onClick={() => handleSort('ventas')}>
+                  <div className="flex items-center justify-center text-[10px] font-black uppercase tracking-widest">
+                    <DollarSign size={12} className="mr-1" /> Ventas <SortIcon columnKey="ventas" />
+                  </div>
+                </TableHead>
+                <TableHead className="cursor-pointer py-4 text-center transition-colors hover:text-red-600" onClick={() => handleSort('ticketPromedio')}>
+                  <div className="flex items-center justify-center text-[10px] font-black uppercase tracking-widest">
+                    <Receipt size={12} className="mr-1" /> Ticket Prom. <SortIcon columnKey="ticketPromedio" />
+                  </div>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAndSortedData.length > 0 ? (
+                filteredAndSortedData.map((agent, idx) => (
+                  <TableRow
+                    key={`${agent.tipo}-${agent.codigo || agent.agente}`}
+                    className={cn(
+                      idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30',
+                      'transition-colors hover:bg-slate-100'
+                    )}
+                  >
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-black uppercase',
+                            agent.tipo === 'plataforma'
+                              ? 'bg-amber-100 text-amber-700'
+                              : agent.tipo === 'sin_registro'
+                                ? 'bg-slate-200 text-slate-600'
+                                : 'bg-red-100 text-red-600'
+                          )}
+                        >
+                          {agent.agente.substring(0, 2)}
+                        </div>
+                        <div className="min-w-0">
+                          <span
+                            className={cn(
+                              'block truncate text-xs font-black',
+                              agent.tipo === 'plataforma'
+                                ? 'text-amber-800'
+                                : agent.tipo === 'sin_registro'
+                                  ? 'text-slate-500'
+                                  : 'text-slate-900'
+                            )}
+                          >
+                            {agent.agente}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3 text-center">
+                      <span className="text-xs font-bold text-slate-600">
+                        {formatCount(agent.transacciones)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3 text-center">
+                      <span className="text-xs font-bold text-slate-600">
+                        {formatCurrency(agent.ventas)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3 text-center">
+                      <span className="text-xs font-bold text-slate-600">
+                        {formatCurrency(agent.ticketPromedio)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-32 text-center">
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <Users size={24} className="opacity-20" />
+                      <p className="text-xs font-bold uppercase tracking-widest">
+                        No se encontraron registros
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (embedded) {
+    return table;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="h-4 w-1 rounded-full bg-red-600" />
+        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+          Bloque comercial
+        </h2>
+      </div>
+      {table}
+    </div>
+  );
+}

@@ -1,16 +1,41 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import {
+  calculateGlobalKpis,
+  calculateKPIsByShift,
+} from '@/ui/reports/analysis-beta/services/kpi.service';
 
 export default function KPIObserver() {
-    const { metrics } = useOperationalDashboardStore();
+  const dataDate = useDashboardStore((state) => state.dataDate);
+  const dailyHistory = useDashboardStore((state) => state.dailyHistory);
+  const setKPIs = useDashboardStore((state) => state.setKPIs);
+  const setKPIsByShift = useDashboardStore((state) => state.setKPIsByShift);
 
-    // This component previously might have logged updates or triggered side effects.
-    // For now, we keep it as a placeholder or simple logger.
-    useEffect(() => {
-        // Observer for side effects if needed in the future
-    }, [metrics]);
+  useEffect(() => {
+    if (!dataDate) {
+      setKPIs(calculateGlobalKpis([], [], []));
+      setKPIsByShift(calculateKPIsByShift([], [], []));
+      return;
+    }
 
-    return null;
+    const snapshot = dailyHistory[dataDate];
+
+    if (!snapshot) {
+      setKPIs(calculateGlobalKpis([], [], []));
+      setKPIsByShift(calculateKPIsByShift([], [], []));
+      return;
+    }
+
+    setKPIs(snapshot.kpis);
+    setKPIsByShift(snapshot.shiftKpis);
+  }, [
+    dataDate,
+    dailyHistory,
+    setKPIs,
+    setKPIsByShift,
+  ]);
+
+  return null;
 }

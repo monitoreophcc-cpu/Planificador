@@ -1,45 +1,39 @@
 'use client';
 
-import { useOperationalDashboardStore } from '@/ui/reports/analysis-beta/store/useOperationalDashboardStore';
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import type { TimeSlotKpi } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import ShiftDetailTable from './ShiftDetailTable';
-import { getShift } from '@/domain/call-center-analysis/shift.service';
 
-export default function ShiftTablesContainer() {
-    const { data } = useOperationalDashboardStore();
+type ShiftTablesContainerProps = {
+  detail?: {
+    day: TimeSlotKpi[];
+    night: TimeSlotKpi[];
+  } | null;
+};
 
-    if (!data?.answered) return null;
+export default function ShiftTablesContainer({ detail }: ShiftTablesContainerProps) {
+  const dataDate = useDashboardStore((state) => state.dataDate);
+  const dailyHistory = useDashboardStore((state) => state.dailyHistory);
 
-    // Filter data by shift - Using the pre-calculated 'turno' field from parser
-    const dayAnswered = data.answered.filter(c => c.turno === 'Día');
-    const nightAnswered = data.answered.filter(c => c.turno === 'Noche');
+  const resolvedDetail =
+    detail ?? (dataDate ? dailyHistory[dataDate]?.operationalDetail ?? null : null);
 
-    // Using RAW abandoned for shift tables as requested
-    const dayAbandoned = data.abandoned.raw.filter(c => c.turno === 'Día');
-    const nightAbandoned = data.abandoned.raw.filter(c => c.turno === 'Noche');
+  if (!resolvedDetail) {
+    return null;
+  }
 
-    // For transactions, we derive shift from hour using canonical logic (needs date)
-    // IMPORTANT: Filter by platform 'Call Center' to only show agent-handled sales
-    const dayTransactions = data.transactions.filter(t =>
-        t.plataforma === 'Call Center' && getShift(t.hora, t.fecha) === 'Día'
-    );
-    const nightTransactions = data.transactions.filter(t =>
-        t.plataforma === 'Call Center' && getShift(t.hora, t.fecha) === 'Noche'
-    );
+  const hasData =
+    resolvedDetail.day.some((row) => row.recibidas > 0 || row.abandonadas > 0) ||
+    resolvedDetail.night.some((row) => row.recibidas > 0 || row.abandonadas > 0);
 
-    return (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <ShiftDetailTable
-                title="Turno Día (09:00 - 15:30)"
-                answered={dayAnswered}
-                abandoned={dayAbandoned}
-                transactions={dayTransactions}
-            />
-            <ShiftDetailTable
-                title="Turno Noche (16:00 - CIERRE)"
-                answered={nightAnswered}
-                abandoned={nightAbandoned}
-                transactions={nightTransactions}
-            />
-        </div>
-    );
+  if (!hasData) {
+    return null;
+  }
+
+  return (
+    <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <ShiftDetailTable title="Turno Día" data={resolvedDetail.day} />
+      <ShiftDetailTable title="Turno Noche" data={resolvedDetail.night} />
+    </section>
+  );
 }

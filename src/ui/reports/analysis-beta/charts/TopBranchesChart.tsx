@@ -1,48 +1,94 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/reports/analysis-beta/ui/card";
-import { useOperationalDashboardStore } from "@/ui/reports/analysis-beta/store/useOperationalDashboardStore";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useMemo } from "react";
-import { formatNumber } from "@/domain/call-center-analysis/utils/format";
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
+import { Bar } from 'react-chartjs-2';
+import { getTopSucursales } from '@/ui/reports/analysis-beta/services/chart.service';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+if (typeof window !== 'undefined') {
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+  );
+}
 
 export default function TopBranchesChart() {
-    const { data } = useOperationalDashboardStore();
+  const transactions = useDashboardStore((state) => state.transactions);
+  const dataDate = useDashboardStore((state) => state.dataDate);
+  const filteredTransactions = dataDate
+    ? transactions.filter((record) => record.fecha === dataDate)
+    : [];
+  const { labels, values } = getTopSucursales(filteredTransactions);
 
-    const chartData = useMemo(() => {
-        if (!data?.transactions) return [];
-        const counts = new Map<string, number>();
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: 'Transacciones CC',
+        data: values,
+        backgroundColor: [
+          '#b91c1c', // Rojo Corporativo
+          '#0f172a', // Negro Corporativo
+          '#475569', // Slate-600
+          '#dc2626', // Red-600
+          '#1e293b', // Slate-800
+          '#94a3b8', // Slate-400
+          '#ef4444', // Red-500
+          '#334155', // Slate-700
+          '#f87171', // Red-400
+          '#cbd5e1', // Slate-300
+        ],
+        borderRadius: 4,
+      },
+    ],
+  };
 
-        data.transactions.forEach(t => {
-            const b = t.sucursal || 'Desconocida';
-            counts.set(b, (counts.get(b) || 0) + 1);
-        });
+  const options = {
+    indexAxis: 'y' as const,
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+      },
+    },
+  };
 
-        return Array.from(counts.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10)
-            .map(([name, value]) => ({ name, Transacciones: value }));
-    }, [data]);
+  if (filteredTransactions.length === 0) {
+    return null;
+  }
 
-    if (chartData.length === 0) return null;
-
-    return (
-        <Card className="col-span-1">
-            <CardHeader>
-                <CardTitle>Top 10 Sucursales (Transacciones)</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} />
-                        <Tooltip formatter={(value) => typeof value === 'number' ? formatNumber(value) : value} />
-                        <Legend />
-                        <Bar dataKey="Transacciones" fill="#8884d8" />
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle>Top 10 Sucursales por Transacciones CC</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-96 w-full">
+          <Bar options={options} data={data} />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

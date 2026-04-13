@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/ui/reports/analysis-beta/lib/utils';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 
 type PillToggleContainerProps = {
@@ -37,11 +37,11 @@ export const PillButton = ({ onClick, isActive, children }: PillButtonProps) => 
       size="sm"
       onClick={onClick}
       className={cn(
-        'rounded-full h-auto px-3 py-1 text-xs font-semibold',
-        'ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'rounded-full h-auto px-4 py-1.5 text-xs font-bold transition-all duration-200',
+        'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         isActive
-          ? 'bg-background text-foreground shadow-sm'
-          : 'hover:bg-background/60'
+          ? 'bg-background text-foreground shadow-sm scale-105'
+          : 'hover:bg-background/60 text-muted-foreground hover:text-foreground'
       )}
     >
       {children}
