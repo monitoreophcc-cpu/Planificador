@@ -84,7 +84,7 @@ export const demoAbandonedCalls: Omit<
 
 export const demoTransactions: Omit<Transaction, 'id'>[] = [
   {
-    plataforma: 'Monitoreo Call Center',
+    plataforma: 'Call center',
     plataformaCode: 'CC',
     agente: 'Agente 1',
     sucursal: 'Sucursal Centro',
@@ -95,7 +95,7 @@ export const demoTransactions: Omit<Transaction, 'id'>[] = [
     valor: 1250,
   },
   {
-    plataforma: 'Monitoreo Call Center',
+    plataforma: 'Call center',
     plataformaCode: 'CC',
     agente: 'Agente 2',
     sucursal: 'Sucursal Norte',
@@ -128,7 +128,7 @@ export const demoTransactions: Omit<Transaction, 'id'>[] = [
     valor: 650,
   },
   {
-    plataforma: 'Monitoreo Call Center',
+    plataforma: 'Call center',
     plataformaCode: 'CC',
     agente: 'Agente 1',
     sucursal: 'Sucursal Centro',

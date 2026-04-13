@@ -1,7 +1,7 @@
 import type { Transaction } from '@/ui/reports/analysis-beta/types/dashboard.types';
 
 const PLATFORMS_ORDER = [
-  'Monitoreo Call Center',
+  'Call center',
   'App',
   'WhatsApp',
   'Web',
@@ -10,13 +10,13 @@ const PLATFORMS_ORDER = [
 
 export function getAggregatedSales(transactions: Transaction[]) {
   const ccSales = transactions
-    .filter((t) => t.plataforma === 'Monitoreo Call Center')
+    .filter((t) => t.plataforma === 'Call center')
     .reduce((sum, t) => sum + t.valor, 0);
   const restSales = transactions
-    .filter((t) => t.plataforma !== 'Monitoreo Call Center')
+    .filter((t) => t.plataforma !== 'Call center')
     .reduce((sum, t) => sum + t.valor, 0);
   return {
-    labels: ['Monitoreo Call Center', 'Resto de plataformas'],
+    labels: ['Call center', 'Resto de plataformas'],
     values: [ccSales, restSales],
   };
 }
@@ -36,10 +36,10 @@ export function getSalesByPlatform(transactions: Transaction[]) {
 
 export function getAggregatedAov(transactions: Transaction[]) {
   const ccTransactions = transactions.filter(
-    (t) => t.plataforma === 'Monitoreo Call Center'
+    (t) => t.plataforma === 'Call center'
   );
   const restTransactions = transactions.filter(
-    (t) => t.plataforma !== 'Monitoreo Call Center'
+    (t) => t.plataforma !== 'Call center'
   );
 
   const ccAov =
@@ -54,7 +54,7 @@ export function getAggregatedAov(transactions: Transaction[]) {
       : 0;
 
   return {
-    labels: ['Monitoreo Call Center', 'Resto de plataformas'],
+    labels: ['Call center', 'Resto de plataformas'],
     values: [ccAov, restAov],
   };
 }
@@ -80,7 +80,7 @@ export function getAovByPlatform(transactions: Transaction[]) {
 export function getTopSucursales(transactions: Transaction[], limit = 10) {
   const countMap = new Map<string, number>();
   transactions
-    .filter((t) => t.plataforma === 'Monitoreo Call Center')
+    .filter((t) => t.plataforma === 'Call center')
     .forEach((t) => {
       const s = t.sucursal || 'Sin sucursal';
       countMap.set(s, (countMap.get(s) || 0) + 1);

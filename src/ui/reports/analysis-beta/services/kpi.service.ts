@@ -25,7 +25,7 @@ export function calculateGlobalKpis(
 
   const nivelDeServicio = recibidas > 0 ? (contestadas / recibidas) * 100 : 0;
   const transaccionesCC = transactions.filter(
-    (t) => t.plataforma === 'Monitoreo Call Center'
+    (t) => t.plataforma === 'Call center'
   ).length;
   const ventasValidas = transactions.reduce((sum, transaction) => sum + transaction.valor, 0);
   const ticketPromedio = transactions.length > 0 ? ventasValidas / transactions.length : 0;
@@ -73,7 +73,7 @@ export function calculateKPIsByShift(
     const atencion = recibidas > 0 ? (contestadas / recibidas) * 100 : 0;
 
     const trans = transactionsInShift.filter(
-      (t) => t.plataforma === 'Monitoreo Call Center'
+      (t) => t.plataforma === 'Call center'
     ).length;
     const conv = contestadas > 0 ? (trans / contestadas) * 100 : 0;
 
@@ -298,7 +298,7 @@ export function aggregateByTimeSlot(
   });
 
   transactions.forEach((tx) => {
-    if (tx.plataforma === 'Monitoreo Call Center') {
+    if (tx.plataforma === 'Call center') {
       const slot = periodo30(tx.hora);
       const b = bucket(slot);
       b.t += 1;
