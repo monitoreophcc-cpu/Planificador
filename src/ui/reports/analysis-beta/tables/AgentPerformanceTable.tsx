@@ -25,6 +25,11 @@ import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.st
 import { aggregateByAgent } from '@/ui/reports/analysis-beta/services/kpi.service';
 import { AgentKPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import { cn } from '@/ui/reports/analysis-beta/lib/utils';
+import { useAppStore } from '@/store/useAppStore';
+import {
+  buildRepresentativeLinkMap,
+  summarizeRepresentativeCoverage,
+} from '@/ui/reports/analysis-beta/services/representative-link.service';
 
 type SortConfig = {
   key: keyof AgentKPIs;
@@ -48,6 +53,7 @@ export default function AgentPerformanceTable({
 }: AgentPerformanceTableProps) {
   const transactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const representatives = useAppStore((state) => state.representatives);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'ventas', direction: 'desc' });
   const formatCount = (value: number) => value.toLocaleString('en-US');
@@ -113,6 +119,15 @@ export default function AgentPerformanceTable({
     return result;
   }, [agentData, searchTerm, sortConfig]);
 
+  const representativeLinks = useMemo(
+    () => buildRepresentativeLinkMap(agentData, representatives),
+    [agentData, representatives]
+  );
+  const coverageSummary = useMemo(
+    () => summarizeRepresentativeCoverage(agentData, representativeLinks),
+    [agentData, representativeLinks]
+  );
+
   const SortIcon = ({ columnKey }: { columnKey: keyof AgentKPIs }) => {
     if (sortConfig?.key !== columnKey) return <ArrowUpDown size={12} className="ml-1 opacity-50" />;
     return sortConfig.direction === 'asc'
@@ -131,7 +146,14 @@ export default function AgentPerformanceTable({
               <Users size={14} className={filter === 'platforms' ? 'text-amber-600' : 'text-red-600'} />
               {title}
             </CardTitle>
-            <p className="text-sm text-slate-500">{subtitle}</p>
+            <p className="text-sm text-slate-500">
+              {subtitle}
+              {filter === 'agents' && coverageSummary.totalAgents > 0 ? (
+                <span className="ml-2 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600">
+                  {coverageSummary.linkedAgents}/{coverageSummary.totalAgents} vinculados
+                </span>
+              ) : null}
+            </p>
           </div>
 
           <div className="relative w-full md:w-72">
@@ -209,6 +231,17 @@ export default function AgentPerformanceTable({
                           >
                             {agent.agente}
                           </span>
+                          {agent.tipo === 'agente' ? (
+                            representativeLinks.has(agent.agente) ? (
+                              <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                                Vinculado
+                              </span>
+                            ) : (
+                              <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-amber-700">
+                                Sin vínculo
+                              </span>
+                            )
+                          ) : null}
                         </div>
                       </div>
                     </TableCell>
