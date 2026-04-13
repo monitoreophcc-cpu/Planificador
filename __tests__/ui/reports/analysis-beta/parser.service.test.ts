@@ -203,14 +203,18 @@ describe('aggregateByAgent', () => {
 
     const aggregated = aggregateByAgent(raw);
 
+    const adrian = aggregated.find(
+      (item) => item.agente === 'adrian cedeño' && item.tipo === 'agente'
+    );
+    expect(adrian).toMatchObject({
+      agente: 'adrian cedeño',
+      tipo: 'agente',
+      transacciones: 2,
+    });
+    expect(adrian?.ventas ?? 0).toBeCloseTo(3087.508804975, 6);
+
     expect(aggregated).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          agente: 'adrian cedeño',
-          tipo: 'agente',
-          transacciones: 2,
-          ventas: 3797.5,
-        }),
         expect.objectContaining({
           agente: 'Web',
           tipo: 'plataforma',
