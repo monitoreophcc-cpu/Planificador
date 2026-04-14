@@ -6,18 +6,26 @@ Este documento describe cómo completar manualmente el vínculo entre nombres de
 
 Úsalo cuando en la tabla de **Representantes del día** aparezca la etiqueta **"Sin vínculo"**.
 
-## Archivo de configuración manual
+## Flujo visual (nuevo)
+
+1. Abre la pestaña **Operación** → bloque **Rendimiento comercial** → **Representantes del día**.
+2. En cada fila **Sin vínculo**, pulsa el botón **Vincular**.
+3. Selecciona un representante activo en el modal y confirma con **Guardar vínculo**.
+4. La fila cambiará a **Vinculado (manual)** y el contador `x/y vinculados` se actualizará.
+
+> Este vínculo visual funciona en la sesión actual (no persiste todavía en base de datos).
+
+## Archivo de configuración manual (persistencia por código)
 
 Editar:
 
 `src/ui/reports/analysis-beta/config/manualRepresentativeLinks.ts`
 
-## Paso a paso
+## Paso a paso por código
 
-1. Abre la pestaña **Operación** → bloque **Rendimiento comercial** → **Representantes del día**.
-2. Identifica los agentes con etiqueta **Sin vínculo**.
-3. Abre el archivo `manualRepresentativeLinks.ts`.
-4. Agrega entradas con este formato:
+1. Identifica los agentes con etiqueta **Sin vínculo**.
+2. Abre el archivo `manualRepresentativeLinks.ts`.
+3. Agrega entradas con este formato:
 
 ```ts
 export const MANUAL_REPRESENTATIVE_LINKS = [
@@ -25,8 +33,8 @@ export const MANUAL_REPRESENTATIVE_LINKS = [
 ];
 ```
 
-5. Guarda el archivo y recarga la vista.
-6. Verifica que la fila cambie a **Vinculado (manual)** y que suba el indicador `x/y vinculados`.
+4. Guarda el archivo y recarga la vista.
+5. Verifica que la fila cambie a **Vinculado (manual)** y que suba el indicador `x/y vinculados`.
 
 ## Reglas importantes
 
