@@ -181,7 +181,7 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
   const abandonmentRate = kpis.recibidas > 0 ? (kpis.abandonadas / kpis.recibidas) * 100 : 0;
 
   return (
-    <Document title={`Reporte Análisis de llamadas - ${date || 'General'}`}>
+    <Document title={`Reporte Call Center - ${date || 'General'}`}>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
@@ -190,12 +190,12 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
             <Image src={REPORT_BRAND_IMAGE} style={styles.brandImage} />
             <View style={styles.titleContainer}>
               <Text style={styles.subTitle}>Reporte</Text>
-              <Text style={styles.mainTitleTop}>Análisis de</Text>
-              <Text style={styles.mainTitleBottom}>Llamadas</Text>
+              <Text style={styles.mainTitleTop}>Call</Text>
+              <Text style={styles.mainTitleBottom}>Center</Text>
             </View>
           </View>
           <View style={styles.reportMeta}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0f172a' }}>Análisis de llamadas</Text>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0f172a' }}>Call Center</Text>
             <Text style={styles.dateText}>Fecha de Datos: {date || 'N/A'}</Text>
             <Text style={styles.dateText}>Generado: {new Date().toLocaleString('es-DO')}</Text>
           </View>
@@ -290,7 +290,7 @@ export const CallCenterReport = ({ kpis, kpisByShift, date }: CallCenterReportPr
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text>Análisis de llamadas v1.0.4</Text>
+          <Text>Call Center</Text>
           <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
       </Page>

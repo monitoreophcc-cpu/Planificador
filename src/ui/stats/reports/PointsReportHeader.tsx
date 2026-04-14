@@ -47,7 +47,7 @@ export function PointsReportHeader({
             letterSpacing: '-0.02em',
           }}
         >
-          Incidencias y puntos del mes
+          Incidencias del mes
         </h2>
         <p
           style={{
@@ -56,7 +56,7 @@ export function PointsReportHeader({
             fontSize: '14px',
           }}
         >
-          Resumen mensual de incidencias y puntos, ordenado por rol y turno.
+          Resumen mensual de incidencias, ordenado por rol y turno.
         </p>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

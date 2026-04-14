@@ -8,7 +8,6 @@ import {
   getMonthlyPointsSummary,
   type MonthlyPointsSummary,
 } from '@/application/stats/getMonthlyPointsSummary'
-import { useReportingDataStore } from '@/store/useReportingDataStore'
 import type { ShiftType } from '@/domain/types'
 
 export interface ReorderModalState {
@@ -39,7 +38,6 @@ export function usePointsReportView(): UsePointsReportViewResult {
     representatives: state.representatives,
     incidents: state.incidents,
   }))
-  const salesAttribution = useReportingDataStore(state => state.salesAttribution)
 
   const monthISO = useMemo(() => format(currentDate, 'yyyy-MM'), [currentDate])
   const monthLabel = useMemo(
@@ -48,14 +46,8 @@ export function usePointsReportView(): UsePointsReportViewResult {
   )
 
   const summary = useMemo(
-    () =>
-      getMonthlyPointsSummary(
-        representatives,
-        incidents,
-        monthISO,
-        salesAttribution
-      ),
-    [representatives, incidents, monthISO, salesAttribution]
+    () => getMonthlyPointsSummary(representatives, incidents, monthISO),
+    [representatives, incidents, monthISO]
   )
 
   const handleCopy = (text: string, title: string) => {

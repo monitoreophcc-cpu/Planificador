@@ -118,8 +118,6 @@ export function CallCenterAnalysisView() {
             <div className="flex items-center gap-3 text-slate-400 text-[10px] font-bold uppercase tracking-[0.15em]">
               <span>Sistema de análisis de llamadas y transacciones</span>
               <span className="w-1 h-1 bg-slate-300 rounded-full" />
-              <span>v1.0.4</span>
-              <span className="w-1 h-1 bg-slate-300 rounded-full" />
               <span className="flex items-center gap-1 text-emerald-600">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                 Actualizado {lastUpdated}

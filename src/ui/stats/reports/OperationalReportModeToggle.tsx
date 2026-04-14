@@ -3,8 +3,8 @@
 import type { CSSProperties } from 'react'
 
 interface OperationalReportModeToggleProps {
-  mode: 'INSTITUTIONAL' | 'ANALYSIS' | 'CALL_CENTER'
-  onChange: (mode: 'INSTITUTIONAL' | 'ANALYSIS' | 'CALL_CENTER') => void
+  mode: 'INSTITUTIONAL' | 'ANALYSIS'
+  onChange: (mode: 'INSTITUTIONAL' | 'ANALYSIS') => void
 }
 
 export function OperationalReportModeToggle({
@@ -12,7 +12,7 @@ export function OperationalReportModeToggle({
   onChange,
 }: OperationalReportModeToggleProps) {
   const buttonStyle = (
-    currentMode: 'INSTITUTIONAL' | 'ANALYSIS' | 'CALL_CENTER'
+    currentMode: 'INSTITUTIONAL' | 'ANALYSIS'
   ): CSSProperties => ({
     padding: '9px 14px',
     border: `1px solid ${mode === currentMode ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent'}`,
@@ -52,12 +52,6 @@ export function OperationalReportModeToggle({
         style={buttonStyle('ANALYSIS')}
       >
         ○ Comparar períodos
-      </button>
-      <button
-        onClick={() => onChange('CALL_CENTER')}
-        style={buttonStyle('CALL_CENTER')}
-      >
-        △ Análisis de llamadas
       </button>
     </div>
   )

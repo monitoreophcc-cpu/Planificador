@@ -70,19 +70,31 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 
 interface PersonDetailSummaryStatsProps {
   absences: number
+  averageTicket: number
   errors: number
   points: number
   riskLevel: RiskLevel
+  salesAmount: number
   tardiness: number
+  transactionsCount: number
 }
 
 export function PersonDetailSummaryStats({
   absences,
+  averageTicket,
   errors,
   points,
   riskLevel,
+  salesAmount,
   tardiness,
+  transactionsCount,
 }: PersonDetailSummaryStatsProps) {
+  const formatCurrency = (value: number) =>
+    `RD$ ${value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`
+
   return (
     <div
       style={{
@@ -98,6 +110,9 @@ export function PersonDetailSummaryStats({
         <Stat label="Tardanzas" value={tardiness} />
         <Stat label="Errores" value={errors} />
         <Stat label="Puntos" value={points} />
+        <Stat label="Transacciones (mes)" value={transactionsCount} />
+        <Stat label="Ventas (mes)" value={formatCurrency(salesAmount)} />
+        <Stat label="Ticket prom. (mes)" value={formatCurrency(averageTicket)} />
       </div>
       <div style={{ textAlign: 'right' }}>
         <div

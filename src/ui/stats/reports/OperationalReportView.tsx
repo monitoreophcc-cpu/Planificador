@@ -6,14 +6,13 @@ import { selectOperationalReport } from '@/store/selectors/selectOperationalRepo
 import OperationalAnalysisView from './OperationalAnalysisView'
 import { OperationalInstitutionalView } from './OperationalInstitutionalView'
 import { OperationalReportModeToggle } from './OperationalReportModeToggle'
-import { CallCenterAnalysisView } from '@/ui/reports/analysis-beta/CallCenterAnalysisView'
 
 // ============================================================================
 // MAIN VIEW
 // ============================================================================
 
 export function OperationalReportView() {
-  const [mode, setMode] = useState<'INSTITUTIONAL' | 'ANALYSIS' | 'CALL_CENTER'>('INSTITUTIONAL')
+  const [mode, setMode] = useState<'INSTITUTIONAL' | 'ANALYSIS'>('INSTITUTIONAL')
   const [periodKind, setPeriodKind] = useState<'MONTH' | 'QUARTER'>('MONTH')
 
   const report = useAppStore(state => selectOperationalReport(state, periodKind))
@@ -42,10 +41,8 @@ export function OperationalReportView() {
             Cargando reporte...
           </div>
         )
-      ) : mode === 'ANALYSIS' ? (
-        <OperationalAnalysisView />
       ) : (
-        <CallCenterAnalysisView />
+        <OperationalAnalysisView />
       )}
     </div>
   )

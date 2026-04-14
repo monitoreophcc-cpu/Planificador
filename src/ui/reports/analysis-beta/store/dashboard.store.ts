@@ -17,6 +17,7 @@ import type {
 } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import { buildDailySnapshot } from '@/ui/reports/analysis-beta/services/kpi.service';
 import { buildComparisonResult } from '@/ui/reports/analysis-beta/services/comparison.service';
+import type { ManualRepresentativeLink } from '@/ui/reports/analysis-beta/services/representative-link.service';
 
 // Custom storage for IndexedDB using idb-keyval
 const idbStorage: StateStorage = {
@@ -88,8 +89,11 @@ type DashboardState = {
 
   activeWorkspaceView: WorkspaceView;
   commercialView: CommercialView;
+  manualRepresentativeLinks: ManualRepresentativeLink[];
   setActiveWorkspaceView: (view: WorkspaceView) => void;
   setCommercialView: (view: CommercialView) => void;
+  upsertManualRepresentativeLink: (link: ManualRepresentativeLink) => void;
+  removeManualRepresentativeLink: (agentName: string) => void;
   
   clearCurrentView: () => void;
   clearAllData: () => void;
@@ -209,6 +213,7 @@ export const useDashboardStore = create<DashboardState>()(
       comparisonPreset: 'manual',
       activeWorkspaceView: 'executive',
       commercialView: 'day',
+      manualRepresentativeLinks: [],
       isAuditVisible: false,
       _hasHydrated: false,
 
@@ -342,6 +347,21 @@ export const useDashboardStore = create<DashboardState>()(
       clearComparison: () => set({ comparisonResult: null }),
       setActiveWorkspaceView: (view) => set({ activeWorkspaceView: view }),
       setCommercialView: (view) => set({ commercialView: view }),
+      upsertManualRepresentativeLink: (link) =>
+        set((state) => ({
+          manualRepresentativeLinks: [
+            ...state.manualRepresentativeLinks.filter(
+              (item) => item.agentName !== link.agentName
+            ),
+            link,
+          ],
+        })),
+      removeManualRepresentativeLink: (agentName) =>
+        set((state) => ({
+          manualRepresentativeLinks: state.manualRepresentativeLinks.filter(
+            (item) => item.agentName !== agentName
+          ),
+        })),
 
       clearCurrentView: () =>
         set({

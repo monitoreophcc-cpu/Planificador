@@ -118,7 +118,7 @@ export type AgentKPIs = {
 
 export type WorkspaceView = 'executive' | 'operation' | 'analysis';
 
-export type CommercialView = 'day' | 'month' | 'platforms';
+export type CommercialView = 'day' | 'month';
 
 export type ComparisonPreset = 'manual' | 'day_previous' | 'week_previous' | 'month_previous';
 

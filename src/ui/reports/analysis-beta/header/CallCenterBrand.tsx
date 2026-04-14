@@ -11,7 +11,7 @@ export default function CallCenterBrand({ className }: CallCenterBrandProps) {
     <div className={rootClassName}>
       <Image
         src="/pizza-hut-symbol-official.png"
-        alt="Logo del reporte de análisis de llamadas"
+        alt="Logo de Call Center"
         width={88}
         height={88}
         priority
@@ -20,10 +20,7 @@ export default function CallCenterBrand({ className }: CallCenterBrandProps) {
 
       <div className="flex flex-col">
         <span className="text-[1.62rem] font-black uppercase leading-[0.9] tracking-[-0.08em] text-[#1b243d] md:text-[2.35rem]">
-          Análisis de
-        </span>
-        <span className="text-[1.62rem] font-black uppercase leading-[0.9] tracking-[-0.08em] text-[#1b243d] md:text-[2.35rem]">
-          Llamadas
+          Call Center
         </span>
       </div>
     </div>

@@ -5,7 +5,6 @@ import {
   RepresentativeRole,
   ShiftType,
 } from '@/domain/types'
-import type { SalesAttributionSummary } from '@/domain/reporting/types'
 import { calculatePoints } from '@/domain/analytics/computeMonthlySummary'
 
 export interface PayrollRow {
@@ -16,7 +15,6 @@ export interface PayrollRow {
   errores: number
   otros: number
   total: number
-  salesTotal: number
 }
 
 export interface MonthlyPointsSummary {
@@ -36,8 +34,7 @@ const PUNITIVE_INCIDENTS: IncidentType[] = [
 export function getMonthlyPointsSummary(
   representatives: Representative[],
   incidents: Incident[],
-  month: string, // YYYY-MM
-  attribution?: SalesAttributionSummary
+  month: string // YYYY-MM
 ): MonthlyPointsSummary {
   const incidentsForMonth = incidents.filter(
     i =>
@@ -55,15 +52,6 @@ export function getMonthlyPointsSummary(
         errores: 0,
         otros: 0,
         total: 0,
-        salesTotal: 0,
-      }
-
-      // Inject CC Sales from attribution
-      if (attribution) {
-        const agentStats = attribution.byAgent.find(a => a.agentName === rep.name);
-        if (agentStats) {
-          row.salesTotal = agentStats.totalValue;
-        }
       }
 
       incidentsForMonth
@@ -93,8 +81,7 @@ export function getMonthlyPointsSummary(
       row.total =
         row.tardanza +
         row.ausencia +
-        row.errores +
-        row.otros
+        row.errores + row.otros
 
       return row
     })
