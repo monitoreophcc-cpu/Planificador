@@ -20,6 +20,7 @@ import CallCenterBrand from '@/ui/reports/analysis-beta/header/CallCenterBrand';
 import ExportModal from '@/ui/reports/analysis-beta/header/ExportModal';
 import DataManagementPanel from '@/ui/reports/analysis-beta/header/DataManagementPanel';
 import MonthlyOperationalReport from '@/ui/reports/analysis-beta/operation/MonthlyOperationalReport';
+import CommercialPerformancePanel from '@/ui/reports/analysis-beta/tables/CommercialPerformancePanel';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Toaster } from '@/ui/reports/analysis-beta/ui/toaster';
 
@@ -117,8 +118,6 @@ export function CallCenterAnalysisView() {
             <div className="flex items-center gap-3 text-slate-400 text-[10px] font-bold uppercase tracking-[0.15em]">
               <span>Sistema de análisis de llamadas y transacciones</span>
               <span className="w-1 h-1 bg-slate-300 rounded-full" />
-              <span>v1.0.4</span>
-              <span className="w-1 h-1 bg-slate-300 rounded-full" />
               <span className="flex items-center gap-1 text-emerald-600">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                 Actualizado {lastUpdated}
@@ -208,15 +207,16 @@ export function CallCenterAnalysisView() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="ml-auto h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    className="ml-auto h-8 w-8 rounded-xl p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     onClick={() => setShowGlobalReadings((current) => !current)}
+                    aria-label={showGlobalReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
+                    title={showGlobalReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
                   >
                     {showGlobalReadings ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    {showGlobalReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
                   </Button>
                 </div>
                 <KPISummary showReadings={showGlobalReadings} />
@@ -232,15 +232,16 @@ export function CallCenterAnalysisView() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="ml-auto h-8 rounded-xl px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    className="ml-auto h-8 w-8 rounded-xl p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     onClick={() => setShowShiftReadings((current) => !current)}
+                    aria-label={showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
+                    title={showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
                   >
                     {showShiftReadings ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
-                    {showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
                   </Button>
                 </div>
                 <ShiftGrid showReadings={showShiftReadings} />
@@ -267,6 +268,7 @@ export function CallCenterAnalysisView() {
                 showGlobalReadings={showGlobalReadings}
                 showShiftReadings={showShiftReadings}
               />
+              <CommercialPerformancePanel />
             </TabsContent>
 
             <TabsContent value="analysis" className="focus-visible:outline-none">

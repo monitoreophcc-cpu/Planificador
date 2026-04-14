@@ -1,5 +1,4 @@
 import { Download } from 'lucide-react'
-import { formatCurrency } from '@/lib/formatters'
 import type { PayrollRow } from '@/application/stats/getMonthlyPointsSummary'
 import type { CSSProperties } from 'react'
 import { UI_GLOSSARY } from '@/ui/copy/glossary'
@@ -39,7 +38,7 @@ function generatePointsMatrix(data: PayrollRow[]): string {
         valueOrBlank(row.ausencia),
         valueOrBlank(row.errores),
         valueOrBlank(row.otros),
-        row.salesTotal,
+        valueOrBlank(row.total),
       ].join('\t')
     )
     .join('\n')
@@ -56,7 +55,6 @@ export function PointsReportTable({
       ausencia: acc.ausencia + row.ausencia,
       errores: acc.errores + row.errores,
       otros: acc.otros + row.otros,
-      salesTotal: acc.salesTotal + row.salesTotal,
       total: acc.total + row.total,
     }),
     {
@@ -64,7 +62,6 @@ export function PointsReportTable({
       ausencia: 0,
       errores: 0,
       otros: 0,
-      salesTotal: 0,
       total: 0,
     }
   )
@@ -166,7 +163,7 @@ export function PointsReportTable({
               boxShadow: 'var(--shadow-sm)',
             }}
           >
-            <Download size={14} /> Copiar Puntos (para Excel)
+            <Download size={14} /> Copiar Matriz (para Excel)
           </button>
         </div>
       </header>
@@ -185,15 +182,6 @@ export function PointsReportTable({
                 Errores
               </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'right' }}>Otros</th>
-              <th
-                style={{
-                  ...tableHeaderStyle,
-                  textAlign: 'right',
-                  color: 'var(--accent)',
-                }}
-              >
-                Ventas
-              </th>
               <th style={{ ...tableHeaderStyle, textAlign: 'right' }}>Total</th>
             </tr>
           </thead>
@@ -217,16 +205,6 @@ export function PointsReportTable({
                   style={{
                     ...cellStyle,
                     textAlign: 'right',
-                    color: 'var(--accent)',
-                    fontWeight: 600,
-                  }}
-                >
-                  {row.salesTotal > 0 ? formatCurrency(row.salesTotal) : ''}
-                </td>
-                <td
-                  style={{
-                    ...cellStyle,
-                    textAlign: 'right',
                     fontWeight: 700,
                     color: row.total > 0 ? '#b91c1c' : '#1f2937',
                   }}
@@ -238,7 +216,7 @@ export function PointsReportTable({
             {data.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   style={{
                     ...cellStyle,
                     textAlign: 'center',
@@ -279,17 +257,6 @@ export function PointsReportTable({
                 </td>
                 <td style={{ ...cellStyle, textAlign: 'right', borderTop: 'none', fontWeight: 700 }}>
                   {totals.otros || ''}
-                </td>
-                <td
-                  style={{
-                    ...cellStyle,
-                    textAlign: 'right',
-                    borderTop: 'none',
-                    fontWeight: 700,
-                    color: 'var(--accent)',
-                  }}
-                >
-                  {totals.salesTotal > 0 ? formatCurrency(totals.salesTotal) : ''}
                 </td>
                 <td
                   style={{

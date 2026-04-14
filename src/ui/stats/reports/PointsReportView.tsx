@@ -41,12 +41,12 @@ export function PointsReportView() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         <PointsReportTable
-          title="Ventas - Turno Día"
+          title="Incidencias y puntos - Turno Día"
           data={summary.salesDay}
           onCopy={handleCopy}
         />
         <PointsReportTable
-          title="Ventas - Turno Noche"
+          title="Incidencias y puntos - Turno Noche"
           data={summary.salesNight}
           onCopy={handleCopy}
         />

@@ -5,6 +5,8 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useAppStore } from '@/store/useAppStore'
 import type { MonthlySummary } from '@/domain/analytics/types'
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store'
+import { buildMonthlyRepresentativeSnapshot } from '@/ui/reports/analysis-beta/services/kpi.service'
 import {
   buildPersonCalendarDays,
   getDisplayedEvents,
@@ -28,6 +30,14 @@ export function usePersonDetailModalData({
     representatives: s.representatives,
     allCalendarDays: s.allCalendarDaysForRelevantMonths,
   }))
+  const transactions = useDashboardStore(s => s.transactions)
+
+  const normalizeName = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '')
 
   const currentPersonSummary = useMemo(() => {
     if (!summary || !personId) return null
@@ -38,6 +48,40 @@ export function usePersonDetailModalData({
     () => representatives.find(representative => representative.id === personId),
     [representatives, personId]
   )
+
+  const commercialTotals = useMemo(() => {
+    if (!currentRepresentative) {
+      return {
+        transactionsCount: 0,
+        salesAmount: 0,
+        averageTicket: 0,
+      }
+    }
+
+    const monthReferenceDate = `${summary.month}-01`
+    const monthlySnapshot = buildMonthlyRepresentativeSnapshot(
+      transactions,
+      monthReferenceDate
+    )
+
+    if (!monthlySnapshot) {
+      return {
+        transactionsCount: 0,
+        salesAmount: 0,
+        averageTicket: 0,
+      }
+    }
+
+    const row = monthlySnapshot.rows.find(
+      (item) => normalizeName(item.agente) === normalizeName(currentRepresentative.name)
+    )
+
+    return {
+      transactionsCount: row?.transacciones ?? 0,
+      salesAmount: row?.ventas ?? 0,
+      averageTicket: row?.ticketPromedio ?? 0,
+    }
+  }, [currentRepresentative, summary.month, transactions])
 
   const visibleMonthDate = useMemo(
     () => parseISO(`${summary.month}-01`),
@@ -90,5 +134,6 @@ export function usePersonDetailModalData({
     monthLabel,
     visibleMonthDate,
     handleMonthChange,
+    commercialTotals,
   }
 }

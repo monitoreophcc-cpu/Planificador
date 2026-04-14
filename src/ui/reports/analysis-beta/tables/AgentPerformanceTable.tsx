@@ -20,11 +20,34 @@ import {
   Receipt,
   DollarSign,
   ShoppingCart,
+  Link2,
 } from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import { aggregateByAgent } from '@/ui/reports/analysis-beta/services/kpi.service';
 import { AgentKPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import { cn } from '@/ui/reports/analysis-beta/lib/utils';
+import { useAppStore } from '@/store/useAppStore';
+import {
+  buildRepresentativeLinkMap,
+  summarizeRepresentativeCoverage,
+} from '@/ui/reports/analysis-beta/services/representative-link.service';
+import { MANUAL_REPRESENTATIVE_LINKS } from '@/ui/reports/analysis-beta/config/manualRepresentativeLinks';
+import { Button } from '@/ui/reports/analysis-beta/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/ui/reports/analysis-beta/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/ui/reports/analysis-beta/ui/select';
 
 type SortConfig = {
   key: keyof AgentKPIs;
@@ -48,7 +71,16 @@ export default function AgentPerformanceTable({
 }: AgentPerformanceTableProps) {
   const transactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const manualRepresentativeLinks = useDashboardStore(
+    (state) => state.manualRepresentativeLinks
+  );
+  const upsertManualRepresentativeLink = useDashboardStore(
+    (state) => state.upsertManualRepresentativeLink
+  );
+  const representatives = useAppStore((state) => state.representatives);
   const [searchTerm, setSearchTerm] = useState('');
+  const [linkingAgentName, setLinkingAgentName] = useState<string | null>(null);
+  const [selectedRepresentativeName, setSelectedRepresentativeName] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'ventas', direction: 'desc' });
   const formatCount = (value: number) => value.toLocaleString('en-US');
   const formatCurrency = (value: number) =>
@@ -56,6 +88,13 @@ export default function AgentPerformanceTable({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  const activeRepresentatives = useMemo(
+    () =>
+      representatives
+        .filter((rep) => rep.isActive)
+        .sort((left, right) => left.name.localeCompare(right.name, 'es')),
+    [representatives]
+  );
 
   const agentData = useMemo(() => {
     const filtered = dataDate
@@ -113,6 +152,19 @@ export default function AgentPerformanceTable({
     return result;
   }, [agentData, searchTerm, sortConfig]);
 
+  const representativeLinks = useMemo(
+    () =>
+      buildRepresentativeLinkMap(agentData, representatives, [
+        ...MANUAL_REPRESENTATIVE_LINKS,
+        ...manualRepresentativeLinks,
+      ]),
+    [agentData, representatives, manualRepresentativeLinks]
+  );
+  const coverageSummary = useMemo(
+    () => summarizeRepresentativeCoverage(agentData, representativeLinks),
+    [agentData, representativeLinks]
+  );
+
   const SortIcon = ({ columnKey }: { columnKey: keyof AgentKPIs }) => {
     if (sortConfig?.key !== columnKey) return <ArrowUpDown size={12} className="ml-1 opacity-50" />;
     return sortConfig.direction === 'asc'
@@ -121,6 +173,20 @@ export default function AgentPerformanceTable({
   };
 
   if (agentData.length === 0) return null;
+
+  const handleLinkRepresentative = () => {
+    if (!linkingAgentName || !selectedRepresentativeName) {
+      return;
+    }
+
+    upsertManualRepresentativeLink({
+      agentName: linkingAgentName,
+      representativeName: selectedRepresentativeName,
+    });
+
+    setLinkingAgentName(null);
+    setSelectedRepresentativeName('');
+  };
 
   const table = (
     <Card className="overflow-hidden rounded-2xl border-slate-200 shadow-sm">
@@ -131,7 +197,14 @@ export default function AgentPerformanceTable({
               <Users size={14} className={filter === 'platforms' ? 'text-amber-600' : 'text-red-600'} />
               {title}
             </CardTitle>
-            <p className="text-sm text-slate-500">{subtitle}</p>
+            <p className="text-sm text-slate-500">
+              {subtitle}
+              {filter === 'agents' && coverageSummary.totalAgents > 0 ? (
+                <span className="ml-2 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600">
+                  {coverageSummary.linkedAgents}/{coverageSummary.totalAgents} vinculados
+                </span>
+              ) : null}
+            </p>
           </div>
 
           <div className="relative w-full md:w-72">
@@ -209,6 +282,45 @@ export default function AgentPerformanceTable({
                           >
                             {agent.agente}
                           </span>
+                          {agent.tipo === 'agente' ? (
+                            (() => {
+                              const link = representativeLinks.get(agent.agente);
+                              if (!link) {
+                                return (
+                                  <div className="mt-1 flex items-center gap-2">
+                                    <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-amber-700">
+                                      Sin vínculo
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 rounded-lg px-2 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                      onClick={() => setLinkingAgentName(agent.agente)}
+                                    >
+                                      <Link2 className="mr-1 h-3.5 w-3.5" />
+                                      Vincular
+                                    </Button>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <span
+                                  className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-emerald-700"
+                                  title={
+                                    link.matchType === 'manual_override'
+                                      ? `Vinculado manualmente a ${link.representativeName}`
+                                      : `Coincidencia automática con ${link.representativeName}`
+                                  }
+                                >
+                                  {link.matchType === 'manual_override'
+                                    ? 'Vinculado (manual)'
+                                    : 'Vinculado'}
+                                </span>
+                              );
+                            })()
+                          ) : null}
                         </div>
                       </div>
                     </TableCell>
@@ -248,8 +360,76 @@ export default function AgentPerformanceTable({
     </Card>
   );
 
+  const linkDialog = (
+    <Dialog
+      open={Boolean(linkingAgentName)}
+      onOpenChange={(open) => {
+        if (!open) {
+          setLinkingAgentName(null);
+          setSelectedRepresentativeName('');
+        }
+      }}
+    >
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Vincular representante manualmente</DialogTitle>
+          <DialogDescription>
+            Asocia el agente <strong>{linkingAgentName ?? ''}</strong> con un representante activo
+            del sistema. Este vínculo se aplica de inmediato en la vista actual.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
+            Representante del sistema
+          </p>
+          <Select
+            value={selectedRepresentativeName}
+            onValueChange={setSelectedRepresentativeName}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecciona representante..." />
+            </SelectTrigger>
+            <SelectContent>
+              {activeRepresentatives.map((representative) => (
+                <SelectItem key={representative.id} value={representative.name}>
+                  {representative.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setLinkingAgentName(null);
+              setSelectedRepresentativeName('');
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleLinkRepresentative}
+            disabled={!selectedRepresentativeName}
+          >
+            Guardar vínculo
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   if (embedded) {
-    return table;
+    return (
+      <>
+        {table}
+        {linkDialog}
+      </>
+    );
   }
 
   return (
@@ -261,6 +441,7 @@ export default function AgentPerformanceTable({
         </h2>
       </div>
       {table}
+      {linkDialog}
     </div>
   );
 }

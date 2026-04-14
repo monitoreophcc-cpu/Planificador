@@ -16,6 +16,11 @@ interface PersonDetailModalContentProps {
   currentPersonSummary: PersonMonthlySummary | null
   currentRepresentative?: Representative
   displayedEvents: IncidentWithPoints[]
+  commercialTotals: {
+    transactionsCount: number
+    salesAmount: number
+    averageTicket: number
+  }
   monthLabel: string
   onClose: () => void
   onMonthChange: (offset: number) => void
@@ -30,6 +35,7 @@ export function PersonDetailModalContent({
   currentPersonSummary,
   currentRepresentative,
   displayedEvents,
+  commercialTotals,
   monthLabel,
   onClose,
   onMonthChange,
@@ -67,10 +73,13 @@ export function PersonDetailModalContent({
 
       <PersonDetailSummaryStats
         absences={totals.ausencias}
+        averageTicket={commercialTotals.averageTicket}
         errors={totals.errores}
         points={totals.puntos}
         riskLevel={riskLevel}
+        salesAmount={commercialTotals.salesAmount}
         tardiness={totals.tardanzas}
+        transactionsCount={commercialTotals.transactionsCount}
       />
 
       <div

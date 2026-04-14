@@ -36,6 +36,7 @@ export function PersonDetailModal({
     currentPersonSummary,
     currentRepresentative,
     displayedEvents,
+    commercialTotals,
     monthLabel,
     visibleMonthDate,
     handleMonthChange,
@@ -54,6 +55,7 @@ export function PersonDetailModal({
       currentPersonSummary={currentPersonSummary ?? null}
       currentRepresentative={currentRepresentative}
       displayedEvents={displayedEvents}
+      commercialTotals={commercialTotals}
       monthLabel={monthLabel}
       onClose={onClose}
       onMonthChange={handleMonthChange}
