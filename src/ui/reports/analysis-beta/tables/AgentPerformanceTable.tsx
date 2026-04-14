@@ -30,6 +30,7 @@ import {
   buildRepresentativeLinkMap,
   summarizeRepresentativeCoverage,
 } from '@/ui/reports/analysis-beta/services/representative-link.service';
+import { MANUAL_REPRESENTATIVE_LINKS } from '@/ui/reports/analysis-beta/config/manualRepresentativeLinks';
 
 type SortConfig = {
   key: keyof AgentKPIs;
@@ -120,7 +121,7 @@ export default function AgentPerformanceTable({
   }, [agentData, searchTerm, sortConfig]);
 
   const representativeLinks = useMemo(
-    () => buildRepresentativeLinkMap(agentData, representatives),
+    () => buildRepresentativeLinkMap(agentData, representatives, MANUAL_REPRESENTATIVE_LINKS),
     [agentData, representatives]
   );
   const coverageSummary = useMemo(
@@ -232,15 +233,31 @@ export default function AgentPerformanceTable({
                             {agent.agente}
                           </span>
                           {agent.tipo === 'agente' ? (
-                            representativeLinks.has(agent.agente) ? (
-                              <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-emerald-700">
-                                Vinculado
-                              </span>
-                            ) : (
-                              <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-amber-700">
-                                Sin vínculo
-                              </span>
-                            )
+                            (() => {
+                              const link = representativeLinks.get(agent.agente);
+                              if (!link) {
+                                return (
+                                  <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-amber-700">
+                                    Sin vínculo
+                                  </span>
+                                );
+                              }
+
+                              return (
+                                <span
+                                  className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-emerald-700"
+                                  title={
+                                    link.matchType === 'manual_override'
+                                      ? `Vinculado manualmente a ${link.representativeName}`
+                                      : `Coincidencia automática con ${link.representativeName}`
+                                  }
+                                >
+                                  {link.matchType === 'manual_override'
+                                    ? 'Vinculado (manual)'
+                                    : 'Vinculado'}
+                                </span>
+                              );
+                            })()
                           ) : null}
                         </div>
                       </div>

@@ -1,5 +1,6 @@
 import {
   buildRepresentativeLinkMap,
+  listPendingAgentNames,
   summarizeRepresentativeCoverage,
 } from '@/ui/reports/analysis-beta/services/representative-link.service';
 import type { AgentKPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
@@ -88,5 +89,42 @@ describe('representative-link.service', () => {
       pendingAgents: 1,
     });
   });
-});
 
+  it('prioritizes manual links and lists pending agents alphabetically', () => {
+    const rows: AgentKPIs[] = [
+      {
+        agente: 'M. Peña',
+        tipo: 'agente',
+        transacciones: 1,
+        ventas: 100,
+        ticketPromedio: 100,
+      },
+      {
+        agente: 'Zeta',
+        tipo: 'agente',
+        transacciones: 1,
+        ventas: 200,
+        ticketPromedio: 200,
+      },
+      {
+        agente: 'Alfa',
+        tipo: 'agente',
+        transacciones: 1,
+        ventas: 300,
+        ticketPromedio: 300,
+      },
+    ];
+
+    const links = buildRepresentativeLinkMap(
+      rows,
+      [{ id: 'rep-1', name: 'Maria Pena', isActive: true }],
+      [{ agentName: 'M. Peña', representativeName: 'Maria Pena' }]
+    );
+
+    expect(links.get('M. Peña')).toMatchObject({
+      representativeId: 'rep-1',
+      matchType: 'manual_override',
+    });
+    expect(listPendingAgentNames(rows, links)).toEqual(['Alfa', 'Zeta']);
+  });
+});

@@ -9,7 +9,12 @@ export type RepresentativeIdentity = {
 export type RepresentativeLinkMatch = {
   representativeId: string;
   representativeName: string;
-  matchType: 'exact_normalized';
+  matchType: 'manual_override' | 'exact_normalized';
+};
+
+export type ManualRepresentativeLink = {
+  agentName: string;
+  representativeName: string;
 };
 
 function normalizeName(value: string): string {
@@ -22,7 +27,8 @@ function normalizeName(value: string): string {
 
 export function buildRepresentativeLinkMap(
   rows: AgentKPIs[],
-  representatives: RepresentativeIdentity[]
+  representatives: RepresentativeIdentity[],
+  manualLinks: ManualRepresentativeLink[] = []
 ): Map<string, RepresentativeLinkMatch> {
   const byNormalizedName = new Map<string, RepresentativeIdentity>();
 
@@ -32,10 +38,27 @@ export function buildRepresentativeLinkMap(
       byNormalizedName.set(normalizeName(rep.name), rep);
     });
 
+  const manualByAgentName = new Map(
+    manualLinks.map((item) => [normalizeName(item.agentName), item.representativeName])
+  );
+
   const links = new Map<string, RepresentativeLinkMatch>();
 
   rows.forEach((row) => {
     if (row.tipo !== 'agente') return;
+    const manualRepresentativeName = manualByAgentName.get(normalizeName(row.agente));
+    if (manualRepresentativeName) {
+      const manualRep = byNormalizedName.get(normalizeName(manualRepresentativeName));
+      if (manualRep) {
+        links.set(row.agente, {
+          representativeId: manualRep.id,
+          representativeName: manualRep.name,
+          matchType: 'manual_override',
+        });
+        return;
+      }
+    }
+
     const matched = byNormalizedName.get(normalizeName(row.agente));
     if (!matched) return;
     links.set(row.agente, {
@@ -64,3 +87,12 @@ export function summarizeRepresentativeCoverage(
   };
 }
 
+export function listPendingAgentNames(
+  rows: AgentKPIs[],
+  links: Map<string, RepresentativeLinkMatch>
+): string[] {
+  return rows
+    .filter((row) => row.tipo === 'agente' && !links.has(row.agente))
+    .map((row) => row.agente)
+    .sort((left, right) => left.localeCompare(right, 'es'));
+}
