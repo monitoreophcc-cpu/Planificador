@@ -20,7 +20,6 @@ function formatError(error: unknown): string {
 
 export function UserAccessManagementCard() {
   const role = useAccessStore(state => state.role)
-  const canManage = useAccessStore(state => state.canManageRoles)
   const sessionUserId = useAccessStore(state => state.sessionUserId)
 
   const [roles, setRoles] = useState<AccessRoleRow[]>([])
@@ -129,6 +128,8 @@ export function UserAccessManagementCard() {
       setBusy(false)
     }
   }
+
+  const canManage = role === 'OWNER'
 
   return (
     <section

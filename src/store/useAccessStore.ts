@@ -28,6 +28,10 @@ type AccessState = AccessResolution & {
   setGuestAccess: (dataOwnerUserId: string | null) => void
 }
 
+
+const CONFIGURED_OWNER_USER_ID =
+  '2e059caa-b0f4-4bc4-9a62-0b9abfa6e0d9'
+
 const baseAccessState: AccessResolution = {
   ...getAccessCapabilities(null),
   status: 'idle',
@@ -130,6 +134,25 @@ async function claimInitialOwner(userId: string): Promise<void> {
 }
 
 
+async function ensureConfiguredOwner(): Promise<void> {
+  const supabase = createClientSafely()
+  if (!supabase) {
+    throw new Error('Supabase no está configurado en este entorno.')
+  }
+
+  const { error } = await supabase.from('app_access_roles').upsert(
+    {
+      user_id: CONFIGURED_OWNER_USER_ID,
+      role: 'OWNER',
+    },
+    { onConflict: 'user_id' }
+  )
+
+  if (error) {
+    throw error
+  }
+}
+
 export const useAccessStore = create<AccessState>()(set => ({
   ...baseAccessState,
 
@@ -157,9 +180,15 @@ export const useAccessStore = create<AccessState>()(set => ({
       let ownerRole = await fetchOwnerRoleRow()
 
       if (!ownerRole) {
-        await claimInitialOwner(userId)
-        currentRole = await fetchRoleRow(userId)
+        await claimInitialOwner(CONFIGURED_OWNER_USER_ID)
         ownerRole = await fetchOwnerRoleRow()
+        currentRole = await fetchRoleRow(userId)
+      }
+
+      if (userId === CONFIGURED_OWNER_USER_ID && currentRole?.role !== 'OWNER') {
+        await ensureConfiguredOwner()
+        ownerRole = await fetchOwnerRoleRow()
+        currentRole = await fetchRoleRow(userId)
       }
 
       if (!currentRole) {
