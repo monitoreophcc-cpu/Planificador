@@ -8,6 +8,7 @@ export type AccessCapabilities = {
   role: AppAccessRole | null
   canEditData: boolean
   canAccessSettings: boolean
+  canManageRoles: boolean
   hasAuthenticatedAppAccess: boolean
   isReadOnly: boolean
 }
@@ -23,6 +24,7 @@ export function getAccessCapabilities(
 ): AccessCapabilities {
   const canEditData = role === 'OWNER'
   const canAccessSettings = role === 'OWNER'
+  const canManageRoles = role === 'OWNER'
   const hasAuthenticatedAppAccess = role === 'OWNER' || role === 'READER'
   const isReadOnly = role === 'READER' || role === 'GUEST'
 
@@ -30,6 +32,7 @@ export function getAccessCapabilities(
     role,
     canEditData,
     canAccessSettings,
+    canManageRoles,
     hasAuthenticatedAppAccess,
     isReadOnly,
   }
@@ -48,4 +51,9 @@ export function getAccessRoleLabel(role: AppAccessRole | null): string {
     default:
       return 'Acceso pendiente'
   }
+}
+
+
+export function canManageRoles(role: AppAccessRole | null): boolean {
+  return role === 'OWNER'
 }

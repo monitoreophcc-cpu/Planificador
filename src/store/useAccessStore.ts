@@ -129,6 +129,7 @@ async function claimInitialOwner(userId: string): Promise<void> {
   throw error
 }
 
+
 export const useAccessStore = create<AccessState>()(set => ({
   ...baseAccessState,
 
