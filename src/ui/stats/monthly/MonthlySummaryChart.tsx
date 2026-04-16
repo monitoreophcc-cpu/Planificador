@@ -222,7 +222,7 @@ export function MonthlySummaryChart({
           >
             <CalendarRange size={14} color="var(--accent)" />
             <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)' }}>
-              {analysis.daysWithIncidents} día(s) con actividad
+              {analysis.daysWithIncidents} días con actividad
             </span>
           </div>
           <div
@@ -271,7 +271,7 @@ export function MonthlySummaryChart({
                 Incidencias por día
               </div>
               <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                {summary.totals.totalIncidents} incidencia(s) registradas en el mes
+                {summary.totals.totalIncidents} incidencias registradas en el mes
               </div>
             </div>
             <div
@@ -289,7 +289,7 @@ export function MonthlySummaryChart({
               }}
             >
               <BarChart3 size={14} />
-              Máximo diario: {analysis.maxIncidents}
+              Pico del mes: {analysis.maxIncidents}
             </div>
           </div>
           <div style={{ height: '260px' }}>
@@ -421,7 +421,7 @@ export function MonthlySummaryChart({
               }}
             >
               <ShieldCheck size={14} />
-              {analysis.calmDays} día(s) sin incidencias registradas
+              {analysis.calmDays} días sin incidencias registradas
             </div>
           </div>
 
@@ -445,6 +445,29 @@ export function MonthlySummaryChart({
               }}
             >
               Tipos más frecuentes
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '10px',
+                color: 'var(--text-muted)',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <span
+                  style={{
+                    width: '9px',
+                    height: '9px',
+                    borderRadius: '50%',
+                    background: 'var(--accent)',
+                  }}
+                />
+                Eventos registrados
+              </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {analysis.topIncidentTypes.length > 0 ? (
@@ -476,8 +499,7 @@ export function MonthlySummaryChart({
                           width: `${(count / analysis.maxTypeCount) * 100}%`,
                           height: '100%',
                           borderRadius: '999px',
-                          background:
-                            'linear-gradient(90deg, var(--accent) 0%, var(--accent-warm) 100%)',
+                          background: 'var(--accent)',
                         }}
                       />
                     </div>

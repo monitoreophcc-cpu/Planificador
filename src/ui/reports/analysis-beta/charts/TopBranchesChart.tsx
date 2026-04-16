@@ -31,6 +31,10 @@ export default function TopBranchesChart() {
   const filteredTransactions = dataDate
     ? transactions.filter((record) => record.fecha === dataDate)
     : [];
+  const toTitleCase = (label: string) =>
+    label
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   const { labels, values } = getTopSucursales(filteredTransactions);
 
   const data = {
@@ -71,6 +75,14 @@ export default function TopBranchesChart() {
     scales: {
       x: {
         beginAtZero: true,
+      },
+      y: {
+        ticks: {
+          callback: (value: string | number) => {
+            const label = labels[Number(value)] ?? '';
+            return toTitleCase(label);
+          },
+        },
       },
     },
   };

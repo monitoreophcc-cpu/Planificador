@@ -116,7 +116,7 @@ export function PersonDetailModalContent({
           style={{
             padding: '10px 20px',
             borderRadius: '8px',
-            backgroundColor: '#e5e7eb',
+            backgroundColor: 'transparent',
             color: '#374151',
             border: 'none',
             cursor: 'pointer',

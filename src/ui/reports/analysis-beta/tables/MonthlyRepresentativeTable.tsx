@@ -57,6 +57,8 @@ export default function MonthlyRepresentativeTable({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  const formatDisplayName = (value: string) =>
+    value.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 
   const monthlySnapshot = useMemo(
     () => buildMonthlyRepresentativeSnapshot(transactions, dataDate),
@@ -209,7 +211,9 @@ export default function MonthlyRepresentativeTable({
                     Representante destacado
                   </span>
                   <h3 className="text-lg font-black text-slate-900">
-                    {featuredRepresentative.agente}
+                    <span style={{ textTransform: 'capitalize' }}>
+                      {formatDisplayName(featuredRepresentative.agente)}
+                    </span>
                   </h3>
                   <p className="text-sm text-slate-600">
                     {featuredRepresentative.transacciones.toLocaleString('en-US')} transacciones ·{' '}
@@ -278,7 +282,9 @@ export default function MonthlyRepresentativeTable({
                           {agent.agente.substring(0, 2)}
                         </div>
                         <span className="block truncate text-xs font-black text-slate-900">
-                          {agent.agente}
+                          <span style={{ textTransform: 'capitalize' }}>
+                            {formatDisplayName(agent.agente)}
+                          </span>
                         </span>
                       </div>
                     </TableCell>

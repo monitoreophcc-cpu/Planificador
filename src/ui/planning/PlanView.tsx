@@ -252,24 +252,16 @@ export function PlanView({
         {weekDays.map(day => {
           const isToday = day.date === todayIso
           const isHoliday = day.kind === 'HOLIDAY'
-          const headerBackground = isToday
-            ? isHoliday
-              ? 'rgba(235, 87, 87, 0.1)'
-              : 'rgba(47, 128, 237, 0.12)'
-            : isHoliday
+          const headerBackground = isHoliday
               ? 'rgba(235, 87, 87, 0.08)'
               : 'transparent'
-          const headerBorder = isToday
-            ? isHoliday
-              ? 'rgba(235, 87, 87, 0.34)'
-              : 'rgba(47, 128, 237, 0.28)'
-            : isHoliday
+          const headerBorder = isHoliday
               ? 'rgba(235, 87, 87, 0.28)'
               : 'transparent'
           const headerTextColor = isHoliday
             ? '#c53030'
             : isToday
-              ? PLANNER_THEME.info
+              ? 'var(--color-primary)'
               : 'var(--color-text-secondary)'
 
           return (
@@ -296,7 +288,7 @@ export function PlanView({
                   background: headerBackground,
                   border: `1px solid ${headerBorder}`,
                   boxShadow:
-                    isToday || isHoliday
+                    isHoliday
                       ? 'inset 0 1px 0 rgba(255, 255, 255, 0.4)'
                       : 'none',
                   transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease',
@@ -308,7 +300,7 @@ export function PlanView({
                   style={{
                     fontSize: '14px',
                     letterSpacing: '0.01em',
-                    fontWeight: isHoliday ? 800 : isToday ? 700 : 600,
+                    fontWeight: isHoliday ? 800 : isToday ? 600 : 500,
                     color: headerTextColor,
                     textTransform: 'lowercase',
                   }}
@@ -321,7 +313,7 @@ export function PlanView({
                   style={{
                     fontSize: '13px',
                     lineHeight: 1.1,
-                    fontWeight: isHoliday ? 800 : isToday ? 700 : 600,
+                    fontWeight: isHoliday ? 800 : isToday ? 600 : 500,
                     color: headerTextColor,
                     opacity: isHoliday || isToday ? 1 : 0.82,
                   }}
@@ -353,12 +345,8 @@ export function PlanView({
                     width: '24px',
                     height: '2px',
                     borderRadius: '999px',
-                    backgroundColor: isHoliday
-                      ? '#c53030'
-                      : isToday
-                        ? PLANNER_THEME.info
-                        : 'transparent',
-                    opacity: isToday || isHoliday ? 1 : 0,
+                    backgroundColor: isHoliday ? '#c53030' : 'transparent',
+                    opacity: isHoliday ? 1 : 0,
                     marginTop: '2px',
                   }}
                 />

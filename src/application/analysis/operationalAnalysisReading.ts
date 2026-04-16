@@ -64,7 +64,7 @@ export function buildOperationalAnalysisReading(
 
     if (deltaPoints > 0) {
       parts.push(
-        `Los puntos punitivos aumentaron en ${deltaPoints} (${pointsPercent > 0 ? '+' : ''}${pointsPercent}%).`
+        `Los puntos aumentaron en ${deltaPoints} (${pointsPercent > 0 ? '+' : ''}${pointsPercent}%).`
       )
     }
 
@@ -94,7 +94,7 @@ export function buildOperationalAnalysisReading(
 
     if (deltaPoints < 0) {
       parts.push(
-        `Los puntos punitivos disminuyeron en ${Math.abs(deltaPoints)} (${pointsPercent}%).`
+        `Los puntos disminuyeron en ${Math.abs(deltaPoints)} (${pointsPercent}%).`
       )
     }
 

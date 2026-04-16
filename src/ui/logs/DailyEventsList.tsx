@@ -46,7 +46,7 @@ export function DailyEventsList({
   const handleDeleteGroup = async (person: PersonInGroup, type: IncidentType) => {
     const styleInfo = INCIDENT_STYLES[type] ?? INCIDENT_STYLES['OTRO']
     const confirmed = await showConfirm({
-      title: `¿Eliminar ${person.count} incidencia(s)?`,
+      title: `¿Eliminar ${person.count} incidencias?`,
       description: `Esto eliminará permanentemente todas las incidencias de tipo "${styleInfo.label}" registradas para ${person.repName} en este día.`,
       intent: 'danger',
       confirmLabel: 'Sí, eliminar',

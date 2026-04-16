@@ -35,11 +35,38 @@ export function OperationalAnalysisRiskPanels({
         >
           <AlertTriangle size={18} color="var(--text-danger)" />
           <h5 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>
-            Representantes a revisar ({analysis.risk.needsAttention.length})
+            Representantes a revisar
           </h5>
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: '999px',
+              fontSize: '12px',
+              fontWeight: 700,
+              background: 'rgba(192, 85, 61, 0.12)',
+              color: 'var(--text-danger)',
+              border: '1px solid rgba(192, 85, 61, 0.2)',
+            }}
+          >
+            {analysis.risk.needsAttention.length}
+          </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {analysis.risk.needsAttention.slice(0, 5).map(representative => (
+          {analysis.risk.needsAttention.length === 0 ? (
+            <div
+              style={{
+                minHeight: '120px',
+                display: 'grid',
+                placeItems: 'center',
+                textAlign: 'center',
+                color: 'var(--text-muted)',
+                fontSize: '13px',
+              }}
+            >
+              Sin representantes a revisar en este período
+            </div>
+          ) : (
+            analysis.risk.needsAttention.slice(0, 5).map(representative => (
             <div
               key={representative.id}
               style={{
@@ -59,7 +86,8 @@ export function OperationalAnalysisRiskPanels({
                 {representative.points} pts
               </span>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -83,8 +111,21 @@ export function OperationalAnalysisRiskPanels({
         >
           <Award size={18} color="var(--text-success)" />
           <h5 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>
-            Representantes con mejor resultado ({analysis.risk.topPerformers.length})
+            Representantes con mejor resultado
           </h5>
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: '999px',
+              fontSize: '12px',
+              fontWeight: 700,
+              background: 'rgba(47, 125, 96, 0.12)',
+              color: 'var(--text-success)',
+              border: '1px solid rgba(47, 125, 96, 0.2)',
+            }}
+          >
+            {analysis.risk.topPerformers.length}
+          </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {analysis.risk.topPerformers.slice(0, 5).map(representative => (
