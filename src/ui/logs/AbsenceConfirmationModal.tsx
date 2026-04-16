@@ -51,7 +51,7 @@ export function AbsenceConfirmationModal({
               fontWeight: 700,
             }}
           >
-            ⚠ Impacto estimado: 2 punto(s) sobre el registro del día
+            ⚠ Impacto estimado: 2 puntos sobre el registro del día
           </p>
         </div>
 

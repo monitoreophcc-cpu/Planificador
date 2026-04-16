@@ -110,9 +110,9 @@ export function PersonDetailSummaryStats({
         <Stat label="Tardanzas" value={tardiness} />
         <Stat label="Errores" value={errors} />
         <Stat label="Puntos" value={points} />
-        <Stat label="Transacciones (mes)" value={transactionsCount} />
+        <Stat label="Transacciones del mes" value={transactionsCount} />
         <Stat label="Ventas (mes)" value={formatCurrency(salesAmount)} />
-        <Stat label="Ticket prom. (mes)" value={formatCurrency(averageTicket)} />
+        <Stat label="Ticket promedio" value={formatCurrency(averageTicket)} />
       </div>
       <div style={{ textAlign: 'right' }}>
         <div

@@ -255,7 +255,7 @@ export function PlanningCoverageChart({
                       height: `${barHeight}px`,
                       borderRadius: '999px',
                       background: toneColor(tone),
-                      border: isToday ? '2px solid var(--color-primary)' : '2px solid transparent',
+                      border: '2px solid transparent',
                       boxShadow: `0 10px 24px ${tone === 'danger' ? 'rgba(204, 71, 71, 0.18)' : tone === 'warning' ? 'rgba(213, 146, 34, 0.18)' : 'rgba(32, 195, 139, 0.16)'}`,
                     }}
                   />
@@ -263,27 +263,13 @@ export function PlanningCoverageChart({
                 <div
                   style={{
                     textAlign: 'center',
-                    color: isToday ? PLANNER_THEME.info : PLANNER_THEME.textMuted,
-                    fontWeight: isToday ? 700 : 500,
+                    color: isToday ? 'var(--color-primary)' : PLANNER_THEME.textMuted,
+                    fontWeight: isToday ? 600 : 500,
                     fontSize: '12px',
                     opacity: 0.8,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
                   }}
                 >
                   <span>{dayLabel}</span>
-                  {isToday && (
-                    <span
-                      style={{
-                        width: '20px',
-                        height: '2px',
-                        borderRadius: '999px',
-                        background: 'var(--color-primary)',
-                        alignSelf: 'center',
-                      }}
-                    />
-                  )}
                 </div>
               </div>
             )

@@ -121,7 +121,7 @@ export function DailyLogAttentionPanel({
           }}
         >
           <SummaryChip label={`${rows.length} fichas visibles`} />
-          <SummaryChip label={`${metrics.find(metric => metric.id === 'incidents')?.value ?? '0'} incidencia(s)`} />
+          <SummaryChip label={`${metrics.find(metric => metric.id === 'incidents')?.value ?? '0'} incidencias`} />
         </div>
       </div>
 

@@ -128,7 +128,7 @@ export function DailyLogSidebarControls({
               title="Gestionar coberturas activas"
             >
               <Shield size={12} />
-              {activeCoveragesCount} activa(s)
+              {activeCoveragesCount} activas
             </button>
           )}
         </div>

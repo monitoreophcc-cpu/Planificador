@@ -83,6 +83,8 @@ export default function AgentPerformanceTable({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  const formatDisplayName = (value: string) =>
+    value.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
   const activeRepresentatives = useMemo(
     () =>
       representatives
@@ -277,7 +279,13 @@ export default function AgentPerformanceTable({
                                   : 'text-slate-900'
                             )}
                           >
-                            {agent.agente}
+                            {agent.tipo === 'agente' ? (
+                              <span style={{ textTransform: 'capitalize' }}>
+                                {formatDisplayName(agent.agente)}
+                              </span>
+                            ) : (
+                              agent.agente
+                            )}
                           </span>
                           {agent.tipo === 'agente' ? (
                             (() => {

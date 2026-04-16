@@ -22,6 +22,11 @@ export function DailyLogDateNavigator({
   date,
   onDateChange,
 }: DailyLogDateNavigatorProps) {
+  const formatWithLeadingCapital = (value: Date, pattern: string) => {
+    const formatted = format(value, pattern, { locale: es })
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+  }
+
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [displayMonth, setDisplayMonth] = useState(date)
 
@@ -68,10 +73,9 @@ export function DailyLogDateNavigator({
           textAlign: 'center',
           padding: '0 14px',
           letterSpacing: '-0.01em',
-          textTransform: 'capitalize',
         }}
       >
-        {format(date, "EEEE, d 'de' MMMM", { locale: es })}
+        {formatWithLeadingCapital(date, "EEEE, d 'de' MMMM")}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -139,11 +143,10 @@ export function DailyLogDateNavigator({
                 fontSize: '13px',
                 fontWeight: 700,
                 color: 'var(--text-main)',
-                textTransform: 'capitalize',
                 letterSpacing: '-0.01em',
               }}
             >
-              {format(displayMonth, "MMMM 'de' yyyy", { locale: es })}
+              {formatWithLeadingCapital(displayMonth, "MMMM 'de' yyyy")}
             </div>
 
             <button

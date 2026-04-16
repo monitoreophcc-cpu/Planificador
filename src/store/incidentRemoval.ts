@@ -79,7 +79,7 @@ export function removeBulkIncidents(
 
   addHistoryEvent({
     category: 'INCIDENT',
-    title: `${incidentsToRemove.length} incidencia(s) eliminada(s)`,
+    title: `${incidentsToRemove.length} incidencias eliminada(s)`,
     subject: representativeName,
     description: `Tipo: ${incidentLabel(incidentsToRemove[0].type)}`,
     metadata: { incidents: incidentsToRemove },

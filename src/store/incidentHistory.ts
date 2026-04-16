@@ -2,6 +2,7 @@ import React from 'react'
 import type { ValidationResult } from '@/domain/incidents/validateIncident'
 import type { Incident, Representative } from '@/domain/types'
 import { incidentLabel, repName } from '@/application/presenters/humanizeStore'
+import { calculatePoints } from '@/domain/analytics/computeMonthlySummary'
 import type { ConfirmOptions } from './useAppUiStore'
 import type { AppState } from './useAppStore'
 import type { IncidentRuntime } from './incidentRuntime'
@@ -36,39 +37,71 @@ export function buildIncidentConfirmOptions({
   }
 
   const isOverride = incident.type === 'OVERRIDE'
+  const showImpactCallout =
+    incident.type !== 'OVERRIDE' &&
+    incident.type !== 'LICENCIA' &&
+    incident.type !== 'VACACIONES'
   const representativeName = repName(representatives, incident.representativeId)
   const label = incidentLabel(incident.type)
+  const impactPoints = showImpactCallout ? calculatePoints(incident) : 0
 
   return {
     title: isOverride ? 'Confirmar cambio de turno' : 'Confirmar Incidencia',
     description: React.createElement(
-      'span',
-      null,
-      'Registrar ',
-      isOverride
-        ? 'un cambio de turno'
-        : React.createElement(
-            'strong',
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+        },
+      },
+      React.createElement(
+        'span',
+        null,
+        'Registrar ',
+        isOverride
+          ? 'un cambio de turno'
+          : React.createElement(
+              'strong',
+              {
+                style: {
+                  fontWeight: 700,
+                  color: 'var(--text-main)',
+                },
+              },
+              label
+            ),
+        ' a ',
+        React.createElement(
+          'strong',
+          {
+            style: {
+              fontWeight: 700,
+              color: 'var(--text-main)',
+            },
+          },
+          representativeName
+        ),
+        '.'
+      ),
+      showImpactCallout
+        ? React.createElement(
+            'div',
             {
               style: {
+                padding: '10px 12px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-warning)',
+                background: 'var(--bg-warning)',
+                color: 'var(--text-warning)',
                 fontWeight: 700,
-                color: 'var(--text-main)',
+                fontSize: '0.88rem',
               },
             },
-            label
-          ),
-      ' a ',
-      React.createElement(
-        'strong',
-        {
-          style: {
-            fontWeight: 700,
-            color: 'var(--text-main)',
-          },
-        },
-        representativeName
-      ),
-      '.'
+            `⚠ Impacto estimado: ${impactPoints} puntos sobre el registro del día`
+          )
+        : null
     ),
     intent: 'info',
     confirmLabel: isOverride ? 'Aplicar Cambio' : 'Registrar',

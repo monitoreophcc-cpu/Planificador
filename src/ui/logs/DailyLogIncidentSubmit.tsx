@@ -58,7 +58,7 @@ export function DailyLogIncidentSubmit({
       >
         <AlertTriangle size={16} color="var(--text-warning)" />
         <strong style={{ fontSize: '16px', color: 'var(--text-warning)' }}>
-          Impacto: {preview.points} punto(s)
+          Impacto: {preview.points} puntos
         </strong>
       </div>
 
@@ -117,7 +117,7 @@ function buildIncidentPreview({
   if (incidentType === 'LICENCIA' || incidentType === 'VACACIONES') {
     return {
       title: `Registrar ${labelMap[incidentType]} para ${targetName}`,
-      description: `Se aplicará desde ${formattedDate} por ${duration} día(s). Este registro es administrativo y no suma puntos punitivos.`,
+      description: `Se aplicará desde ${formattedDate} por ${duration} días. Este registro es administrativo y no suma puntos.`,
       buttonLabel: `Registrar ${labelMap[incidentType]}`,
       points: 0,
     }

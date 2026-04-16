@@ -32,6 +32,7 @@ export const PlanCell = React.memo(function PlanCell({
   const showPrimaryPill = Boolean(resolved.label)
   const showSecondaryBadge =
     resolved.badge === 'CUBIERTO' || resolved.badge === 'CUBRIENDO'
+  const hideIconForCoveredCell = resolved.badge === 'CUBIERTO'
   const leadingGlyph =
     resolved.label === 'LIC' ? '✦' : resolved.label === 'AUS' ? '!' : ''
 
@@ -151,10 +152,12 @@ export const PlanCell = React.memo(function PlanCell({
       }}
     >
       <div style={{ display: 'flex', gap: 4, alignItems: 'center', minHeight: '16px' }}>
-        {!showPrimaryPill && Icon && <Icon size={15} strokeWidth={2.4} />}
+        {!showPrimaryPill && Icon && !hideIconForCoveredCell && (
+          <Icon size={15} strokeWidth={2.4} />
+        )}
         {showPrimaryPill && (
           <span style={primaryPillStyle}>
-            {leadingGlyph}
+            {resolved.label === 'OFF' ? '' : leadingGlyph}
             {resolved.label}
           </span>
         )}
