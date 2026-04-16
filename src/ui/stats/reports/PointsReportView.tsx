@@ -1,5 +1,6 @@
 'use client'
 
+import { useAccess } from '@/hooks/useAccess'
 import { ReorderAgentsModal } from './components/ReorderAgentsModal'
 import { PointsReportActions } from './PointsReportActions'
 import { PointsReportCopyToast } from './PointsReportCopyToast'
@@ -8,6 +9,7 @@ import { PointsReportTable } from './PointsReportTable'
 import { usePointsReportView } from './usePointsReportView'
 
 export function PointsReportView() {
+  const { canEditData } = useAccess()
   const {
     copiedTitle,
     monthLabel,
@@ -37,7 +39,10 @@ export function PointsReportView() {
         onNext={goToNextMonth}
       />
 
-      <PointsReportActions onOpenReorderModal={openReorderModal} />
+      <PointsReportActions
+        canEditData={canEditData}
+        onOpenReorderModal={openReorderModal}
+      />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
         <PointsReportTable

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAccess } from '@/hooks/useAccess'
 import type {
   DayInfo,
   ShiftType,
@@ -16,8 +17,10 @@ import { usePlanningSectionDerivedData } from './usePlanningSectionDerivedData'
 import { usePlanningSectionActions } from './usePlanningSectionActions'
 import { PlanningSectionContent } from './PlanningSectionContent'
 import { PlanningSectionModals } from './PlanningSectionModals'
+import { ReadOnlyNotice } from '@/ui/system/ReadOnlyNotice'
 
 export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings: () => void }) {
+  const { canEditData, isReadOnly } = useAccess()
   const {
     representatives,
     coverageRules,
@@ -120,6 +123,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
     >
       <PlanningSectionViewTabs
         activeShift={activeShift}
+        canEditData={canEditData}
         viewMode={viewMode}
         onSelectDay={() => {
           setActiveShift('DAY')
@@ -133,6 +137,10 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         onOpenSwapManager={handleOpenSwapManager}
       />
 
+      {isReadOnly ? (
+        <ReadOnlyNotice description="Puedes recorrer semanas, revisar coberturas y consultar la planificación, pero no gestionar cambios ni editar excepciones." />
+      ) : null}
+
       <PlanningSectionContent
         activeShift={activeShift}
         assignmentsMap={assignmentsMap}
@@ -140,6 +148,7 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         agentsToRender={agentsToRender}
         incidents={incidents}
         isCurrentWeek={isCurrentWeek}
+        isReadOnly={!canEditData}
         onEditDay={setEditingDay}
         onGoToday={handleGoToday}
         onNextWeek={handleNextWeek}

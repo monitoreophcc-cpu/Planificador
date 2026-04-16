@@ -1,7 +1,9 @@
 import type { StateCreator } from 'zustand'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import { generateMonthDays } from '@/domain/calendar/state'
 import type { CoverageRule, DayInfo, ISODate, SpecialDay } from '@/domain/types'
 import type { AppState } from './useAppStore'
+import { canCurrentUserEditData } from './useAccessStore'
 
 export interface PlanningCalendarSlice {
   planningAnchorDate: ISODate
@@ -66,6 +68,11 @@ export const createPlanningCalendarSlice: StateCreator<
   },
 
   addOrUpdateCoverageRule: rule => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] addOrUpdateCoverageRule bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     get().addHistoryEvent({
       category: 'RULE',
       title: 'Regla de cobertura actualizada',
@@ -92,6 +99,11 @@ export const createPlanningCalendarSlice: StateCreator<
   },
 
   removeCoverageRule: id => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] removeCoverageRule bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     const { addHistoryEvent, coverageRules } = get()
     const ruleToRemove = coverageRules.find(rule => rule.id === id)
 
@@ -110,6 +122,11 @@ export const createPlanningCalendarSlice: StateCreator<
   },
 
   addOrUpdateSpecialDay: day => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] addOrUpdateSpecialDay bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     get().addHistoryEvent({
       category: 'CALENDAR',
       title: 'Día especial actualizado',
@@ -131,6 +148,11 @@ export const createPlanningCalendarSlice: StateCreator<
   },
 
   removeSpecialDay: date => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] removeSpecialDay bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     get().addHistoryEvent({
       category: 'CALENDAR',
       title: 'Excepción de día eliminada',

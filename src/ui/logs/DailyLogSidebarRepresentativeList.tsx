@@ -17,6 +17,7 @@ type DailyLogSidebarRepresentativeListProps = {
   bulkMode: DailyLogBulkMode | null
   bulkNote: string
   bulkSelectedRepIds: string[]
+  canEditData?: boolean
   effectiveAdministrativeMode: boolean
   hideAbsent: boolean
   incidentType: IncidentType
@@ -45,6 +46,7 @@ export function DailyLogSidebarRepresentativeList({
   bulkMode,
   bulkNote,
   bulkSelectedRepIds,
+  canEditData = true,
   effectiveAdministrativeMode,
   hideAbsent,
   incidentType,
@@ -96,6 +98,7 @@ export function DailyLogSidebarRepresentativeList({
       <DailyLogSidebarControls
         activeCoveragesCount={activeCoveragesCount}
         bulkMode={bulkMode}
+        canEditData={canEditData}
         effectiveAdministrativeMode={effectiveAdministrativeMode}
         filteredCount={filteredRows.length}
         focusMode={focusMode}
@@ -125,7 +128,7 @@ export function DailyLogSidebarRepresentativeList({
           onBulkCustomPointsChange={onBulkCustomPointsChange}
           onBulkNoteChange={onBulkNoteChange}
           onCancel={onCloseBulkMode}
-          onSubmit={onSubmitBulkRegistration}
+          onSubmit={canEditData ? onSubmitBulkRegistration : () => undefined}
         />
       ) : null}
 
@@ -174,9 +177,11 @@ export function DailyLogSidebarRepresentativeList({
           filteredRows.map(row => (
             <DailyLogSidebarRepresentativeRow
               key={row.id}
-              bulkMode={bulkMode}
+              bulkMode={canEditData ? bulkMode : null}
               bulkSelected={bulkSelectedRepIds.includes(row.id)}
-              onToggleBulkRepresentative={onToggleBulkRepresentative}
+              onToggleBulkRepresentative={
+                canEditData ? onToggleBulkRepresentative : () => undefined
+              }
               row={row}
               selected={selectedRepId === row.id}
               onSelectRepresentative={onSelectRepresentative}

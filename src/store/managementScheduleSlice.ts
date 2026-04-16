@@ -1,10 +1,12 @@
 import { StateCreator } from 'zustand'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import { ISODate } from '@/domain/types'
 import {
     ManagerDuty,
     ManagerPlanDay,
     ManagerWeeklyPlan,
 } from '@/domain/management/types'
+import { canCurrentUserEditData } from './useAccessStore'
 
 export interface ManagementScheduleSlice {
     managementSchedules: Record<string, ManagerWeeklyPlan>
@@ -41,6 +43,11 @@ export const createManagementScheduleSlice: StateCreator<
     managementSchedules: {},
 
     setManagerDuty: (managerId, date, duty, note) => {
+        if (!canCurrentUserEditData()) {
+            console.warn('[Access] setManagerDuty bloqueado:', READ_ONLY_ACTION_MESSAGE)
+            return
+        }
+
         set((state: any) => {
             if (!state.managementSchedules[managerId]) {
                 state.managementSchedules[managerId] = { managerId, days: {} }
@@ -54,6 +61,11 @@ export const createManagementScheduleSlice: StateCreator<
     },
 
     clearManagerDuty: (managerId, date) => {
+        if (!canCurrentUserEditData()) {
+            console.warn('[Access] clearManagerDuty bloqueado:', READ_ONLY_ACTION_MESSAGE)
+            return
+        }
+
         set((state: any) => {
             const schedule = state.managementSchedules[managerId]
             if (!schedule) return
@@ -67,6 +79,11 @@ export const createManagementScheduleSlice: StateCreator<
     },
 
     copyManagerWeek: (fromDates, toDates) => {
+        if (!canCurrentUserEditData()) {
+            console.warn('[Access] copyManagerWeek bloqueado:', READ_ONLY_ACTION_MESSAGE)
+            return
+        }
+
         if (fromDates.length !== toDates.length) return
 
         set((state: ManagementScheduleSlice) => {

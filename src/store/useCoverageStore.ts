@@ -13,11 +13,13 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import { Coverage } from '@/domain/planning/coverage'
 import { ISODate, RepresentativeId } from '@/domain/types'
 import { ShiftType } from '@/domain/calendar/types'
 import { nanoid } from 'nanoid'
 import { useAppStore } from './useAppStore'
+import { canCurrentUserEditData } from './useAccessStore'
 
 const COVERAGE_STORE_VERSION = 1
 
@@ -49,6 +51,10 @@ export const useCoverageStore = create<CoverageState>()(
             coverages: [],
 
             createCoverage: (input) => {
+                if (!canCurrentUserEditData()) {
+                    throw new Error(READ_ONLY_ACTION_MESSAGE)
+                }
+
                 // ✅ VALIDATION: Check for existing active coverage
                 const existingCoverage = get().coverages.find(c =>
                     c.status === 'ACTIVE' &&
@@ -97,6 +103,11 @@ export const useCoverageStore = create<CoverageState>()(
             },
 
             cancelCoverage: (coverageId) => {
+                if (!canCurrentUserEditData()) {
+                    console.warn('[Access] cancelCoverage bloqueado:', READ_ONLY_ACTION_MESSAGE)
+                    return
+                }
+
                 set(state => ({
                     coverages: state.coverages.map(c =>
                         c.id === coverageId
@@ -125,6 +136,11 @@ export const useCoverageStore = create<CoverageState>()(
             },
 
             replaceCoverages: (coverages) => {
+                if (!canCurrentUserEditData()) {
+                    console.warn('[Access] replaceCoverages bloqueado:', READ_ONLY_ACTION_MESSAGE)
+                    return
+                }
+
                 set({
                     coverages: Array.isArray(coverages) ? coverages : []
                 })

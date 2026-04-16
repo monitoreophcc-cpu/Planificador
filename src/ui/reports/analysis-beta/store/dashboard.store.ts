@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { get, set, del } from 'idb-keyval';
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access';
+import { canCurrentUserEditData } from '@/store/useAccessStore';
 import type {
   AnsweredCall,
   AbandonedCall,
@@ -186,6 +188,10 @@ const rebuildDailyHistory = (state: Pick<
   return { allDates, nextHistory };
 };
 
+function canMutateDashboardData(): boolean {
+  return canCurrentUserEditData();
+}
+
 export const useDashboardStore = create<DashboardState>()(
   persist(
     (set, getStore) => ({
@@ -218,6 +224,11 @@ export const useDashboardStore = create<DashboardState>()(
       _hasHydrated: false,
 
       addAnsweredCalls: (newData, dates) => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] addAnsweredCalls bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
         const current = getStore().answeredCalls;
         // Filter out existing records for the dates being uploaded (Upsert logic)
         const filtered = current.filter(r => !dates.includes(r.fecha));
@@ -250,6 +261,11 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       addAbandonedCalls: (data, dates) => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] addAbandonedCalls bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
         const currentClean = getStore().abandonedCalls;
         const currentRaw = getStore().rawAbandonedCalls;
         
@@ -287,6 +303,11 @@ export const useDashboardStore = create<DashboardState>()(
       },
 
       addTransactions: (data, dates) => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] addTransactions bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
         const currentClean = getStore().transactions;
         const currentRaw = getStore().rawTransactions;
         
@@ -347,7 +368,12 @@ export const useDashboardStore = create<DashboardState>()(
       clearComparison: () => set({ comparisonResult: null }),
       setActiveWorkspaceView: (view) => set({ activeWorkspaceView: view }),
       setCommercialView: (view) => set({ commercialView: view }),
-      upsertManualRepresentativeLink: (link) =>
+      upsertManualRepresentativeLink: (link) => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] upsertManualRepresentativeLink bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
         set((state) => ({
           manualRepresentativeLinks: [
             ...state.manualRepresentativeLinks.filter(
@@ -355,15 +381,27 @@ export const useDashboardStore = create<DashboardState>()(
             ),
             link,
           ],
-        })),
-      removeManualRepresentativeLink: (agentName) =>
+        }));
+      },
+      removeManualRepresentativeLink: (agentName) => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] removeManualRepresentativeLink bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
         set((state) => ({
           manualRepresentativeLinks: state.manualRepresentativeLinks.filter(
             (item) => item.agentName !== agentName
           ),
-        })),
+        }));
+      },
 
-      clearCurrentView: () =>
+      clearCurrentView: () => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] clearCurrentView bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
         set({
           dataDate: null,
           comparisonConfig: initialComparisonConfig,
@@ -373,29 +411,42 @@ export const useDashboardStore = create<DashboardState>()(
           isAuditVisible: false,
           kpis: initialKpis,
           kpisByShift: { Día: initialShiftKPIs, Noche: initialShiftKPIs },
-        }),
+        });
+      },
       
-      clearAllData: () => set({
-        answeredCalls: [],
-        abandonedCalls: [],
-        rawAbandonedCalls: [],
-        transactions: [],
-        rawTransactions: [],
-        availableDates: [],
-        dailyHistory: {},
-        dataDate: null,
-        comparisonConfig: initialComparisonConfig,
-        comparisonResult: null,
-        comparisonPreset: 'manual',
-        selectedHour: null,
-        activeWorkspaceView: 'executive',
-        commercialView: 'day',
-        isAuditVisible: false,
-        kpis: initialKpis,
-        kpisByShift: { Día: initialShiftKPIs, Noche: initialShiftKPIs },
-      }),
+      clearAllData: () => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] clearAllData bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
+        set({
+          answeredCalls: [],
+          abandonedCalls: [],
+          rawAbandonedCalls: [],
+          transactions: [],
+          rawTransactions: [],
+          availableDates: [],
+          dailyHistory: {},
+          dataDate: null,
+          comparisonConfig: initialComparisonConfig,
+          comparisonResult: null,
+          comparisonPreset: 'manual',
+          selectedHour: null,
+          activeWorkspaceView: 'executive',
+          commercialView: 'day',
+          isAuditVisible: false,
+          kpis: initialKpis,
+          kpisByShift: { Día: initialShiftKPIs, Noche: initialShiftKPIs },
+        });
+      },
 
       removeHistoryDate: (date) => {
+        if (!canMutateDashboardData()) {
+          console.warn('[Access] removeHistoryDate bloqueado:', READ_ONLY_ACTION_MESSAGE);
+          return;
+        }
+
         if (!date) return;
         
         const filteredAns = getStore().answeredCalls.filter(r => r.fecha !== date);

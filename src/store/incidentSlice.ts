@@ -1,8 +1,10 @@
 import type { StateCreator } from 'zustand'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import type { Incident, IncidentInput } from '@/domain/types'
 import type { VacationConfirmationPayload } from './useAppUiStore'
 import { useAppUiStore } from './useAppUiStore'
 import type { AppState } from './useAppStore'
+import { canCurrentUserEditData } from './useAccessStore'
 import {
   applyIncidentToState,
   assertIncidentInvariants,
@@ -37,6 +39,10 @@ export const createIncidentSlice: StateCreator<
   IncidentSlice
 > = (set, get) => ({
   addIncident: async (incidentData, skipConfirm = false) => {
+    if (!canCurrentUserEditData()) {
+      return { ok: false, reason: READ_ONLY_ACTION_MESSAGE }
+    }
+
     const {
       representatives,
       incidents,
@@ -123,10 +129,30 @@ export const createIncidentSlice: StateCreator<
     return { ok: true, newId: newIncident.id }
   },
 
-  removeIncident: (id, silent = false) =>
-    removeSingleIncident(get, set, id, silent),
+  removeIncident: (id, silent = false) => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] removeIncident bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
 
-  removeIncidents: ids => removeBulkIncidents(get, set, ids),
+    removeSingleIncident(get, set, id, silent)
+  },
 
-  updateIncident: (id, updates) => updateIncidentRecord(set, id, updates),
+  removeIncidents: ids => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] removeIncidents bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
+    removeBulkIncidents(get, set, ids)
+  },
+
+  updateIncident: (id, updates) => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] updateIncident bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
+    updateIncidentRecord(set, id, updates)
+  },
 })

@@ -6,6 +6,7 @@ import { DailyLogSidebarShiftPanel } from './DailyLogSidebarShiftPanel'
 
 type DailyLogSidebarProps = {
   activeShift: 'DAY' | 'NIGHT'
+  canEditData?: boolean
   onActiveShiftChange: (shift: 'DAY' | 'NIGHT') => void
   dayPresent: number
   dayPlanned: number
@@ -39,6 +40,7 @@ type DailyLogSidebarProps = {
 
 export function DailyLogSidebar({
   activeShift,
+  canEditData = true,
   onActiveShiftChange,
   dayPresent,
   dayPlanned,
@@ -109,6 +111,7 @@ export function DailyLogSidebar({
         bulkMode={bulkMode}
         bulkNote={bulkNote}
         bulkSelectedRepIds={bulkSelectedRepIds}
+        canEditData={canEditData}
         effectiveAdministrativeMode={effectiveAdministrativeMode}
         hideAbsent={hideAbsent}
         incidentType={incidentType}

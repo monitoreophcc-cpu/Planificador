@@ -1,7 +1,9 @@
 import type { StateCreator } from 'zustand'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import type { HistoryEvent } from '@/domain/history/types'
 import type { SpecialSchedule } from '@/domain/types'
 import type { AppState } from './useAppStore'
+import { canCurrentUserEditData } from './useAccessStore'
 
 export interface SpecialScheduleSlice {
   addSpecialSchedule: (
@@ -53,6 +55,10 @@ export const createSpecialScheduleSlice: StateCreator<
   SpecialScheduleSlice
 > = (set, get) => ({
   addSpecialSchedule: data => {
+    if (!canCurrentUserEditData()) {
+      return { success: false, message: READ_ONLY_ACTION_MESSAGE }
+    }
+
     const state = get()
 
     if (data.from > data.to) {
@@ -155,6 +161,10 @@ export const createSpecialScheduleSlice: StateCreator<
   },
 
   updateSpecialSchedule: (id, updates) => {
+    if (!canCurrentUserEditData()) {
+      return { success: false, message: READ_ONLY_ACTION_MESSAGE }
+    }
+
     const state = get()
     const index = state.specialSchedules.findIndex(schedule => schedule.id === id)
     if (index === -1) {
@@ -204,6 +214,11 @@ export const createSpecialScheduleSlice: StateCreator<
   },
 
   removeSpecialSchedule: id => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] removeSpecialSchedule bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     set(state => {
       state.specialSchedules = state.specialSchedules.filter(
         schedule => schedule.id !== id

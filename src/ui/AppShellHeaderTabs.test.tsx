@@ -25,6 +25,7 @@ describe('AppShellHeaderTabs', () => {
       root.render(
         <AppShellHeaderTabs
           activeView="SETTINGS"
+          canAccessSettings
           onViewChange={() => undefined}
         />
       )
@@ -32,5 +33,19 @@ describe('AppShellHeaderTabs', () => {
 
     expect(container.textContent).toContain('Ajustes')
     expect(container.textContent).not.toContain('Configuración')
+  })
+
+  it('hides Ajustes when the user cannot access settings', async () => {
+    await act(async () => {
+      root.render(
+        <AppShellHeaderTabs
+          activeView="DAILY_LOG"
+          canAccessSettings={false}
+          onViewChange={() => undefined}
+        />
+      )
+    })
+
+    expect(container.textContent).not.toContain('Ajustes')
   })
 })

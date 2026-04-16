@@ -7,8 +7,10 @@ import { DailyLogToolbar } from './DailyLogToolbar'
 import { DailyLogIncidentForm } from './DailyLogIncidentForm'
 import { DailyLogEventPanels } from './DailyLogEventPanels'
 import { format } from 'date-fns'
+import { useAccess } from '@/hooks/useAccess'
 import { DailyLogModals } from './DailyLogModals'
 import { useDailyLogController } from './useDailyLogController'
+import { ReadOnlyNotice } from '@/ui/system/ReadOnlyNotice'
 
 type DailyLogViewProps = {
   summaryMeta: {
@@ -21,6 +23,7 @@ type DailyLogViewProps = {
 
 export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
   const controller = useDailyLogController()
+  const { canEditData, isReadOnly } = useAccess()
   const [isDashboardExpanded, setIsDashboardExpanded] = useState(false)
   const formRef = useRef<HTMLElement | null>(null)
   const previousSelectedRepIdRef = useRef<string | null>(null)
@@ -133,7 +136,11 @@ export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
           'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)',
         border: '1px solid rgba(255,255,255,0.18)',
       }}
-    >
+      >
+      {isReadOnly ? (
+        <ReadOnlyNotice description="Puedes revisar incidencias, coberturas y el estado del día, pero no registrar nuevos eventos ni ejecutar cambios operativos." />
+      ) : null}
+
       <DailyLogToolbar
         date={controller.dateForLog}
         filterMode={controller.filterMode}
@@ -173,6 +180,7 @@ export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
       >
         <DailyLogSidebar
           activeShift={controller.activeShift}
+          canEditData={canEditData}
           onActiveShiftChange={controller.setActiveShift}
           dayPresent={controller.dailyStats.dayPresent}
           dayPlanned={controller.dailyStats.dayPlanned}
@@ -226,6 +234,7 @@ export function DailyLogView({ summaryMeta }: DailyLogViewProps) {
             duration={controller.duration}
             incidentType={controller.incidentType}
             note={controller.note}
+            readOnly={!canEditData}
             onCustomPointsChange={controller.setCustomPoints}
             onDurationChange={controller.setDuration}
             onIncidentTypeChange={controller.setIncidentType}

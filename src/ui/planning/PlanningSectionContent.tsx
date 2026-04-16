@@ -21,6 +21,7 @@ type PlanningSectionContentProps = {
   agentsToRender: Representative[]
   incidents: Incident[]
   isCurrentWeek: boolean
+  isReadOnly?: boolean
   onEditDay: React.Dispatch<React.SetStateAction<DayInfo | null>>
   onGoToday: () => void
   onNextWeek: () => void
@@ -49,6 +50,7 @@ export function PlanningSectionContent({
   agentsToRender,
   incidents,
   isCurrentWeek,
+  isReadOnly = false,
   onEditDay,
   onGoToday,
   onNextWeek,
@@ -74,6 +76,7 @@ export function PlanningSectionContent({
       agents={agentsToRender}
       incidents={incidents}
       isCurrentWeek={isCurrentWeek}
+      isReadOnly={isReadOnly}
       representatives={representatives}
       weekDays={weekDays}
       weekLabel={weekLabel}

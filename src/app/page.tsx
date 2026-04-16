@@ -2,33 +2,78 @@
 
 import AppShellContent from '../ui/AppShell'
 import { ToastProvider } from '@/ui/components/ToastProvider'
+import { useAccess } from '@/hooks/useAccess'
 import { EditModeProvider } from '@/hooks/useEditMode'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { buildNextPath } from '@/lib/auth/redirects'
 import { useSession } from '@/hooks/useSession'
+import { useAccessStore } from '@/store/useAccessStore'
 import { useSyncHealthStore } from '@/store/useSyncHealthStore'
 
 export default function Page() {
-  const { user, loading: sessionLoading } = useSession()
+  const { user, loading: sessionLoading, signOut } = useSession()
+  const { error: accessError, hasAuthenticatedAppAccess, status: accessStatus } =
+    useAccess()
+  const userId = user?.id ?? null
   const router = useRouter()
   const pathname = usePathname()
   const [isReady, setIsReady] = useState(false)
   const [bootstrapError, setBootstrapError] = useState<string | null>(null)
+  const bootstrapAuthenticatedAccess = useAccessStore(
+    state => state.bootstrapAuthenticatedAccess
+  )
+  const clearAccess = useAccessStore(state => state.clearAccess)
 
   useEffect(() => {
-    if (sessionLoading || user) {
+    if (sessionLoading || userId) {
       return
     }
 
+    clearAccess()
     const search =
       typeof window === 'undefined' ? '' : window.location.search
     const nextPath = buildNextPath(pathname, search)
     router.replace(`/login?next=${encodeURIComponent(nextPath)}`)
-  }, [pathname, router, sessionLoading, user])
+  }, [clearAccess, pathname, router, sessionLoading, userId])
 
   useEffect(() => {
-    if (sessionLoading || !user) {
+    if (sessionLoading) {
+      return
+    }
+
+    if (!userId) {
+      setIsReady(false)
+      return
+    }
+
+    let isActive = true
+
+    setIsReady(false)
+    setBootstrapError(null)
+
+    void bootstrapAuthenticatedAccess(userId).catch(error => {
+      if (!isActive) return
+
+      setBootstrapError(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo validar el acceso de esta cuenta.'
+      )
+    })
+
+    return () => {
+      isActive = false
+    }
+  }, [bootstrapAuthenticatedAccess, sessionLoading, userId])
+
+  useEffect(() => {
+    if (
+      sessionLoading ||
+      !userId ||
+      accessStatus !== 'ready' ||
+      !hasAuthenticatedAppAccess
+    ) {
       return
     }
 
@@ -116,7 +161,7 @@ export default function Page() {
       clearTimeout(saveTimer)
       unsubscribe()
     }
-  }, [sessionLoading, user])
+  }, [accessStatus, hasAuthenticatedAppAccess, sessionLoading, userId])
 
   if (sessionLoading) {
     return (
@@ -136,7 +181,7 @@ export default function Page() {
     )
   }
 
-  if (!user) {
+  if (!userId) {
     return (
       <div
         style={{
@@ -150,6 +195,24 @@ export default function Page() {
         }}
       >
         Redirigiendo al login...
+      </div>
+    )
+  }
+
+  if (accessStatus === 'loading') {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          fontFamily: 'sans-serif',
+          fontSize: '1.2rem',
+          color: '#6b7280',
+        }}
+      >
+        Validando acceso...
       </div>
     )
   }
@@ -197,6 +260,124 @@ export default function Page() {
           >
             Reintentar
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (accessStatus === 'error') {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          fontFamily: 'sans-serif',
+          background: '#f8fafc',
+          padding: '24px',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '480px',
+            width: '100%',
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>
+            No se pudo validar el acceso
+          </h1>
+          <p style={{ margin: '12px 0 0', color: '#4b5563', lineHeight: 1.5 }}>
+            {accessError ?? 'Ocurrió un error inesperado al revisar los permisos.'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: '16px',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#2563eb',
+              color: 'white',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (accessStatus === 'ready' && !hasAuthenticatedAppAccess) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          fontFamily: 'sans-serif',
+          background: '#f8fafc',
+          padding: '24px',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '560px',
+            width: '100%',
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>
+            Tu cuenta no tiene acceso a esta operación
+          </h1>
+          <p style={{ margin: '12px 0 0', color: '#4b5563', lineHeight: 1.6 }}>
+            {accessError ??
+              'Solo el usuario principal y las cuentas de solo lectura habilitadas pueden entrar a la plataforma.'}
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '18px' }}>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid #d1d5db',
+                background: 'white',
+                color: '#111827',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Reintentar
+            </button>
+            <button
+              onClick={() => {
+                void signOut()
+              }}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#2563eb',
+                color: 'white',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       </div>
     )

@@ -1,7 +1,9 @@
 import type { StateCreator } from 'zustand'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import type { SwapEvent, SwapEventInput } from '@/domain/types'
 import { swapDescription } from '@/application/presenters/humanizeStore'
 import type { AppState } from './useAppStore'
+import { canCurrentUserEditData } from './useAccessStore'
 
 export interface SwapSlice {
   addSwap: (data: SwapEventInput) => void
@@ -15,6 +17,11 @@ export const createSwapSlice: StateCreator<
   SwapSlice
 > = (set, get) => ({
   addSwap: data => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] addSwap bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     const { addHistoryEvent, representatives, pushUndo } = get()
     const swap = {
       id: `swap-${crypto.randomUUID()}`,
@@ -55,6 +62,11 @@ export const createSwapSlice: StateCreator<
   },
 
   removeSwap: id => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] removeSwap bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     set(state => {
       state.swaps = state.swaps.filter(swap => swap.id !== id)
     })

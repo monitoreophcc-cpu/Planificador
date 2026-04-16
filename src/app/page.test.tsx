@@ -6,12 +6,20 @@ import Page from './page'
 const mockReplace = jest.fn()
 const mockUseSession = jest.fn()
 const mockInitialize = jest.fn()
+const mockBootstrapAuthenticatedAccess = jest.fn()
+const mockClearAccess = jest.fn()
 const mockSubscribe = jest.fn()
 const mockUnsubscribe = jest.fn()
 const mockStateToPersist = jest.fn((state: unknown) => state)
 const mockSaveState = jest.fn()
 const mockShouldRunAutoBackup = jest.fn(() => false)
 const mockSaveBackupToLocalStorage = jest.fn()
+const mockUseAccess = jest.fn()
+const mockAccessStoreState = {
+  bootstrapAuthenticatedAccess: (...args: unknown[]) =>
+    mockBootstrapAuthenticatedAccess(...args),
+  clearAccess: () => mockClearAccess(),
+}
 
 const mockStoreSnapshot = {
   initialize: mockInitialize,
@@ -28,6 +36,15 @@ jest.mock('@/store/useAppStore', () => ({
 
 jest.mock('@/hooks/useSession', () => ({
   useSession: () => mockUseSession(),
+}))
+
+jest.mock('@/hooks/useAccess', () => ({
+  useAccess: () => mockUseAccess(),
+}))
+
+jest.mock('@/store/useAccessStore', () => ({
+  useAccessStore: (selector: (state: unknown) => unknown) =>
+    selector(mockAccessStoreState),
 }))
 
 jest.mock('next/navigation', () => ({
@@ -78,8 +95,11 @@ describe('Page bootstrap', () => {
     root = createRoot(container)
 
     mockInitialize.mockReset()
+    mockBootstrapAuthenticatedAccess.mockReset()
+    mockClearAccess.mockReset()
     mockReplace.mockReset()
     mockUseSession.mockReset()
+    mockUseAccess.mockReset()
     mockSubscribe.mockReset()
     mockUnsubscribe.mockReset()
     mockStateToPersist.mockClear()
@@ -89,11 +109,23 @@ describe('Page bootstrap', () => {
 
     mockSubscribe.mockReturnValue(mockUnsubscribe)
     mockShouldRunAutoBackup.mockReturnValue(false)
+    mockBootstrapAuthenticatedAccess.mockResolvedValue(undefined)
     mockUseSession.mockReturnValue({
       user: { id: 'user-1' },
       session: { user: { id: 'user-1' } },
       loading: false,
       signOut: jest.fn(),
+    })
+    mockUseAccess.mockReturnValue({
+      status: 'ready',
+      role: 'OWNER',
+      roleLabel: 'Usuario principal',
+      error: null,
+      canEditData: true,
+      canAccessSettings: true,
+      hasAuthenticatedAppAccess: true,
+      isReadOnly: false,
+      dataOwnerUserId: 'user-1',
     })
   })
 
@@ -114,6 +146,7 @@ describe('Page bootstrap', () => {
     })
 
     expect(container.textContent).toContain('APP_SHELL_READY')
+    expect(mockBootstrapAuthenticatedAccess).toHaveBeenCalledWith('user-1')
     expect(mockInitialize).toHaveBeenCalledTimes(1)
     expect(mockSubscribe).toHaveBeenCalledTimes(1)
     expect(mockSaveBackupToLocalStorage).not.toHaveBeenCalled()
@@ -152,6 +185,31 @@ describe('Page bootstrap', () => {
 
     expect(container.textContent).toContain('Redirigiendo al login...')
     expect(mockReplace).toHaveBeenCalledWith('/login?next=%2F')
+    expect(mockClearAccess).toHaveBeenCalledTimes(1)
+    expect(mockInitialize).not.toHaveBeenCalled()
+  })
+
+  it('shows an access denied state when the account is not enabled', async () => {
+    mockUseAccess.mockReturnValue({
+      status: 'ready',
+      role: 'UNASSIGNED',
+      roleLabel: 'Sin acceso',
+      error: 'Tu cuenta todavía no fue habilitada para usar esta plataforma.',
+      canEditData: false,
+      canAccessSettings: false,
+      hasAuthenticatedAppAccess: false,
+      isReadOnly: false,
+      dataOwnerUserId: null,
+    })
+
+    await act(async () => {
+      root.render(React.createElement(Page))
+      await flushEffects()
+    })
+
+    expect(container.textContent).toContain(
+      'Tu cuenta no tiene acceso a esta operación'
+    )
     expect(mockInitialize).not.toHaveBeenCalled()
   })
 })

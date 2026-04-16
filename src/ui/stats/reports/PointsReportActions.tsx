@@ -3,6 +3,7 @@ import type { ShiftType } from '@/domain/types'
 import type { CSSProperties } from 'react'
 
 interface PointsReportActionsProps {
+  canEditData?: boolean
   onOpenReorderModal: (shift: ShiftType) => void
 }
 
@@ -22,8 +23,13 @@ const actionButtonStyle: CSSProperties = {
 }
 
 export function PointsReportActions({
+  canEditData = true,
   onOpenReorderModal,
 }: PointsReportActionsProps) {
+  if (!canEditData) {
+    return null
+  }
+
   return (
     <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
       <button

@@ -27,7 +27,9 @@ import type {
 export type { CloudSnapshot, SyncResult } from './supabase-sync-types'
 export { extractWeeklyPlansFromHistoryEvents } from './supabase-sync-data'
 
-export async function loadFromSupabase(userId: string): Promise<CloudSnapshot> {
+export async function loadFromSupabase(
+  dataOwnerUserId: string
+): Promise<CloudSnapshot> {
   if (isBrowserOffline()) {
     return createEmptySnapshot()
   }
@@ -44,27 +46,27 @@ export async function loadFromSupabase(userId: string): Promise<CloudSnapshot> {
     supabase
       .from('representatives')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', dataOwnerUserId)
       .order('order_index', { ascending: true }),
     supabase
       .from('weekly_plans')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', dataOwnerUserId)
       .order('week_start', { ascending: true }),
     supabase
       .from('incidents')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', dataOwnerUserId)
       .order('start_date', { ascending: true }),
     supabase
       .from('swaps')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', dataOwnerUserId)
       .order('date', { ascending: true }),
     supabase
       .from('coverage_rules')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', dataOwnerUserId)
       .order('updated_at', { ascending: true }),
   ])
 
@@ -90,30 +92,30 @@ export async function loadFromSupabase(userId: string): Promise<CloudSnapshot> {
 
 export async function syncAll(
   storeState: SyncableStoreState,
-  userId: string
+  dataOwnerUserId: string
 ): Promise<SyncResult> {
   const weeklyPlans = extractWeeklyPlansFromHistoryEvents(storeState.historyEvents)
 
   const snapshots: Array<{ table: SyncTable; rows: SyncRow[] }> = [
     {
       table: 'representatives',
-      rows: serializeRepresentatives(storeState.representatives, userId),
+      rows: serializeRepresentatives(storeState.representatives, dataOwnerUserId),
     },
     {
       table: 'weekly_plans',
-      rows: serializeWeeklyPlans(weeklyPlans, userId),
+      rows: serializeWeeklyPlans(weeklyPlans, dataOwnerUserId),
     },
     {
       table: 'incidents',
-      rows: serializeIncidents(storeState.incidents, userId),
+      rows: serializeIncidents(storeState.incidents, dataOwnerUserId),
     },
     {
       table: 'swaps',
-      rows: serializeSwaps(storeState.swaps, userId),
+      rows: serializeSwaps(storeState.swaps, dataOwnerUserId),
     },
     {
       table: 'coverage_rules',
-      rows: serializeCoverageRules(storeState.coverageRules, userId),
+      rows: serializeCoverageRules(storeState.coverageRules, dataOwnerUserId),
     },
   ]
 
@@ -121,18 +123,18 @@ export async function syncAll(
     if (isBrowserOffline()) {
       await Promise.all(
         snapshots.map(snapshot =>
-          enqueuePending(userId, snapshot.table, snapshot.rows)
+          enqueuePending(dataOwnerUserId, snapshot.table, snapshot.rows)
         )
       )
 
       return { success: false, error: 'offline_pending_sync' }
     }
 
-    await flushPendingQueue(userId)
+    await flushPendingQueue(dataOwnerUserId)
 
     const results = await Promise.all(
       snapshots.map(snapshot =>
-        syncRowsSnapshot(userId, snapshot.table, snapshot.rows)
+        syncRowsSnapshot(dataOwnerUserId, snapshot.table, snapshot.rows)
       )
     )
 

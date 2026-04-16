@@ -8,7 +8,7 @@ import type {
   WeeklyPlan,
 } from '@/domain/types'
 import type { HistoryEvent } from '@/domain/history/types'
-import { createClient } from '@/lib/supabase/client'
+import { useAccessStore } from './useAccessStore'
 import {
   extractWeeklyPlansFromHistoryEvents,
   loadFromSupabase,
@@ -42,6 +42,16 @@ let watchedCloudSignature: string | null = null
 let lastSyncedCloudSignature: string | null = null
 
 const REMOTE_REFRESH_INTERVAL_MS = 15000
+
+function getSharedAccessState() {
+  const accessState = useAccessStore.getState()
+
+  return {
+    canEditData: accessState.canEditData,
+    dataOwnerUserId: accessState.dataOwnerUserId,
+    hasAuthenticatedAppAccess: accessState.hasAuthenticatedAppAccess,
+  }
+}
 
 async function readPendingSummaryForUser(userId?: string) {
   return getPendingQueueSummary(userId)
@@ -219,26 +229,32 @@ async function executeCloudSync(
   const syncHealth = useSyncHealthStore.getState()
 
   try {
-    const supabase = createClient()
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    const userId = session?.user.id ?? undefined
-    const initialPendingSummary = await readPendingSummaryForUser(userId)
+    const accessState = getSharedAccessState()
+    const initialPendingSummary = await readPendingSummaryForUser(
+      accessState.dataOwnerUserId ?? undefined
+    )
 
     syncHealth.setPendingSummary(initialPendingSummary)
 
-    if (!userId) {
+    if (!accessState.hasAuthenticatedAppAccess || !accessState.dataOwnerUserId) {
       setCloudStatus('unauthenticated')
       syncHealth.markCloudUnauthenticated(initialPendingSummary)
+      return
+    }
+
+    if (!accessState.canEditData) {
+      setCloudStatus('synced')
+      syncHealth.markCloudSuccess(initialPendingSummary)
       return
     }
 
     setCloudStatus('syncing')
     syncHealth.markCloudAttempt()
 
-    const result = await syncAll(getState(), userId)
-    const pendingSummary = await readPendingSummaryForUser(userId)
+    const result = await syncAll(getState(), accessState.dataOwnerUserId)
+    const pendingSummary = await readPendingSummaryForUser(
+      accessState.dataOwnerUserId
+    )
 
     if (result.success) {
       recordCloudSignature(computeCloudSignature(getState()))
@@ -296,20 +312,19 @@ export async function loadCloudSnapshotIfNeeded(
     return null
   }
 
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const accessState = getSharedAccessState()
 
-  if (!session?.user.id) {
+  if (!accessState.hasAuthenticatedAppAccess || !accessState.dataOwnerUserId) {
     resetCloudSignatures()
     return null
   }
 
-  const pendingSummary = await readPendingSummaryForUser(session.user.id)
+  const pendingSummary = await readPendingSummaryForUser(
+    accessState.dataOwnerUserId
+  )
   useSyncHealthStore.getState().setPendingSummary(pendingSummary)
 
-  const remoteSnapshot = await loadFromSupabase(session.user.id)
+  const remoteSnapshot = await loadFromSupabase(accessState.dataOwnerUserId)
   const localSignature = computeCloudSignature(state)
   const remoteSignature = computeCloudSnapshotSignature(remoteSnapshot)
   const localHasData = hasLocalCloudData(state)
@@ -354,12 +369,9 @@ async function refreshCloudSnapshotIfNeeded(
   }
 
   try {
-    const supabase = createClient()
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+    const accessState = getSharedAccessState()
 
-    if (!session?.user.id) {
+    if (!accessState.hasAuthenticatedAppAccess || !accessState.dataOwnerUserId) {
       resetCloudSignatures()
       const emptySummary = await readPendingSummaryForUser()
       setCloudStatus('unauthenticated')
@@ -367,12 +379,14 @@ async function refreshCloudSnapshotIfNeeded(
       return
     }
 
-    const pendingSummary = await readPendingSummaryForUser(session.user.id)
+    const pendingSummary = await readPendingSummaryForUser(
+      accessState.dataOwnerUserId
+    )
     const syncHealth = useSyncHealthStore.getState()
     syncHealth.setPendingSummary(pendingSummary)
 
     const localSignature = computeCloudSignature(getState())
-    const remoteSnapshot = await loadFromSupabase(session.user.id)
+    const remoteSnapshot = await loadFromSupabase(accessState.dataOwnerUserId)
     const remoteSignature = computeCloudSnapshotSignature(remoteSnapshot)
     const remoteHasData = hasCloudSnapshotData(remoteSnapshot)
 
@@ -422,16 +436,18 @@ export function ensureCloudSyncWatcher(
 
   const refreshPendingSummary = async (): Promise<void> => {
     try {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      const summary = await readPendingSummaryForUser(session?.user.id)
+      const accessState = getSharedAccessState()
+      const summary = await readPendingSummaryForUser(
+        accessState.dataOwnerUserId ?? undefined
+      )
       const syncHealth = useSyncHealthStore.getState()
 
       syncHealth.setPendingSummary(summary)
 
-      if (!session?.user.id) {
+      if (
+        !accessState.hasAuthenticatedAppAccess ||
+        !accessState.dataOwnerUserId
+      ) {
         setCloudStatus('unauthenticated')
         syncHealth.markCloudUnauthenticated(summary)
         return

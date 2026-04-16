@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useAccess } from '@/hooks/useAccess'
 import { AppShellGlobalModals } from './AppShellGlobalModals'
 import { AppShellHeader } from './AppShellHeader'
 import { AppShellViewRouter } from './AppShellViewRouter'
@@ -8,10 +9,15 @@ import { useAppShellNavigation } from './useAppShellNavigation'
 
 function AppShellInner() {
   const { activeView, setActiveView } = useAppShellNavigation()
+  const { canAccessSettings } = useAccess()
 
   return (
     <div className="app-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppShellHeader activeView={activeView} onViewChange={setActiveView} />
+      <AppShellHeader
+        activeView={activeView}
+        canAccessSettings={canAccessSettings}
+        onViewChange={setActiveView}
+      />
 
       <main
         className="main-content app-main-shell"
@@ -21,7 +27,11 @@ function AppShellInner() {
       >
         <AppShellViewRouter
           activeView={activeView}
-          onNavigateToSettings={() => setActiveView('SETTINGS')}
+          onNavigateToSettings={() => {
+            if (canAccessSettings) {
+              setActiveView('SETTINGS')
+            }
+          }}
         />
       </main>
 

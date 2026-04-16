@@ -31,6 +31,7 @@ interface PlanningOperationalPanelProps {
   agents: Representative[]
   incidents: Incident[]
   isCurrentWeek: boolean
+  isReadOnly?: boolean
   representatives: Representative[]
   weekDays: DayInfo[]
   weekLabel: string
@@ -57,6 +58,7 @@ export function PlanningOperationalPanel({
   agents,
   incidents,
   isCurrentWeek,
+  isReadOnly = false,
   representatives,
   weekDays,
   weekLabel,
@@ -374,9 +376,9 @@ export function PlanningOperationalPanel({
                 coverageData={coverageData}
                 isCurrentWeek={isCurrentWeek}
                 weekLabel={weekLabel}
-                onCellClick={onCellClick}
-                onCellContextMenu={onCellContextMenu}
-                onEditDay={onEditDay}
+                onCellClick={isReadOnly ? async () => undefined : onCellClick}
+                onCellContextMenu={isReadOnly ? () => undefined : onCellContextMenu}
+                onEditDay={isReadOnly ? (() => undefined) as typeof onEditDay : onEditDay}
                 onGoToday={onGoToday}
                 onPrevWeek={onPrevWeek}
                 onNextWeek={onNextWeek}
@@ -421,6 +423,7 @@ export function PlanningOperationalPanel({
 
             <PlanningCoverageChart
               coverageData={coverageData}
+              canAccessSettings={!isReadOnly}
               onNavigateToSettings={onNavigateToSettings}
               weekDays={weekDays}
             />

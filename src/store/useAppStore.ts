@@ -43,7 +43,9 @@ import {
   initializeAppState,
 } from './appStorePersistence'
 import { useCloudSyncStore, type CloudSyncStatus } from './useCloudSyncStore'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import { useSyncHealthStore } from './useSyncHealthStore'
+import { canCurrentUserEditData } from './useAccessStore'
 import { createAppStoreUiBridge } from './appStoreUiBridge'
 import type { CloudSnapshot } from '@/persistence/supabase-sync'
 
@@ -129,6 +131,10 @@ export const useAppStore = create<AppState>()(
       dailyLogDate: new Date().toISOString().split('T')[0],
 
       triggerCloudSync: async () => {
+        if (!canCurrentUserEditData()) {
+          return
+        }
+
         const { runCloudSync } = await loadCloudSyncModule()
         await runCloudSync(get, setCloudStatus)
       },
@@ -182,6 +188,10 @@ export const useAppStore = create<AppState>()(
       },
 
       resetState: async keepFormalIncidents => {
+        if (!canCurrentUserEditData()) {
+          return
+        }
+
         const confirmed = await get().showConfirm({
           title: '⚠️ ¿Reiniciar la planificación?',
           description:
@@ -217,6 +227,13 @@ export const useAppStore = create<AppState>()(
       },
       exportState: () => exportPlanningState(get()),
       importState: async data => {
+        if (!canCurrentUserEditData()) {
+          return {
+            success: false,
+            message: READ_ONLY_ACTION_MESSAGE,
+          }
+        }
+
         const result = await importAppState(set, get, data)
         void get().triggerCloudSync()
         return result

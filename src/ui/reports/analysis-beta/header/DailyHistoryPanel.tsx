@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useAccess } from '@/hooks/useAccess';
 import { History, CalendarDays, Check, ChevronDown, Trash2 } from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
@@ -23,6 +24,7 @@ const coverageLabels = [
 ] as const;
 
 export default function DailyHistoryPanel() {
+  const { canEditData } = useAccess();
   const [open, setOpen] = useState(false);
   const dailyHistory = useDashboardStore((state) => state.dailyHistory);
   const dataDate = useDashboardStore((state) => state.dataDate);
@@ -159,21 +161,23 @@ export default function DailyHistoryPanel() {
                         Actual
                       </span>
                     ) : null}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
-                      title={`Borrar ${snapshot.date} del historial`}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        handleRemoveDate(snapshot.date);
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span className="sr-only">Borrar fecha</span>
-                    </Button>
+                    {canEditData ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+                        title={`Borrar ${snapshot.date} del historial`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleRemoveDate(snapshot.date);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span className="sr-only">Borrar fecha</span>
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
 
@@ -207,17 +211,19 @@ export default function DailyHistoryPanel() {
           })}
         </div>
 
-        <div className="border-t border-slate-100 p-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-9 w-full rounded-xl border-red-200 bg-red-50 text-[11px] font-black uppercase tracking-[0.14em] text-red-700 hover:bg-red-100"
-            onClick={handleClearHistory}
-          >
-            <Trash2 className="h-4 w-4" />
-            Borrar todo el historial
-          </Button>
-        </div>
+        {canEditData ? (
+          <div className="border-t border-slate-100 p-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 w-full rounded-xl border-red-200 bg-red-50 text-[11px] font-black uppercase tracking-[0.14em] text-red-700 hover:bg-red-100"
+              onClick={handleClearHistory}
+            >
+              <Trash2 className="h-4 w-4" />
+              Borrar todo el historial
+            </Button>
+          </div>
+        ) : null}
       </PopoverContent>
     </Popover>
   );

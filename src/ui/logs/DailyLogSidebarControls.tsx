@@ -9,6 +9,7 @@ export type SidebarFocusMode = 'ALL' | 'ATTENTION' | 'COVERAGES' | 'ABSENT'
 type DailyLogSidebarControlsProps = {
   activeCoveragesCount: number
   bulkMode: DailyLogBulkMode | null
+  canEditData?: boolean
   effectiveAdministrativeMode: boolean
   filteredCount: number
   focusMode: SidebarFocusMode
@@ -26,6 +27,7 @@ type DailyLogSidebarControlsProps = {
 export function DailyLogSidebarControls({
   activeCoveragesCount,
   bulkMode,
+  canEditData = true,
   effectiveAdministrativeMode,
   filteredCount,
   focusMode,
@@ -92,10 +94,10 @@ export function DailyLogSidebarControls({
         >
           <button
             type="button"
-            disabled={availableBulkMode === null}
+            disabled={!canEditData || availableBulkMode === null}
             aria-pressed={isBulkActive}
             onClick={() => {
-              if (availableBulkMode) {
+              if (canEditData && availableBulkMode) {
                 onOpenBulkMode(availableBulkMode)
               }
             }}
@@ -110,12 +112,12 @@ export function DailyLogSidebarControls({
           </button>
           {activeCoveragesCount > 0 && (
             <button
-              onClick={onOpenCoverageManager}
+              onClick={canEditData ? onOpenCoverageManager : undefined}
               style={{
                 background: 'rgba(var(--accent-rgb), 0.08)',
                 border: '1px solid rgba(var(--accent-rgb), 0.14)',
                 borderRadius: '999px',
-                cursor: 'pointer',
+                cursor: canEditData ? 'pointer' : 'not-allowed',
                 color: 'var(--accent-strong)',
                 fontSize: '12px',
                 fontWeight: 700,
@@ -124,8 +126,10 @@ export function DailyLogSidebarControls({
                 gap: '6px',
                 padding: '7px 10px',
                 boxShadow: 'var(--shadow-sm)',
+                opacity: canEditData ? 1 : 0.65,
               }}
               title="Gestionar coberturas activas"
+              disabled={!canEditData}
             >
               <Shield size={12} />
               {activeCoveragesCount} activas

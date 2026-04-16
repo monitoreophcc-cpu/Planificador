@@ -1,7 +1,9 @@
 import type { StateCreator } from 'zustand'
+import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
 import type { Representative } from '@/domain/types'
 import { repName } from '@/application/presenters/humanizeStore'
 import type { AppState } from './useAppStore'
+import { canCurrentUserEditData } from './useAccessStore'
 
 export interface RepresentativeSlice {
   addRepresentative: (data: Omit<Representative, 'id' | 'isActive'>) => void
@@ -22,6 +24,11 @@ export const createRepresentativeSlice: StateCreator<
   RepresentativeSlice
 > = (set, get) => ({
   addRepresentative: data => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] addRepresentative bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     set(state => {
       state.representatives.push({
         id: crypto.randomUUID(),
@@ -32,6 +39,11 @@ export const createRepresentativeSlice: StateCreator<
   },
 
   updateRepresentative: updatedRep => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] updateRepresentative bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     set(state => {
       const index = state.representatives.findIndex(
         representative => representative.id === updatedRep.id
@@ -47,6 +59,10 @@ export const createRepresentativeSlice: StateCreator<
   },
 
   deactivateRepresentative: async repId => {
+    if (!canCurrentUserEditData()) {
+      return
+    }
+
     const { showConfirm, representatives, normalizeOrderIndexes } = get()
     const representativeName = repName(representatives, repId)
     const representative = representatives.find(rep => rep.id === repId)
@@ -73,6 +89,10 @@ export const createRepresentativeSlice: StateCreator<
   },
 
   reactivateRepresentative: async repId => {
+    if (!canCurrentUserEditData()) {
+      return
+    }
+
     const { showConfirm, representatives, normalizeOrderIndexes } = get()
     const representative = representatives.find(rep => rep.id === repId)
 
@@ -113,6 +133,11 @@ export const createRepresentativeSlice: StateCreator<
   },
 
   reorderRepresentatives: (shift, orderedIds) => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] reorderRepresentatives bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     set(state => {
       const representativesInShift = state.representatives.filter(
         representative =>
@@ -145,6 +170,11 @@ export const createRepresentativeSlice: StateCreator<
   },
 
   normalizeOrderIndexes: shift => {
+    if (!canCurrentUserEditData()) {
+      console.warn('[Access] normalizeOrderIndexes bloqueado:', READ_ONLY_ACTION_MESSAGE)
+      return
+    }
+
     set(state => {
       const representativesInShift = state.representatives
         .filter(

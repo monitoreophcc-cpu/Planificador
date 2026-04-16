@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useAccess } from '@/hooks/useAccess';
 import { CalendarRange, Eye, EyeOff, History } from 'lucide-react';
 import KPISummary from '@/ui/reports/analysis-beta/kpis/KPISummary';
 import ShiftGrid from '@/ui/reports/analysis-beta/shifts/ShiftGrid';
@@ -76,6 +77,7 @@ function buildAnalyzedPeriodLabel(dates: string[]) {
 }
 
 export function CallCenterAnalysisView() {
+  const { canEditData } = useAccess();
   const [mounted, setMounted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [showGlobalReadings, setShowGlobalReadings] = useState(false);
@@ -129,7 +131,7 @@ export function CallCenterAnalysisView() {
             <DailyHistoryPanel />
             <ComparisonPanel />
             <ExportModal />
-            <DataManagementPanel />
+            {canEditData ? <DataManagementPanel /> : null}
           </div>
         </div>
       </header>

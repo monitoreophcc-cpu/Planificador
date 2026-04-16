@@ -11,6 +11,7 @@ import {
 } from './planningOperationalMetrics'
 
 interface PlanningCoverageChartProps {
+  canAccessSettings?: boolean
   coverageData: Record<ISODate, EffectiveCoverageResult>
   onNavigateToSettings: () => void
   weekDays: DayInfo[]
@@ -34,6 +35,7 @@ function toneColor(tone: 'success' | 'warning' | 'danger' | 'neutral') {
 }
 
 export function PlanningCoverageChart({
+  canAccessSettings = true,
   coverageData,
   onNavigateToSettings,
   weekDays,
@@ -92,20 +94,22 @@ export function PlanningCoverageChart({
             >
               Cobertura diaria — {compactLabel}
             </div>
-            <button
-              onClick={onNavigateToSettings}
-              style={{
-                border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
-                background: PLANNER_THEME.controlBg,
-                color: PLANNER_THEME.controlText,
-                cursor: 'pointer',
-                fontWeight: 600,
-                borderRadius: '999px',
-                padding: '8px 12px',
-              }}
-            >
-              Ver ajustes
-            </button>
+            {canAccessSettings ? (
+              <button
+                onClick={onNavigateToSettings}
+                style={{
+                  border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+                  background: PLANNER_THEME.controlBg,
+                  color: PLANNER_THEME.controlText,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  borderRadius: '999px',
+                  padding: '8px 12px',
+                }}
+              >
+                Ver ajustes
+              </button>
+            ) : null}
           </div>
           <div
             style={{
@@ -175,21 +179,23 @@ export function PlanningCoverageChart({
             flexWrap: 'wrap',
           }}
         >
-          <button
-            onClick={onNavigateToSettings}
-            style={{
-              border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
-              background: PLANNER_THEME.controlBg,
-              color: PLANNER_THEME.controlText,
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.82rem',
-              padding: '6px 10px',
-              borderRadius: '999px',
-            }}
-          >
-            Abrir ajustes
-          </button>
+          {canAccessSettings ? (
+            <button
+              onClick={onNavigateToSettings}
+              style={{
+                border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+                background: PLANNER_THEME.controlBg,
+                color: PLANNER_THEME.controlText,
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                padding: '6px 10px',
+                borderRadius: '999px',
+              }}
+            >
+              Abrir ajustes
+            </button>
+          ) : null}
         </div>
       </div>
 

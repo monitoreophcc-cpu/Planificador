@@ -7,6 +7,7 @@ export type PlanningSectionViewMode = 'OPERATIONAL' | 'MANAGERIAL'
 
 interface PlanningSectionViewTabsProps {
   activeShift: ShiftType
+  canEditData?: boolean
   viewMode: PlanningSectionViewMode
   onSelectDay: () => void
   onSelectNight: () => void
@@ -31,6 +32,7 @@ function shiftTabStyle(isActive: boolean) {
 
 export function PlanningSectionViewTabs({
   activeShift,
+  canEditData = true,
   viewMode,
   onSelectDay,
   onSelectNight,
@@ -87,7 +89,7 @@ export function PlanningSectionViewTabs({
 
         {viewMode === 'OPERATIONAL' && (
           <button
-            onClick={onOpenSwapManager}
+            onClick={canEditData ? onOpenSwapManager : undefined}
             style={{
               padding: '14px 22px',
               background: 'transparent',
@@ -96,12 +98,14 @@ export function PlanningSectionViewTabs({
               borderRadius: '18px',
               fontWeight: 600,
               fontSize: '14px',
-              cursor: 'pointer',
+              cursor: canEditData ? 'pointer' : 'not-allowed',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
               boxShadow: 'none',
+              opacity: canEditData ? 1 : 0.6,
             }}
+            disabled={!canEditData}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

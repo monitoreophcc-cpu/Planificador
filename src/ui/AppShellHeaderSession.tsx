@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { useMemo } from 'react'
+import { useAccess } from '@/hooks/useAccess'
 import { useSession } from '@/hooks/useSession'
 import { useAppShellSyncMeta } from './useAppShellSyncMeta'
 
 export function AppShellHeaderSession() {
   const { user, loading } = useSession()
+  const { isReadOnly, roleLabel } = useAccess()
   const syncMeta = useAppShellSyncMeta()
 
   const userName = useMemo(() => {
@@ -84,7 +86,11 @@ export function AppShellHeaderSession() {
 
         <div className="app-shell-session__meta">
           <p className="app-shell-session__eyebrow">
-            {loading ? 'Verificando acceso' : 'Sesión activa'}
+            {loading
+              ? 'Verificando acceso'
+              : isReadOnly
+                ? 'Sesión activa · solo lectura'
+                : 'Sesión activa'}
           </p>
           <div className="app-shell-session__name">{loading ? 'Cargando sesión...' : userName}</div>
           <div className="app-shell-session__status-row">
@@ -107,6 +113,11 @@ export function AppShellHeaderSession() {
             >
               {syncMeta.label}
             </div>
+            {!loading ? (
+              <div className="app-shell-session__email" title={roleLabel}>
+                {roleLabel}
+              </div>
+            ) : null}
             {user?.email && typeof user.user_metadata?.full_name === 'string' && (
               <div className="app-shell-session__email" title={user.email}>
                 {user.email}

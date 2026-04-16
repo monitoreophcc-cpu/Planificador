@@ -6,6 +6,7 @@ import { UI_GLOSSARY } from './copy/glossary'
 
 type AppShellHeaderTabsProps = {
   activeView: AppShellView
+  canAccessSettings?: boolean
   onViewChange: (view: AppShellView) => void
 }
 
@@ -22,11 +23,14 @@ const APP_SHELL_VIEWS: Array<{
 
 export function AppShellHeaderTabs({
   activeView,
+  canAccessSettings = true,
   onViewChange,
 }: AppShellHeaderTabsProps) {
   return (
     <nav className="app-shell-nav" aria-label="Vistas principales">
-      {APP_SHELL_VIEWS.map(view => {
+      {APP_SHELL_VIEWS.filter(
+        view => canAccessSettings || view.id !== 'SETTINGS'
+      ).map(view => {
         const Icon = view.icon
         const isActive = activeView === view.id
 

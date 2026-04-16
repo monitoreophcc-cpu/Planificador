@@ -18,11 +18,13 @@ const AppShellHeaderSession = dynamic(
 
 type AppShellHeaderProps = {
   activeView: AppShellView
+  canAccessSettings: boolean
   onViewChange: (view: AppShellView) => void
 }
 
 export function AppShellHeader({
   activeView,
+  canAccessSettings,
   onViewChange,
 }: AppShellHeaderProps) {
   return (
@@ -36,7 +38,11 @@ export function AppShellHeader({
 
       <div className="app-shell-header__nav-wrap">
         <div className="app-shell-header__nav-inner">
-          <AppShellHeaderTabs activeView={activeView} onViewChange={onViewChange} />
+          <AppShellHeaderTabs
+            activeView={activeView}
+            canAccessSettings={canAccessSettings}
+            onViewChange={onViewChange}
+          />
         </div>
       </div>
     </header>

@@ -13,6 +13,7 @@ interface DailyLogIncidentFormProps {
   incidentType: IncidentType
   logDate: string
   note: string
+  readOnly?: boolean
   onCustomPointsChange: (value: number | '') => void
   onDurationChange: (value: number) => void
   onIncidentTypeChange: (value: IncidentType) => void
@@ -37,6 +38,7 @@ export function DailyLogIncidentForm({
   incidentType,
   logDate,
   note,
+  readOnly = false,
   onCustomPointsChange,
   onDurationChange,
   onIncidentTypeChange,
@@ -47,6 +49,7 @@ export function DailyLogIncidentForm({
   selectedRepStatusPills = [],
 }: DailyLogIncidentFormProps) {
   const hasSelectedRep = Boolean(selectedRepName)
+  const isDisabled = !hasSelectedRep || readOnly
 
   return (
     <form onSubmit={onSubmit}>
@@ -140,7 +143,7 @@ export function DailyLogIncidentForm({
           <>
             <DailyLogIncidentFields
               customPoints={customPoints}
-              disabled={!hasSelectedRep}
+              disabled={isDisabled}
               duration={duration}
               incidentType={incidentType}
               note={note}
@@ -153,7 +156,7 @@ export function DailyLogIncidentForm({
             <DailyLogIncidentSubmit
               conflictMessages={conflictMessages}
               customPoints={customPoints}
-              disabled={!hasSelectedRep}
+              disabled={isDisabled}
               duration={duration}
               incidentType={incidentType}
               logDate={logDate}

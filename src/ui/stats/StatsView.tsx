@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useAccess } from '@/hooks/useAccess'
 import dynamic from 'next/dynamic'
 import { type StatsTab } from './StatsTabs'
+import { ReadOnlyNotice } from '@/ui/system/ReadOnlyNotice'
 
 export type ExtendedStatsTab = StatsTab | 'points' | 'executive' | 'callcenter'
 
@@ -31,6 +33,7 @@ const CallCenterAnalysisView = dynamic(
 )
 
 export function StatsView() {
+  const { isReadOnly } = useAccess()
   const [activeTab, setActiveTab] = useState<ExtendedStatsTab>('monthly')
   const tabs: { id: ExtendedStatsTab; label: string }[] = [
     { id: 'monthly', label: 'Resumen Mensual' },
@@ -61,6 +64,10 @@ export function StatsView() {
         gap: '16px',
       }}
     >
+      {isReadOnly ? (
+        <ReadOnlyNotice description="Puedes consultar, exportar e imprimir reportes, pero no cargar, limpiar ni reordenar datos." />
+      ) : null}
+
       <div
         style={{
           background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--bg-panel) 100%)',

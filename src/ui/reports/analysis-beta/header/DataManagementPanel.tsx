@@ -11,6 +11,7 @@ import {
   PhoneOff,
   Trash2,
 } from 'lucide-react';
+import { useAccess } from '@/hooks/useAccess';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import {
   processAbandonedCalls,
@@ -45,6 +46,7 @@ function summarizeLoadedDates(dates: string[]): string {
 }
 
 export default function DataManagementPanel() {
+  const { canEditData } = useAccess();
   const addAnsweredCalls = useDashboardStore((state) => state.addAnsweredCalls);
   const addAbandonedCalls = useDashboardStore((state) => state.addAbandonedCalls);
   const addTransactions = useDashboardStore((state) => state.addTransactions);
@@ -182,6 +184,10 @@ export default function DataManagementPanel() {
       onClick: () => transactionsInputRef.current?.click(),
     },
   ];
+
+  if (!canEditData) {
+    return null;
+  }
 
   return (
     <Dialog>
