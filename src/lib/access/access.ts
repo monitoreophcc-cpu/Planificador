@@ -22,11 +22,14 @@ export const ACCESS_DENIED_MESSAGE =
 export function getAccessCapabilities(
   role: AppAccessRole | null
 ): AccessCapabilities {
-  const canEditData = role === 'OWNER'
-  const canAccessSettings = role === 'OWNER'
-  const canManageRoles = role === 'OWNER'
-  const hasAuthenticatedAppAccess = role === 'OWNER' || role === 'READER'
-  const isReadOnly = role === 'READER' || role === 'GUEST'
+  const isDefault = role === 'DEFAULT'
+  const isGuest = role === 'GUEST'
+
+  const canEditData = isDefault
+  const canAccessSettings = isDefault
+  const canManageRoles = false // aún no implementado
+  const hasAuthenticatedAppAccess = isDefault || isGuest
+  const isReadOnly = isGuest
 
   return {
     role,
@@ -34,7 +37,7 @@ export function getAccessCapabilities(
     canAccessSettings,
     canManageRoles,
     hasAuthenticatedAppAccess,
-    isReadOnly: isGuest,
+    isReadOnly,
   }
 }
 
@@ -49,7 +52,6 @@ export function getAccessRoleLabel(role: AppAccessRole | null): string {
   }
 }
 
-
 export function canManageRoles(role: AppAccessRole | null): boolean {
-  return role === 'OWNER'
+  return false
 }
