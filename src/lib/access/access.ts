@@ -1,6 +1,6 @@
 'use client'
 
-export type AppAccessRole = 'OWNER' | 'READER' | 'GUEST' | 'UNASSIGNED'
+export type AppAccessRole = 'DEFAULT' | 'GUEST'
 
 export type AccessStatus = 'idle' | 'loading' | 'ready' | 'error'
 
@@ -16,35 +16,29 @@ export const READ_ONLY_ACTION_MESSAGE =
   'Esta cuenta está en modo solo lectura.'
 
 export const ACCESS_DENIED_MESSAGE =
-  'Tu cuenta todavía no fue habilitada para usar esta plataforma.'
+  'No se pudo validar el acceso de esta cuenta.'
 
 export function getAccessCapabilities(
   role: AppAccessRole | null
 ): AccessCapabilities {
-  const canEditData = role === 'OWNER'
-  const canAccessSettings = role === 'OWNER'
-  const hasAuthenticatedAppAccess = role === 'OWNER' || role === 'READER'
-  const isReadOnly = role === 'READER' || role === 'GUEST'
+  const isGuest = role === 'GUEST'
+  const hasAuthenticatedAppAccess = role === 'DEFAULT'
 
   return {
     role,
-    canEditData,
-    canAccessSettings,
+    canEditData: hasAuthenticatedAppAccess,
+    canAccessSettings: hasAuthenticatedAppAccess,
     hasAuthenticatedAppAccess,
-    isReadOnly,
+    isReadOnly: isGuest,
   }
 }
 
 export function getAccessRoleLabel(role: AppAccessRole | null): string {
   switch (role) {
-    case 'OWNER':
-      return 'Usuario principal'
-    case 'READER':
-      return 'Solo lectura'
+    case 'DEFAULT':
+      return 'Sesión activa'
     case 'GUEST':
       return 'Invitado'
-    case 'UNASSIGNED':
-      return 'Sin acceso'
     default:
       return 'Acceso pendiente'
   }
