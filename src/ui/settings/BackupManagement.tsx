@@ -5,7 +5,6 @@ import { BackupManagementAlerts } from './BackupManagementAlerts'
 import { BackupManagementHeader } from './BackupManagementHeader'
 import { BackupManagementList } from './BackupManagementList'
 import { SystemTrustOverview } from './SystemTrustOverview'
-import { UserAccessManagementCard } from './UserAccessManagementCard'
 import { useBackupManagement } from './useBackupManagement'
 
 export function BackupManagement() {
@@ -38,7 +37,6 @@ export function BackupManagement() {
       }}
     >
       <SystemTrustOverview latestLocalBackupAt={latestLocalBackupAt} />
-      <UserAccessManagementCard />
 
       <BackupManagementHeader
         autoBackup={autoBackup}

@@ -118,14 +118,13 @@ describe('Page bootstrap', () => {
     })
     mockUseAccess.mockReturnValue({
       status: 'ready',
-      role: 'OWNER',
-      roleLabel: 'Usuario principal',
       error: null,
       canEditData: true,
       canAccessSettings: true,
       hasAuthenticatedAppAccess: true,
       isReadOnly: false,
       dataOwnerUserId: 'user-1',
+      accessLabel: 'Sesión activa',
     })
   })
 
@@ -189,17 +188,16 @@ describe('Page bootstrap', () => {
     expect(mockInitialize).not.toHaveBeenCalled()
   })
 
-  it('shows an access denied state when the account is not enabled', async () => {
+  it('shows an access validation error when bootstrap access fails', async () => {
     mockUseAccess.mockReturnValue({
-      status: 'ready',
-      role: 'UNASSIGNED',
-      roleLabel: 'Sin acceso',
-      error: 'Tu cuenta todavía no fue habilitada para usar esta plataforma.',
+      status: 'error',
+      error: 'No se pudo validar la sesión.',
       canEditData: false,
       canAccessSettings: false,
       hasAuthenticatedAppAccess: false,
       isReadOnly: false,
       dataOwnerUserId: null,
+      accessLabel: 'Acceso pendiente',
     })
 
     await act(async () => {
@@ -207,9 +205,8 @@ describe('Page bootstrap', () => {
       await flushEffects()
     })
 
-    expect(container.textContent).toContain(
-      'Tu cuenta no tiene acceso a esta operación'
-    )
+    expect(container.textContent).toContain('No se pudo validar el acceso')
+    expect(container.textContent).toContain('No se pudo validar la sesión.')
     expect(mockInitialize).not.toHaveBeenCalled()
   })
 })

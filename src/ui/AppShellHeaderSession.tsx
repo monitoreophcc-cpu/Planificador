@@ -8,7 +8,7 @@ import { useAppShellSyncMeta } from './useAppShellSyncMeta'
 
 export function AppShellHeaderSession() {
   const { user, loading } = useSession()
-  const { isReadOnly, roleLabel } = useAccess()
+  const { isReadOnly, accessLabel } = useAccess()
   const syncMeta = useAppShellSyncMeta()
 
   const userName = useMemo(() => {
@@ -114,8 +114,8 @@ export function AppShellHeaderSession() {
               {syncMeta.label}
             </div>
             {!loading ? (
-              <div className="app-shell-session__email" title={roleLabel}>
-                {roleLabel}
+              <div className="app-shell-session__email" title={accessLabel}>
+                {accessLabel}
               </div>
             ) : null}
             {user?.email && typeof user.user_metadata?.full_name === 'string' && (

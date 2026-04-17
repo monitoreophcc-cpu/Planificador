@@ -12,9 +12,8 @@ import { useAccessStore } from '@/store/useAccessStore'
 import { useSyncHealthStore } from '@/store/useSyncHealthStore'
 
 export default function Page() {
-  const { user, loading: sessionLoading, signOut } = useSession()
-  const { error: accessError, hasAuthenticatedAppAccess, status: accessStatus } =
-    useAccess()
+  const { user, loading: sessionLoading } = useSession()
+  const { error: accessError, status: accessStatus } = useAccess()
   const userId = user?.id ?? null
   const router = useRouter()
   const pathname = usePathname()
@@ -71,8 +70,7 @@ export default function Page() {
     if (
       sessionLoading ||
       !userId ||
-      accessStatus !== 'ready' ||
-      !hasAuthenticatedAppAccess
+      accessStatus !== 'ready'
     ) {
       return
     }
@@ -161,7 +159,7 @@ export default function Page() {
       clearTimeout(saveTimer)
       unsubscribe()
     }
-  }, [accessStatus, hasAuthenticatedAppAccess, sessionLoading, userId])
+  }, [accessStatus, sessionLoading, userId])
 
   if (sessionLoading) {
     return (
@@ -310,74 +308,6 @@ export default function Page() {
           >
             Reintentar
           </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (accessStatus === 'ready' && !hasAuthenticatedAppAccess) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          fontFamily: 'sans-serif',
-          background: '#f8fafc',
-          padding: '24px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '560px',
-            width: '100%',
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: '1.25rem', color: '#111827' }}>
-            Tu cuenta no tiene acceso a esta operación
-          </h1>
-          <p style={{ margin: '12px 0 0', color: '#4b5563', lineHeight: 1.6 }}>
-            {accessError ??
-              'Solo el usuario principal y las cuentas de solo lectura habilitadas pueden entrar a la plataforma.'}
-          </p>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '18px' }}>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                padding: '10px 14px',
-                borderRadius: '8px',
-                border: '1px solid #d1d5db',
-                background: 'white',
-                color: '#111827',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Reintentar
-            </button>
-            <button
-              onClick={() => {
-                void signOut()
-              }}
-              style={{
-                padding: '10px 14px',
-                borderRadius: '8px',
-                border: 'none',
-                background: '#2563eb',
-                color: 'white',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Cerrar sesión
-            </button>
-          </div>
         </div>
       </div>
     )
