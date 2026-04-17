@@ -8,6 +8,7 @@ export type AccessCapabilities = {
   role: AppAccessRole | null
   canEditData: boolean
   canAccessSettings: boolean
+  canManageRoles: boolean
   hasAuthenticatedAppAccess: boolean
   isReadOnly: boolean
 }
@@ -21,13 +22,17 @@ export const ACCESS_DENIED_MESSAGE =
 export function getAccessCapabilities(
   role: AppAccessRole | null
 ): AccessCapabilities {
-  const isGuest = role === 'GUEST'
-  const hasAuthenticatedAppAccess = role === 'DEFAULT'
+  const canEditData = role === 'OWNER'
+  const canAccessSettings = role === 'OWNER'
+  const canManageRoles = role === 'OWNER'
+  const hasAuthenticatedAppAccess = role === 'OWNER' || role === 'READER'
+  const isReadOnly = role === 'READER' || role === 'GUEST'
 
   return {
     role,
-    canEditData: hasAuthenticatedAppAccess,
-    canAccessSettings: hasAuthenticatedAppAccess,
+    canEditData,
+    canAccessSettings,
+    canManageRoles,
     hasAuthenticatedAppAccess,
     isReadOnly: isGuest,
   }
@@ -42,4 +47,9 @@ export function getAccessRoleLabel(role: AppAccessRole | null): string {
     default:
       return 'Acceso pendiente'
   }
+}
+
+
+export function canManageRoles(role: AppAccessRole | null): boolean {
+  return role === 'OWNER'
 }
