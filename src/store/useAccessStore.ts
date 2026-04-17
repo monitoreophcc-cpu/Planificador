@@ -230,7 +230,7 @@ export const useAccessStore = create<AccessState>()(set => ({
         sessionUserId: userId,
         dataOwnerUserId: userId,
       })
-    }
+    )
   },
 }))
 
