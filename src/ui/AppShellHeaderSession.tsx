@@ -2,13 +2,11 @@
 
 import Link from 'next/link'
 import { useMemo } from 'react'
-import { useAccess } from '@/hooks/useAccess'
 import { useSession } from '@/hooks/useSession'
 import { useAppShellSyncMeta } from './useAppShellSyncMeta'
 
 export function AppShellHeaderSession() {
   const { user, loading } = useSession()
-  const { isReadOnly, accessLabel } = useAccess()
   const syncMeta = useAppShellSyncMeta()
 
   const userName = useMemo(() => {
@@ -65,7 +63,11 @@ export function AppShellHeaderSession() {
 
   return (
     <div className="app-shell-session">
-      <div className="app-shell-session__card">
+      <div
+        className="app-shell-session__card app-shell-session__card--compact"
+        title={syncMeta.label}
+        aria-label={`Estado de sincronizacion: ${syncMeta.label}`}
+      >
         <div className="app-shell-session__avatar">
           {userAvatar ? (
             <div
@@ -83,47 +85,15 @@ export function AppShellHeaderSession() {
             <span>{userName.slice(0, 1).toUpperCase()}</span>
           )}
         </div>
-
-        <div className="app-shell-session__meta">
-          <p className="app-shell-session__eyebrow">
-            {loading
-              ? 'Verificando acceso'
-              : isReadOnly
-                ? 'Sesión activa · solo lectura'
-                : 'Sesión activa'}
-          </p>
-          <div className="app-shell-session__name">{loading ? 'Cargando sesión...' : userName}</div>
-          <div className="app-shell-session__status-row">
-            <span
-              aria-hidden="true"
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '999px',
-                background: syncMeta.tone,
-                boxShadow: `0 0 0 4px ${syncMeta.surface}`,
-                flexShrink: 0,
-              }}
-            />
-            <div
-              className="app-shell-session__status-label"
-              style={{
-                color: syncMeta.tone,
-              }}
-            >
-              {syncMeta.label}
-            </div>
-            {!loading ? (
-              <div className="app-shell-session__email" title={accessLabel}>
-                {accessLabel}
-              </div>
-            ) : null}
-            {user?.email && typeof user.user_metadata?.full_name === 'string' && (
-              <div className="app-shell-session__email" title={user.email}>
-                {user.email}
-              </div>
-            )}
-          </div>
+        <div className="app-shell-session__status-row app-shell-session__status-row--compact">
+          <span
+            aria-hidden="true"
+            className="app-shell-session__status-dot"
+            style={{
+              background: syncMeta.tone,
+              boxShadow: `0 0 0 4px ${syncMeta.surface}`,
+            }}
+          />
         </div>
       </div>
     </div>
