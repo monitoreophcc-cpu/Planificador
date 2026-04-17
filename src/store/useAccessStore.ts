@@ -1,40 +1,61 @@
 'use client'
 
 import { create } from 'zustand'
-import { createClientSafely } from '@/lib/supabase/client'
-import {
-  getAccessCapabilities,
-  type AccessCapabilities,
-  type AccessStatus,
-  type AppAccessRole,
-  ACCESS_DENIED_MESSAGE,
-} from '@/lib/access/access'
 
-type ExtendedRole = AppAccessRole | 'OWNER' | 'UNASSIGNED'
+type AccessStatus = 'idle' | 'loading' | 'ready' | 'error'
 
-type AccessRoleRow = {
-  user_id: string
-  role: ExtendedRole
-}
-
-type AccessResolution = AccessCapabilities & {
+type AccessState = {
   status: AccessStatus
-  error: string | null
   sessionUserId: string | null
-  dataOwnerUserId: string | null
-}
+  error: string | null
 
-type AccessState = AccessResolution & {
   bootstrapAuthenticatedAccess: (userId: string) => Promise<void>
   clearAccess: () => void
-  setGuestAccess: (dataOwnerUserId: string | null) => void
 }
 
-const CONFIGURED_OWNER_USER_ID = 'c75e4279-c281-44d3-b6f1-43424a6aa8b7'
-const ACCESS_ROLES_TABLE = 'app_access_roles'
+const baseState: AccessState = {
+  status: 'idle',
+  sessionUserId: null,
+  error: null,
 
-const baseAccessState: AccessResolution = {
-  ...getAccessCapabilities(null),
+  bootstrapAuthenticatedAccess: async () => {},
+  clearAccess: () => {},
+}
+
+export const useAccessStore = create<AccessState>()(set => ({
+  ...baseState,
+
+  clearAccess: () => {
+    set(baseState)
+  },
+
+  bootstrapAuthenticatedAccess: async userId => {
+    try {
+      set({
+        status: 'loading',
+        sessionUserId: userId,
+        error: null,
+      })
+
+      // Aquí no validas nada externo
+      // Si el usuario está autenticado → tiene acceso a sus propios datos
+
+      set({
+        status: 'ready',
+        sessionUserId: userId,
+        error: null,
+      })
+    } catch (error) {
+      console.error('[Access] Error:', error)
+
+      set({
+        status: 'error',
+        sessionUserId: null,
+        error: 'No se pudo validar la sesión.',
+      })
+    }
+  },
+}))  ...getAccessCapabilities(null),
   status: 'idle',
   error: null,
   sessionUserId: null,
