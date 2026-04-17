@@ -28,9 +28,8 @@ type AccessState = AccessResolution & {
   setGuestAccess: (dataOwnerUserId: string | null) => void
 }
 
-
-const CONFIGURED_OWNER_USER_ID =
-  '2e059caa-b0f4-4bc4-9a62-0b9abfa6e0d9'
+// ✅ UUID corregido — coincide con auth.uid() en Supabase
+const CONFIGURED_OWNER_USER_ID = 'c75e4279-c281-44d3-b6f1-43424a6aa9b7'
 
 const baseAccessState: AccessResolution = {
   ...getAccessCapabilities(null),
@@ -133,7 +132,6 @@ async function claimInitialOwner(userId: string): Promise<void> {
   throw error
 }
 
-
 async function ensureConfiguredOwner(): Promise<void> {
   const supabase = createClientSafely()
   if (!supabase) {
@@ -179,12 +177,18 @@ export const useAccessStore = create<AccessState>()(set => ({
       let currentRole = await fetchRoleRow(userId)
       let ownerRole = await fetchOwnerRoleRow()
 
+      // Si no hay Owner aún y el usuario actual es el Owner configurado,
+      // lo registra automáticamente (bootstrap inicial).
+      // La RLS permite el INSERT solo si user_id === auth.uid(),
+      // por eso CONFIGURED_OWNER_USER_ID debe coincidir exactamente.
       if (!ownerRole) {
         await claimInitialOwner(CONFIGURED_OWNER_USER_ID)
         ownerRole = await fetchOwnerRoleRow()
         currentRole = await fetchRoleRow(userId)
       }
 
+      // Garantiza que el Owner configurado siempre tenga su rol,
+      // por si fue removido accidentalmente.
       if (userId === CONFIGURED_OWNER_USER_ID && currentRole?.role !== 'OWNER') {
         await ensureConfiguredOwner()
         ownerRole = await fetchOwnerRoleRow()
