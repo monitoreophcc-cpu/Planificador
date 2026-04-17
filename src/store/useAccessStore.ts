@@ -24,6 +24,9 @@ type AccessState = AccessResolution & {
 // ✅ UUID corregido — coincide con auth.uid() en Supabase
 const CONFIGURED_OWNER_USER_ID = 'c75e4279-c281-44d3-b6f1-43424a6aa9b7'
 
+// Table name constant for maintainability
+const ACCESS_ROLES_TABLE = 'app_access_roles'
+
 const baseAccessState: AccessResolution = {
   ...getAccessCapabilities(null),
   status: 'idle',
@@ -50,14 +53,23 @@ function buildResolvedAccessState(
   }
 }
 
-async function fetchRoleRow(userId: string): Promise<AccessRoleRow | null> {
+/**
+ * Helper function to get Supabase client or throw an error.
+ * Eliminates repetitive null checks across all database functions.
+ */
+function getSupabaseClient() {
   const supabase = createClientSafely()
   if (!supabase) {
     throw new Error('Supabase no está configurado en este entorno.')
   }
+  return supabase
+}
+
+async function fetchRoleRow(userId: string): Promise<AccessRoleRow | null> {
+  const supabase = getSupabaseClient()
 
   const { data, error } = await supabase
-    .from('app_access_roles')
+    .from(ACCESS_ROLES_TABLE)
     .select('user_id, role')
     .eq('user_id', userId)
     .maybeSingle()
@@ -70,13 +82,10 @@ async function fetchRoleRow(userId: string): Promise<AccessRoleRow | null> {
 }
 
 async function fetchOwnerRoleRow(): Promise<AccessRoleRow | null> {
-  const supabase = createClientSafely()
-  if (!supabase) {
-    throw new Error('Supabase no está configurado en este entorno.')
-  }
+  const supabase = getSupabaseClient()
 
   const { data, error } = await supabase
-    .from('app_access_roles')
+    .from(ACCESS_ROLES_TABLE)
     .select('user_id, role')
     .eq('role', 'OWNER')
     .maybeSingle()
@@ -88,38 +97,37 @@ async function fetchOwnerRoleRow(): Promise<AccessRoleRow | null> {
   return data as AccessRoleRow | null
 }
 
-async function claimInitialOwner(userId: string): Promise<void> {
-  const supabase = createClientSafely()
-  if (!supabase) {
-    throw new Error('Supabase no está configurado en este entorno.')
-  }
+/**
+ * Attempts to claim the initial owner role.
+ * Returns true if successful, false if owner already exists (duplicate key).
+ * @throws {Error} If a different error occurs
+ */
+async function claimInitialOwner(userId: string): Promise<boolean> {
+  const supabase = getSupabaseClient()
 
   const { error } = await supabase
-    .from('app_access_roles')
+    .from(ACCESS_ROLES_TABLE)
     .insert({ user_id: userId, role: 'OWNER' })
 
   if (!error) {
-    return
+    return true
   }
 
-  const duplicateOwner =
+  const isDuplicateError =
     error.code === '23505' ||
     error.message.toLowerCase().includes('duplicate key')
 
-  if (duplicateOwner) {
-    return
+  if (isDuplicateError) {
+    return false
   }
 
   throw error
 }
 
 async function ensureConfiguredOwner(): Promise<void> {
-  const supabase = createClientSafely()
-  if (!supabase) {
-    throw new Error('Supabase no está configurado en este entorno.')
-  }
+  const supabase = getSupabaseClient()
 
-  const { error } = await supabase.from('app_access_roles').upsert(
+  const { error } = await supabase.from(ACCESS_ROLES_TABLE).upsert(
     {
       user_id: CONFIGURED_OWNER_USER_ID,
       role: 'OWNER',
@@ -155,6 +163,7 @@ export const useAccessStore = create<AccessState>()(set => ({
     })
 
     try {
+      // Fetch user role and owner role upfront to avoid N+1 queries
       let currentRole = await fetchRoleRow(userId)
       let ownerRole = await fetchOwnerRoleRow()
 
@@ -163,9 +172,12 @@ export const useAccessStore = create<AccessState>()(set => ({
       // La RLS permite el INSERT solo si user_id === auth.uid(),
       // por eso CONFIGURED_OWNER_USER_ID debe coincidir exactamente.
       if (!ownerRole) {
-        await claimInitialOwner(CONFIGURED_OWNER_USER_ID)
-        ownerRole = await fetchOwnerRoleRow()
-        currentRole = await fetchRoleRow(userId)
+        const claimSucceeded = await claimInitialOwner(CONFIGURED_OWNER_USER_ID)
+        if (claimSucceeded) {
+          // Only refetch what changed
+          ownerRole = await fetchOwnerRoleRow()
+          currentRole = await fetchRoleRow(userId)
+        }
       }
 
       // Garantiza que el Owner configurado siempre tenga su rol,
@@ -218,7 +230,7 @@ export const useAccessStore = create<AccessState>()(set => ({
         sessionUserId: userId,
         dataOwnerUserId: userId,
       })
-    )
+    }
   },
 }))
 
