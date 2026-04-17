@@ -1,8 +1,6 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import * as Popover from '@radix-ui/react-popover'
-import { Info } from 'lucide-react'
 import type { AppShellView } from './appShellTypes'
 import { UI_GLOSSARY } from './copy/glossary'
 
@@ -71,8 +69,6 @@ export function AppShellViewRouter({
   onNavigateToSettings,
 }: AppShellViewRouterProps) {
   const viewMeta = VIEW_META[activeView]
-  const shouldShowBanner =
-    activeView !== 'DAILY_LOG' && activeView !== 'PLANNING'
   const content =
     activeView === 'DAILY_LOG' ? (
       <DailyLogView summaryMeta={viewMeta} />
@@ -85,44 +81,6 @@ export function AppShellViewRouter({
     )
 
   return (
-    <div className="app-shell-view-frame">
-      {shouldShowBanner ? (
-        <section className="app-shell-view-banner" aria-label={`Contexto de ${viewMeta.title}`}>
-          <div className="app-shell-view-banner__copy">
-            <p className="app-shell-view-banner__eyebrow">{viewMeta.eyebrow}</p>
-            <p className="app-shell-view-banner__title">{viewMeta.title}</p>
-          </div>
-          <div className="app-shell-view-banner__actions">
-            <Popover.Root>
-              <Popover.Trigger asChild>
-                <button
-                  type="button"
-                  className="app-shell-view-banner__summary-trigger"
-                  aria-label={`Ver resumen de ${viewMeta.title}`}
-                >
-                  <Info size={15} strokeWidth={2.2} />
-                  <span>Resumen</span>
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content
-                  className="app-shell-view-popover"
-                  align="end"
-                  sideOffset={10}
-                >
-                  <p className="app-shell-view-popover__eyebrow">{viewMeta.eyebrow}</p>
-                  <p className="app-shell-view-popover__title">{viewMeta.title}</p>
-                  <p className="app-shell-view-popover__description">{viewMeta.description}</p>
-                  <div className="app-shell-view-popover__context">{viewMeta.context}</div>
-                  <Popover.Arrow className="app-shell-view-popover__arrow" />
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
-            <div className="app-shell-view-banner__context">{viewMeta.context}</div>
-          </div>
-        </section>
-      ) : null}
-      {content}
-    </div>
+    <div className="app-shell-view-frame">{content}</div>
   )
 }

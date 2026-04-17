@@ -4,11 +4,14 @@ import { useAccess } from '@/hooks/useAccess'
 import { ReorderAgentsModal } from './components/ReorderAgentsModal'
 import { PointsReportActions } from './PointsReportActions'
 import { PointsReportCopyToast } from './PointsReportCopyToast'
-import { PointsReportHeader } from './PointsReportHeader'
 import { PointsReportTable } from './PointsReportTable'
 import { usePointsReportView } from './usePointsReportView'
 
-export function PointsReportView() {
+interface PointsReportViewProps {
+  currentDate: Date
+}
+
+export function PointsReportView({ currentDate }: PointsReportViewProps) {
   const { canEditData } = useAccess()
   const {
     copiedTitle,
@@ -16,28 +19,57 @@ export function PointsReportView() {
     reorderModal,
     summary,
     closeReorderModal,
-    goToNextMonth,
-    goToPreviousMonth,
     handleCopy,
     openReorderModal,
-  } = usePointsReportView()
+  } = usePointsReportView(currentDate)
 
   return (
     <div
       style={{
-        padding: '24px',
+        padding: '18px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '24px',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
+        gap: '18px',
       }}
     >
-      <PointsReportHeader
-        monthLabel={monthLabel}
-        onPrev={goToPreviousMonth}
-        onNext={goToNextMonth}
-      />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          gap: '12px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              marginBottom: '8px',
+            }}
+          >
+            Incidencias del mes
+          </div>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '1.15rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Incidencias y puntos por turno
+          </h2>
+          <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+            Vista mensual compacta de {monthLabel} para copiar, revisar y reordenar sin navegar dentro del panel.
+          </p>
+        </div>
+      </div>
 
       <PointsReportActions
         canEditData={canEditData}

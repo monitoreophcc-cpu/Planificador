@@ -1,4 +1,5 @@
 import {
+  buildDailyHistoryFromSyncRows,
   buildGlobalKpiSyncRow,
   buildOperationalDetailSyncRows,
   buildShiftKpiSyncRows,
@@ -145,6 +146,50 @@ describe('report-sync.service', () => {
           transacciones_cc: 1,
         }),
       ])
+    );
+  });
+
+  it('rebuilds daily snapshots from synced Supabase rows', () => {
+    const history = buildDailyHistoryFromSyncRows({
+      globalRows: [buildGlobalKpiSyncRow('user-1', snapshot)],
+      shiftRows: buildShiftKpiSyncRows('user-1', snapshot),
+      operationalRows: buildOperationalDetailSyncRows('user-1', snapshot),
+    });
+
+    expect(history['2026-03-05']).toEqual(
+      expect.objectContaining({
+        date: '2026-03-05',
+        kpis: expect.objectContaining({
+          recibidas: 20,
+          contestadas: 16,
+          transaccionesCC: 4,
+          ventasValidas: 4800,
+        }),
+        shiftKpis: expect.objectContaining({
+          Día: expect.objectContaining({
+            recibidas: 12,
+            contestadas: 10,
+          }),
+          Noche: expect.objectContaining({
+            recibidas: 8,
+            contestadas: 6,
+          }),
+        }),
+        coverage: expect.objectContaining({
+          answeredLoaded: true,
+          abandonedLoaded: true,
+          transactionsLoaded: true,
+          loadedSources: 3,
+        }),
+      })
+    );
+    expect(history['2026-03-05']?.operationalDetail.day[0]).toEqual(
+      expect.objectContaining({
+        hora: '09:00',
+        recibidas: 5,
+        contestadas: 4,
+        transacciones: 1,
+      })
     );
   });
 });

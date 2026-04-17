@@ -12,6 +12,7 @@ interface SortableRepCardProps {
     onEdit: (rep: Representative) => void
     onSelect: (rep: Representative) => void
     advancedEditMode: boolean
+    sortable?: boolean
 }
 
 export function SortableRepCard({
@@ -20,6 +21,7 @@ export function SortableRepCard({
     onEdit,
     onSelect,
     advancedEditMode,
+    sortable = false,
 }: SortableRepCardProps) {
     const deactivateRepresentative = useAppStore(s => s.deactivateRepresentative)
     const { mode } = useEditMode()
@@ -31,9 +33,9 @@ export function SortableRepCard({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: rep.id })
+    } = useSortable({ id: rep.id, disabled: !sortable })
 
-    const style = advancedEditMode ? {
+    const style = sortable ? {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
@@ -53,7 +55,7 @@ export function SortableRepCard({
 
     return (
         <div
-            ref={advancedEditMode ? setNodeRef : undefined}
+            ref={sortable ? setNodeRef : undefined}
             onClick={() => onSelect(rep)}
             style={{
                 ...style,
@@ -73,8 +75,8 @@ export function SortableRepCard({
         >
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Handle de drag (EXPLÍCITO) - Solo visible en modo avanzado */}
-                    {advancedEditMode && (
+                    {/* Handle de drag visible solo cuando la lista completa del turno es reordenable */}
+                    {sortable && (
                         <Tooltip content="Arrastra para reordenar">
                             <span
                                 {...attributes}

@@ -1,13 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { addMonths, format, subMonths } from 'date-fns'
+import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { PersonMonthlySummary } from '@/domain/analytics/types'
 import { useMonthlySummary } from '@/domain/analytics/useMonthlySummary'
 import { useAppStore } from '@/store/useAppStore'
 import { MonthlySummaryChart } from './MonthlySummaryChart'
-import { MonthlySummaryHeader } from './MonthlySummaryHeader'
 import { MonthlySummaryMetricsPanel } from './MonthlySummaryMetricsPanel'
 import { MonthlySummarySearch } from './MonthlySummarySearch'
 import { MonthlySummaryTable } from './MonthlySummaryTable'
@@ -16,8 +15,11 @@ import {
   filterMonthlySummaryBySearch,
 } from './monthlySummaryMetrics'
 
-export function MonthlySummaryView() {
-  const [currentDate, setCurrentDate] = useState(new Date())
+interface MonthlySummaryViewProps {
+  currentDate: Date
+}
+
+export function MonthlySummaryView({ currentDate }: MonthlySummaryViewProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const openDetailModal = useAppStore(state => state.openDetailModal)
   const { incidents, representatives, allCalendarDaysForRelevantMonths } =
@@ -68,32 +70,82 @@ export function MonthlySummaryView() {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '24px',
-        padding: '24px',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
+        gap: '18px',
+        padding: '18px',
       }}
     >
-      <MonthlySummaryHeader
-        monthLabel={monthLabel}
-        onPrev={() => setCurrentDate(month => subMonths(month, 1))}
-        onNext={() => setCurrentDate(month => addMonths(month, 1))}
-      />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          gap: '12px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              marginBottom: '8px',
+            }}
+          >
+            Resumen mensual
+          </div>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '1.15rem',
+              fontWeight: 800,
+              color: 'var(--text-main)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Resumen mensual de incidencias
+          </h2>
+          <p
+            style={{
+              margin: '6px 0 0',
+              color: 'var(--text-muted)',
+              fontSize: '13px',
+            }}
+          >
+            Lectura rápida de {monthLabel} con foco en volumen, picos y personas a revisar.
+          </p>
+        </div>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '9px 12px',
+            borderRadius: '14px',
+            border: '1px solid rgba(var(--accent-rgb), 0.16)',
+            background: 'rgba(var(--accent-rgb), 0.08)',
+            color: 'var(--accent-strong)',
+            fontSize: '13px',
+            fontWeight: 800,
+          }}
+        >
+          {summary.totals.totalIncidents} incidencias registradas
+        </div>
+      </div>
 
       <MonthlySummaryMetricsPanel metrics={metrics} />
 
-      <div style={{ marginBottom: '8px' }}>
-        <MonthlySummaryChart summary={summary} />
-      </div>
+      <MonthlySummaryChart summary={summary} />
 
-      <MonthlySummarySearch
-        searchTerm={searchTerm}
-        totalCount={summary.byPerson.length}
-        filteredCount={filteredSummary?.byPerson.length ?? 0}
-        onSearchTermChange={setSearchTerm}
-      />
-
-      <div style={{ marginTop: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <MonthlySummarySearch
+          searchTerm={searchTerm}
+          totalCount={summary.byPerson.length}
+          filteredCount={filteredSummary?.byPerson.length ?? 0}
+          onSearchTermChange={setSearchTerm}
+        />
         <MonthlySummaryTable
           data={filteredSummary?.byPerson ?? []}
           onSelectRow={handleSelectPerson}
@@ -102,4 +154,3 @@ export function MonthlySummaryView() {
     </div>
   )
 }
-

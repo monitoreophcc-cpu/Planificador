@@ -370,13 +370,41 @@ export function PlanningOperationalPanel({
 
               <div
                 style={{
-                  color: PLANNER_THEME.shellTextMuted,
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '8px',
+                  flexWrap: 'wrap',
                 }}
               >
-                Mostrando {filteredAgents.length} de {agents.length}
+                {!isReadOnly ? (
+                  <button
+                    onClick={onNavigateToSettings}
+                    style={{
+                      border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+                      background: PLANNER_THEME.controlBg,
+                      color: PLANNER_THEME.controlText,
+                      borderRadius: '999px',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: '0.8rem',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Reordenar nombres
+                  </button>
+                ) : null}
+                <div
+                  style={{
+                    color: PLANNER_THEME.shellTextMuted,
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Mostrando {filteredAgents.length} de {agents.length}
+                </div>
               </div>
             </section>
 

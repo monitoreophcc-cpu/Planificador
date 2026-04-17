@@ -18,25 +18,16 @@ type SettingsTab = 'equipo' | 'calendario' | 'sistema'
 
 const SETTINGS_TAB_META: Record<
   SettingsTab,
-  { eyebrow: string; title: string; description: string }
+  { title: string }
 > = {
   equipo: {
-    eyebrow: 'Estructura operativa',
     title: 'Equipo, reglas y perfiles',
-    description:
-      'Gestiona representantes, demanda y la base operativa desde una vista más ordenada y con menos fricción.',
   },
   calendario: {
-    eyebrow: 'Calendario maestro',
     title: 'Feriados y excepciones del año',
-    description:
-      'Mantén visibles los días que afectan vacaciones y reglas sin perderte entre listas largas.',
   },
   sistema: {
-    eyebrow: 'Confianza del sistema',
     title: 'Respaldo, ayuda e historial',
-    description:
-      'Todo lo relacionado con sincronización, respaldos, auditoría y recuperación reunido en una vista mucho más clara.',
   },
 }
 
@@ -88,18 +79,18 @@ export function SettingsView() {
   return (
     <div style={settingsViewStyles.container}>
       <section style={settingsViewStyles.hero}>
-        <div>
-          <div style={settingsViewStyles.heroBadge}>{activeTabMeta.eyebrow}</div>
+        <div style={settingsViewStyles.heroCopy}>
           <h1 style={settingsViewStyles.heroTitle}>{UI_GLOSSARY.settingsSection}</h1>
-          <p style={settingsViewStyles.heroDescription}>
-            {activeTabMeta.description}
+          <p style={settingsViewStyles.heroContext}>
+            {activeTabMeta.title}
           </p>
         </div>
 
-        <div style={settingsViewStyles.tabRail}>
+        <div style={settingsViewStyles.tabRail} role="tablist" aria-label="Secciones de ajustes">
           <button
             style={settingsViewStyles.tab(activeTab === 'equipo')}
             onClick={() => setActiveTab('equipo')}
+            aria-pressed={activeTab === 'equipo'}
           >
             <Users size={16} />
             Equipo y Reglas
@@ -107,6 +98,7 @@ export function SettingsView() {
           <button
             style={settingsViewStyles.tab(activeTab === 'calendario')}
             onClick={() => setActiveTab('calendario')}
+            aria-pressed={activeTab === 'calendario'}
           >
             <Calendar size={16} />
             Calendario
@@ -114,6 +106,7 @@ export function SettingsView() {
           <button
             style={settingsViewStyles.tab(activeTab === 'sistema')}
             onClick={() => setActiveTab('sistema')}
+            aria-pressed={activeTab === 'sistema'}
           >
             <Settings size={16} />
             Sistema

@@ -7,8 +7,7 @@ import KPISummary from '@/ui/reports/analysis-beta/kpis/KPISummary';
 import ShiftGrid from '@/ui/reports/analysis-beta/shifts/ShiftGrid';
 import ShiftTablesContainer from '@/ui/reports/analysis-beta/tables/ShiftTablesContainer';
 import {
-  buildMonthlyOperationalReport,
-  getPreviousMonthlyOperationalReport,
+  getPreviousMonthlyOperationalSnapshot,
 } from '@/ui/reports/analysis-beta/services/monthly-report.service';
 
 type MonthlyOperationalReportProps = {
@@ -26,15 +25,16 @@ export default function MonthlyOperationalReport({
   showShiftReadings = false,
 }: MonthlyOperationalReportProps) {
   const dataDate = useDashboardStore((state) => state.dataDate);
-  const dailyHistory = useDashboardStore((state) => state.dailyHistory);
+  const monthlyHistory = useDashboardStore((state) => state.monthlyHistory);
+  const currentMonthKey = dataDate?.slice(0, 7) ?? null;
 
   const monthlyReport = useMemo(
-    () => buildMonthlyOperationalReport(dailyHistory, dataDate),
-    [dailyHistory, dataDate]
+    () => (currentMonthKey ? monthlyHistory[currentMonthKey] ?? null : null),
+    [currentMonthKey, monthlyHistory]
   );
   const previousMonthlyReport = useMemo(
-    () => getPreviousMonthlyOperationalReport(dailyHistory, dataDate),
-    [dailyHistory, dataDate]
+    () => getPreviousMonthlyOperationalSnapshot(monthlyHistory, dataDate),
+    [dataDate, monthlyHistory]
   );
 
   if (!monthlyReport) {

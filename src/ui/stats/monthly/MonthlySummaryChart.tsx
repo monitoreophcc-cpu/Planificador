@@ -158,52 +158,37 @@ export function MonthlySummaryChart({
     <div
       style={{
         background:
-          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.45) 100%)',
-        borderRadius: '22px',
-        border: '1px solid var(--shell-border)',
-        boxShadow: 'var(--shadow-sm)',
+          'linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(248,242,233,0.36) 100%)',
+        borderRadius: '20px',
+        border: '1px solid rgba(202, 189, 168, 0.42)',
         overflow: 'hidden',
       }}
     >
       <div
         style={{
-          padding: '20px',
+          padding: '16px 18px',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           gap: '16px',
           flexWrap: 'wrap',
-          borderBottom: '1px solid var(--shell-border)',
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(248,242,233,0.72) 100%)',
+          borderBottom: '1px solid rgba(202, 189, 168, 0.36)',
         }}
       >
         <div>
-          <div
-            style={{
-              fontSize: '11px',
-              fontWeight: 800,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--accent)',
-              marginBottom: '8px',
-            }}
-          >
-            Lectura ejecutiva
-          </div>
           <h3
             style={{
               margin: 0,
               color: 'var(--text-main)',
-              fontSize: '18px',
-              fontWeight: 700,
+              fontSize: '16px',
+              fontWeight: 800,
               letterSpacing: '-0.02em',
             }}
           >
             Ritmo de incidencias del mes
           </h3>
-          <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Ubica los días más cargados y quiénes concentran la mayor presión operativa.
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+            Primero volumen y picos; después equipo y tipos.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -214,10 +199,8 @@ export function MonthlySummaryChart({
               gap: '8px',
               padding: '8px 12px',
               borderRadius: '999px',
-              border: '1px solid var(--shell-border)',
-              background:
-                'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
-              boxShadow: 'var(--shadow-sm)',
+              border: '1px solid rgba(202, 189, 168, 0.42)',
+              background: 'rgba(255,255,255,0.72)',
             }}
           >
             <CalendarRange size={14} color="var(--accent)" />
@@ -234,7 +217,6 @@ export function MonthlySummaryChart({
               borderRadius: '999px',
               border: '1px solid var(--border-warning)',
               background: 'var(--bg-warning)',
-              boxShadow: 'var(--shadow-sm)',
             }}
           >
             <AlertTriangle size={14} color="var(--text-warning)" />
@@ -246,23 +228,14 @@ export function MonthlySummaryChart({
       </div>
 
       <div className="monthly-summary-chart-grid">
-        <div
-          className="monthly-summary-chart-grid__chart"
-          style={{
-            padding: '18px',
-            borderRadius: '18px',
-            border: '1px solid rgba(202, 189, 168, 0.4)',
-            background:
-              'linear-gradient(180deg, rgba(255,255,255,0.76) 0%, rgba(248,242,233,0.36) 100%)',
-          }}
-        >
+        <div className="monthly-summary-chart-grid__chart">
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '12px',
-              marginBottom: '14px',
+              marginBottom: '12px',
               flexWrap: 'wrap',
             }}
           >
@@ -292,7 +265,7 @@ export function MonthlySummaryChart({
               Pico del mes: {analysis.maxIncidents}
             </div>
           </div>
-          <div style={{ height: '260px' }}>
+          <div style={{ height: '330px' }}>
             <Bar
               data={chartData}
               options={{
@@ -334,194 +307,190 @@ export function MonthlySummaryChart({
         </div>
 
         <aside
-          className="monthly-summary-chart-grid__side"
-          style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+          className="monthly-summary-chart-grid__health"
+          style={{
+            padding: '16px',
+            borderRadius: '18px',
+            border: '1px solid rgba(202, 189, 168, 0.38)',
+            background: 'rgba(255,255,255,0.68)',
+          }}
         >
           <div
             style={{
-              padding: '16px',
-              borderRadius: '18px',
-              border: '1px solid rgba(202, 189, 168, 0.4)',
-              background:
-                'linear-gradient(180deg, rgba(255,255,255,0.76) 0%, rgba(248,242,233,0.36) 100%)',
+              fontSize: '12px',
+              fontWeight: 800,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              marginBottom: '10px',
             }}
           >
-            <div
-              style={{
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                color: 'var(--text-muted)',
-                marginBottom: '10px',
-              }}
-            >
-              Estado del equipo
-            </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                gap: '10px',
-              }}
-            >
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--bg-warning)',
-                  border: '1px solid var(--border-warning)',
-                }}
-              >
-                <div style={{ fontSize: '12px', color: 'var(--text-warning)', fontWeight: 700 }}>
-                  En atención
-                </div>
-                <div
-                  style={{
-                    marginTop: '6px',
-                    fontSize: '24px',
-                    fontWeight: 800,
-                    color: 'var(--text-warning)',
-                  }}
-                >
-                  {analysis.atRiskCount}
-                </div>
-              </div>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--bg-success)',
-                  border: '1px solid var(--border-success)',
-                }}
-              >
-                <div style={{ fontSize: '12px', color: 'var(--text-success)', fontWeight: 700 }}>
-                  Estables
-                </div>
-                <div
-                  style={{
-                    marginTop: '6px',
-                    fontSize: '24px',
-                    fontWeight: 800,
-                    color: 'var(--text-success)',
-                  }}
-                >
-                  {analysis.stableCount}
-                </div>
-              </div>
-            </div>
-            <div
-              style={{
-                marginTop: '10px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: 'var(--text-muted)',
-                fontSize: '12px',
-              }}
-            >
-              <ShieldCheck size={14} />
-              {analysis.calmDays} días sin incidencias registradas
-            </div>
+            Estado del equipo
           </div>
-
           <div
             style={{
-              padding: '16px',
-              borderRadius: '18px',
-              border: '1px solid rgba(202, 189, 168, 0.4)',
-              background:
-                'linear-gradient(180deg, rgba(255,255,255,0.76) 0%, rgba(248,242,233,0.36) 100%)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gap: '10px',
             }}
           >
             <div
               style={{
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                color: 'var(--text-muted)',
-                marginBottom: '10px',
+                padding: '12px',
+                borderRadius: '16px',
+                background: 'rgba(255, 246, 231, 0.9)',
+                border: '1px solid var(--border-warning)',
               }}
             >
-              Tipos más frecuentes
+              <div style={{ fontSize: '12px', color: 'var(--text-warning)', fontWeight: 700 }}>
+                En atención
+              </div>
+              <div
+                style={{
+                  marginTop: '4px',
+                  fontSize: '28px',
+                  fontWeight: 800,
+                  color: 'var(--text-warning)',
+                  letterSpacing: '-0.03em',
+                }}
+              >
+                {analysis.atRiskCount}
+              </div>
             </div>
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '10px',
-                color: 'var(--text-muted)',
-                fontSize: '11px',
-                fontWeight: 600,
+                padding: '12px',
+                borderRadius: '16px',
+                background: 'rgba(240, 253, 244, 0.92)',
+                border: '1px solid var(--border-success)',
               }}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <span
-                  style={{
-                    width: '9px',
-                    height: '9px',
-                    borderRadius: '50%',
-                    background: 'var(--accent)',
-                  }}
-                />
-                Eventos registrados
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {analysis.topIncidentTypes.length > 0 ? (
-                analysis.topIncidentTypes.map(([type, count]) => (
-                  <div key={type} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        gap: '10px',
-                        fontSize: '13px',
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                        {INCIDENT_STYLES[type as keyof typeof INCIDENT_STYLES]?.label ?? type}
-                      </span>
-                      <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{count}</span>
-                    </div>
-                    <div
-                      style={{
-                        height: '8px',
-                        borderRadius: '999px',
-                        background: 'rgba(159, 183, 198, 0.24)',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${(count / analysis.maxTypeCount) * 100}%`,
-                          height: '100%',
-                          borderRadius: '999px',
-                          background: 'var(--accent)',
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-                  No hay incidencias registradas en este mes.
-                </div>
-              )}
+              <div style={{ fontSize: '12px', color: 'var(--text-success)', fontWeight: 700 }}>
+                Estables
+              </div>
+              <div
+                style={{
+                  marginTop: '4px',
+                  fontSize: '28px',
+                  fontWeight: 800,
+                  color: 'var(--text-success)',
+                  letterSpacing: '-0.03em',
+                }}
+              >
+                {analysis.stableCount}
+              </div>
             </div>
           </div>
+          <div
+            style={{
+              marginTop: '10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'var(--text-muted)',
+              fontSize: '12px',
+            }}
+          >
+            <ShieldCheck size={14} />
+            {analysis.calmDays} días sin incidencias registradas
+          </div>
         </aside>
+
+        <div
+          className="monthly-summary-chart-grid__types"
+          style={{
+            padding: '16px',
+            borderRadius: '18px',
+            border: '1px solid rgba(202, 189, 168, 0.38)',
+            background: 'rgba(255,255,255,0.68)',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '12px',
+              fontWeight: 800,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              marginBottom: '10px',
+            }}
+          >
+            Tipos más frecuentes
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '10px',
+              color: 'var(--text-muted)',
+              fontSize: '11px',
+              fontWeight: 600,
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <span
+                style={{
+                  width: '9px',
+                  height: '9px',
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                }}
+              />
+              Eventos registrados
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {analysis.topIncidentTypes.length > 0 ? (
+              analysis.topIncidentTypes.map(([type, count]) => (
+                <div key={type} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      fontSize: '13px',
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                      {INCIDENT_STYLES[type as keyof typeof INCIDENT_STYLES]?.label ?? type}
+                    </span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{count}</span>
+                  </div>
+                  <div
+                    style={{
+                      height: '8px',
+                      borderRadius: '999px',
+                      background: 'rgba(159, 183, 198, 0.24)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${(count / analysis.maxTypeCount) * 100}%`,
+                        height: '100%',
+                        borderRadius: '999px',
+                        background: 'var(--accent)',
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                No hay incidencias registradas en este mes.
+              </div>
+            )}
+          </div>
+        </div>
 
         <div
           className="monthly-summary-chart-grid__people"
           style={{
             padding: '16px',
             borderRadius: '18px',
-            border: '1px solid rgba(202, 189, 168, 0.4)',
-            background:
-              'linear-gradient(180deg, rgba(255,255,255,0.76) 0%, rgba(248,242,233,0.36) 100%)',
+            border: '1px solid rgba(202, 189, 168, 0.38)',
+            background: 'rgba(255,255,255,0.68)',
           }}
         >
           <div
@@ -632,21 +601,30 @@ export function MonthlySummaryChart({
       <style jsx>{`
         .monthly-summary-chart-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.95fr);
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           grid-template-areas:
-            'chart side'
+            'chart chart'
+            'health types'
             'people people';
-          gap: 22px;
-          padding: 22px;
+          gap: 16px;
+          padding: 18px;
           align-items: start;
         }
 
         .monthly-summary-chart-grid__chart {
           grid-area: chart;
+          padding: 16px;
+          border-radius: 18px;
+          border: 1px solid rgba(202, 189, 168, 0.38);
+          background: rgba(255, 255, 255, 0.7);
         }
 
-        .monthly-summary-chart-grid__side {
-          grid-area: side;
+        .monthly-summary-chart-grid__health {
+          grid-area: health;
+        }
+
+        .monthly-summary-chart-grid__types {
+          grid-area: types;
         }
 
         .monthly-summary-chart-grid__people {
@@ -658,7 +636,8 @@ export function MonthlySummaryChart({
             grid-template-columns: 1fr;
             grid-template-areas:
               'chart'
-              'side'
+              'health'
+              'types'
               'people';
           }
         }

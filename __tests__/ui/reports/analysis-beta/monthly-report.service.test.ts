@@ -1,4 +1,5 @@
 import {
+  buildMonthlyOperationalHistory,
   buildMonthlyOperationalReport,
   getPreviousMonthlyOperationalReport,
 } from '@/ui/reports/analysis-beta/services/monthly-report.service';
@@ -201,5 +202,17 @@ describe('monthly-report.service', () => {
       })
     );
     expect(previousReport?.kpis.recibidas).toBe(8);
+  });
+
+  it('materializes an explicit monthly history from daily snapshots', () => {
+    const monthlyHistory = buildMonthlyOperationalHistory(dailyHistory);
+
+    expect(Object.keys(monthlyHistory)).toEqual(['2026-02', '2026-03']);
+    expect(monthlyHistory['2026-03']).toEqual(
+      expect.objectContaining({
+        monthKey: '2026-03',
+        loadedDays: 2,
+      })
+    );
   });
 });

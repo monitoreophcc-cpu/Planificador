@@ -13,6 +13,7 @@ interface ShiftSectionProps {
     onEdit: (rep: Representative) => void
     advancedEditMode: boolean
     allowReorder?: boolean
+    reorderDisabledReason?: string
 }
 
 export function ShiftSection({
@@ -24,6 +25,7 @@ export function ShiftSection({
     onEdit,
     advancedEditMode,
     allowReorder = advancedEditMode,
+    reorderDisabledReason,
 }: ShiftSectionProps) {
     const reorderRepresentatives = useAppStore(s => s.reorderRepresentatives)
 
@@ -54,8 +56,8 @@ export function ShiftSection({
                 border: `1px solid ${allowReorder ? '#fbbf24' : '#e5e7eb'}`
             }}>
                 {allowReorder
-                    ? '💡 El orden define el ranking del incentivo. Arrastra desde ≡ para reordenar.'
-                    : 'Selecciona una persona para abrir su panel de trabajo. El reordenamiento queda para la vista por turno.'
+                    ? '💡 Este orden se refleja en el planner y en las listas del turno. Arrastra desde ≡ para reordenar.'
+                    : reorderDisabledReason ?? 'Selecciona una persona para abrir su panel de trabajo. El reordenamiento queda para la vista por turno.'
                 }
             </div>
 
@@ -123,6 +125,7 @@ export function ShiftSection({
                                         onSelect={onSelect}
                                         onEdit={onEdit}
                                         advancedEditMode={advancedEditMode}
+                                        sortable={allowReorder}
                                     />
                                 ))
                             )}
@@ -154,6 +157,7 @@ export function ShiftSection({
                                 onSelect={onSelect}
                                 onEdit={onEdit}
                                 advancedEditMode={advancedEditMode}
+                                sortable={false}
                             />
                         ))
                     )}

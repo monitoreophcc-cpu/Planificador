@@ -9,6 +9,8 @@ interface RepresentativeShiftTabsProps {
   activeRepsCount: number
   activeShift: ShiftType | 'ALL'
   advancedEditMode: boolean
+  allowActiveShiftReorder: boolean
+  activeShiftReorderDisabledReason?: string
   dayReps: Representative[]
   nightReps: Representative[]
   selectedRepId: string | null
@@ -21,6 +23,8 @@ export function RepresentativeShiftTabs({
   activeRepsCount,
   activeShift,
   advancedEditMode,
+  allowActiveShiftReorder,
+  activeShiftReorderDisabledReason,
   dayReps,
   nightReps,
   selectedRepId,
@@ -141,6 +145,8 @@ export function RepresentativeShiftTabs({
           onSelect={onSelect}
           onEdit={onEdit}
           advancedEditMode={advancedEditMode}
+          allowReorder={allowActiveShiftReorder}
+          reorderDisabledReason={activeShiftReorderDisabledReason}
         />
       )}
     </div>

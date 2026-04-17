@@ -166,16 +166,13 @@ function mergeTimeSlots(series: TimeSlotKpi[][]): TimeSlotKpi[] {
   });
 }
 
-export function buildMonthlyOperationalReport(
+function buildMonthlySnapshot(
   dailyHistory: Record<string, DailySnapshot>,
-  referenceDate: string | null
+  monthKey: string
 ): MonthlyOperationalSnapshot | null {
-  if (!referenceDate) {
-    return null;
-  }
-
-  const { monthKey, monthLabel, startDate, endDate, expectedDays } =
-    buildMonthBounds(referenceDate);
+  const { monthLabel, startDate, endDate, expectedDays } = buildMonthBounds(
+    `${monthKey}-01`
+  );
   const loadedDates = Object.keys(dailyHistory)
     .filter((date) => date.startsWith(`${monthKey}-`))
     .sort();
@@ -210,7 +207,23 @@ export function buildMonthlyOperationalReport(
   };
 }
 
-export function getPreviousMonthlyOperationalReport(
+export function buildMonthlyOperationalHistory(
+  dailyHistory: Record<string, DailySnapshot>
+): Record<string, MonthlyOperationalSnapshot> {
+  const monthKeys = [...new Set(Object.keys(dailyHistory).map((date) => date.slice(0, 7)))].sort();
+
+  return monthKeys.reduce<Record<string, MonthlyOperationalSnapshot>>((accumulator, monthKey) => {
+    const snapshot = buildMonthlySnapshot(dailyHistory, monthKey);
+
+    if (snapshot) {
+      accumulator[monthKey] = snapshot;
+    }
+
+    return accumulator;
+  }, {});
+}
+
+export function buildMonthlyOperationalReport(
   dailyHistory: Record<string, DailySnapshot>,
   referenceDate: string | null
 ): MonthlyOperationalSnapshot | null {
@@ -218,7 +231,28 @@ export function getPreviousMonthlyOperationalReport(
     return null;
   }
 
-  const monthKeys = [...new Set(Object.keys(dailyHistory).map((date) => date.slice(0, 7)))].sort();
+  return buildMonthlySnapshot(dailyHistory, referenceDate.slice(0, 7));
+}
+
+export function getPreviousMonthlyOperationalReport(
+  dailyHistory: Record<string, DailySnapshot>,
+  referenceDate: string | null
+): MonthlyOperationalSnapshot | null {
+  return getPreviousMonthlyOperationalSnapshot(
+    buildMonthlyOperationalHistory(dailyHistory),
+    referenceDate
+  );
+}
+
+export function getPreviousMonthlyOperationalSnapshot(
+  monthlyHistory: Record<string, MonthlyOperationalSnapshot>,
+  referenceDate: string | null
+): MonthlyOperationalSnapshot | null {
+  if (!referenceDate) {
+    return null;
+  }
+
+  const monthKeys = Object.keys(monthlyHistory).sort();
   const currentMonthKey = referenceDate.slice(0, 7);
   const currentIndex = monthKeys.indexOf(currentMonthKey);
 
@@ -226,6 +260,5 @@ export function getPreviousMonthlyOperationalReport(
     return null;
   }
 
-  const previousMonthReferenceDate = `${monthKeys[currentIndex - 1]}-01`;
-  return buildMonthlyOperationalReport(dailyHistory, previousMonthReferenceDate);
+  return monthlyHistory[monthKeys[currentIndex - 1]] ?? null;
 }

@@ -16,10 +16,12 @@ import type {
   CommercialView,
   ComparisonPreset,
   WorkspaceView,
+  MonthlyOperationalSnapshot,
 } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import { buildDailySnapshot } from '@/ui/reports/analysis-beta/services/kpi.service';
 import { buildComparisonResult } from '@/ui/reports/analysis-beta/services/comparison.service';
 import type { ManualRepresentativeLink } from '@/ui/reports/analysis-beta/services/representative-link.service';
+import { buildMonthlyOperationalHistory } from '@/ui/reports/analysis-beta/services/monthly-report.service';
 
 // Custom storage for IndexedDB using idb-keyval
 const idbStorage: StateStorage = {
@@ -80,7 +82,15 @@ type DashboardState = {
   dataDate: string | null; // The currently viewed date
   availableDates: string[]; // List of all dates with data
   dailyHistory: Record<string, DailySnapshot>;
+  monthlyHistory: Record<string, MonthlyOperationalSnapshot>;
   setDataDate: (date: string | null) => void;
+  setRemoteHistory: (history: Record<string, DailySnapshot>) => void;
+  setRemoteSourceData: (payload: {
+    answeredCalls: AnsweredCall[];
+    rawAbandonedCalls: AbandonedCall[];
+    rawTransactions: Transaction[];
+  }) => void;
+  setRemoteManualRepresentativeLinks: (links: ManualRepresentativeLink[]) => void;
   comparisonConfig: ComparisonConfig;
   comparisonResult: ComparisonResult | null;
   comparisonPreset: ComparisonPreset;
@@ -188,6 +198,97 @@ const rebuildDailyHistory = (state: Pick<
   return { allDates, nextHistory };
 };
 
+function buildMonthlyHistory(
+  dailyHistory: Record<string, DailySnapshot>
+): Record<string, MonthlyOperationalSnapshot> {
+  return buildMonthlyOperationalHistory(dailyHistory);
+}
+
+function buildDerivedStateFromSources(params: {
+  answeredCalls: AnsweredCall[];
+  rawAbandonedCalls: AbandonedCall[];
+  rawTransactions: Transaction[];
+  inheritedHistory?: Record<string, DailySnapshot>;
+}): Pick<
+  DashboardState,
+  | 'answeredCalls'
+  | 'abandonedCalls'
+  | 'rawAbandonedCalls'
+  | 'transactions'
+  | 'rawTransactions'
+  | 'availableDates'
+  | 'dailyHistory'
+  | 'monthlyHistory'
+> {
+  const answeredCalls = params.answeredCalls;
+  const rawAbandonedCalls = params.rawAbandonedCalls;
+  const rawTransactions = params.rawTransactions;
+  const abandonedCalls = rawAbandonedCalls.filter(
+    (record) => !record.isDuplicate && !record.isLT20
+  );
+  const transactions = rawTransactions.filter((record) => record.estatus === 'N');
+  const sourceDates = [
+    ...new Set([
+      ...answeredCalls.map((record) => record.fecha),
+      ...rawAbandonedCalls.map((record) => record.fecha),
+      ...rawTransactions.map((record) => record.fecha),
+    ]),
+  ].sort();
+  const nextHistory = { ...(params.inheritedHistory ?? {}) };
+
+  sourceDates.forEach((date) => {
+    nextHistory[date] = buildDailySnapshot({
+      date,
+      answered: answeredCalls.filter((record) => record.fecha === date),
+      abandoned: abandonedCalls.filter((record) => record.fecha === date),
+      rawAbandoned: rawAbandonedCalls.filter((record) => record.fecha === date),
+      transactions: transactions.filter((record) => record.fecha === date),
+      rawTransactions: rawTransactions.filter((record) => record.fecha === date),
+    });
+  });
+
+  const availableDates = [...new Set([...Object.keys(nextHistory), ...sourceDates])].sort();
+
+  return {
+    answeredCalls,
+    abandonedCalls,
+    rawAbandonedCalls,
+    transactions,
+    rawTransactions,
+    availableDates,
+    dailyHistory: nextHistory,
+    monthlyHistory: buildMonthlyHistory(nextHistory),
+  };
+}
+
+function mergeSourceRecordsByDate<T extends { fecha: string }>(
+  localRecords: T[],
+  remoteRecords: T[]
+): T[] {
+  const localDates = new Set(localRecords.map((record) => record.fecha));
+  const remoteOnlyRecords = remoteRecords.filter(
+    (record) => !localDates.has(record.fecha)
+  );
+
+  return [...remoteOnlyRecords, ...localRecords];
+}
+
+function mergeManualRepresentativeLinks(
+  localLinks: ManualRepresentativeLink[],
+  remoteLinks: ManualRepresentativeLink[]
+): ManualRepresentativeLink[] {
+  const localAgentNames = new Set(
+    localLinks.map((link) => link.agentName.trim().toLowerCase())
+  );
+  const remoteOnlyLinks = remoteLinks.filter(
+    (link) => !localAgentNames.has(link.agentName.trim().toLowerCase())
+  );
+
+  return [...remoteOnlyLinks, ...localLinks].sort((left, right) =>
+    left.agentName.localeCompare(right.agentName, 'es')
+  );
+}
+
 function canMutateDashboardData(): boolean {
   return canCurrentUserEditData();
 }
@@ -202,6 +303,7 @@ export const useDashboardStore = create<DashboardState>()(
       rawTransactions: [],
       availableDates: [],
       dailyHistory: {},
+      monthlyHistory: {},
       
       kpis: initialKpis,
       kpisByShift: {
@@ -256,6 +358,7 @@ export const useDashboardStore = create<DashboardState>()(
           answeredCalls: updated, 
           availableDates: allDates,
           dailyHistory: nextHistory,
+          monthlyHistory: buildMonthlyHistory(nextHistory),
           dataDate: dates[0] || getStore().dataDate 
         });
       },
@@ -298,6 +401,7 @@ export const useDashboardStore = create<DashboardState>()(
           rawAbandonedCalls: updatedRaw,
           availableDates: allDates,
           dailyHistory: nextHistory,
+          monthlyHistory: buildMonthlyHistory(nextHistory),
           dataDate: dates[0] || getStore().dataDate
         });
       },
@@ -340,6 +444,7 @@ export const useDashboardStore = create<DashboardState>()(
           rawTransactions: updatedRaw,
           availableDates: allDates,
           dailyHistory: nextHistory,
+          monthlyHistory: buildMonthlyHistory(nextHistory),
           dataDate: dates[0] || getStore().dataDate
         });
       },
@@ -352,6 +457,77 @@ export const useDashboardStore = create<DashboardState>()(
       setSelectedHour: (hour) => set({ selectedHour: hour }),
       toggleAudit: () => set((state) => ({ isAuditVisible: !state.isAuditVisible })),
       setDataDate: (date) => set({ dataDate: date }),
+      setRemoteHistory: (history) => {
+        const currentHistory = getStore().dailyHistory;
+        const mergedHistory = {
+          ...history,
+          ...currentHistory,
+        };
+        const availableDates = Object.keys(mergedHistory).sort();
+        const currentDate = getStore().dataDate;
+
+        set({
+          dailyHistory: mergedHistory,
+          monthlyHistory: buildMonthlyHistory(mergedHistory),
+          availableDates,
+          dataDate:
+            currentDate && availableDates.includes(currentDate)
+              ? currentDate
+              : availableDates[availableDates.length - 1] ?? null,
+          comparisonConfig: sanitizeComparisonConfig(
+            getStore().comparisonConfig,
+            availableDates
+          ),
+          comparisonResult: null,
+          comparisonPreset: 'manual',
+        });
+      },
+      setRemoteSourceData: (payload) => {
+        const currentState = getStore();
+        const answeredCalls = mergeSourceRecordsByDate(
+          currentState.answeredCalls,
+          payload.answeredCalls
+        );
+        const rawAbandonedCalls = mergeSourceRecordsByDate(
+          currentState.rawAbandonedCalls,
+          payload.rawAbandonedCalls
+        );
+        const rawTransactions = mergeSourceRecordsByDate(
+          currentState.rawTransactions,
+          payload.rawTransactions
+        );
+        const nextState = buildDerivedStateFromSources({
+          answeredCalls,
+          rawAbandonedCalls,
+          rawTransactions,
+          inheritedHistory: currentState.dailyHistory,
+        });
+        const currentDate = currentState.dataDate;
+
+        set({
+          ...nextState,
+          dataDate:
+            currentDate && nextState.availableDates.includes(currentDate)
+              ? currentDate
+              : nextState.availableDates[nextState.availableDates.length - 1] ?? null,
+          comparisonConfig: sanitizeComparisonConfig(
+            currentState.comparisonConfig,
+            nextState.availableDates
+          ),
+          comparisonResult: null,
+          comparisonPreset: 'manual',
+        });
+      },
+      setRemoteManualRepresentativeLinks: (links) => {
+        const currentLinks = getStore().manualRepresentativeLinks;
+
+        set({
+          manualRepresentativeLinks: mergeManualRepresentativeLinks(
+            currentLinks,
+            links
+          ),
+        });
+      },
       setComparisonConfig: (config) =>
         set((state) => ({ comparisonConfig: { ...state.comparisonConfig, ...config } })),
       setComparisonPreset: (preset) => set({ comparisonPreset: preset }),
@@ -362,6 +538,7 @@ export const useDashboardStore = create<DashboardState>()(
           allAnswered: state.answeredCalls,
           allAbandoned: state.abandonedCalls,
           allTransactions: state.transactions,
+          dailyHistory: state.dailyHistory,
         });
         set({ comparisonResult: result });
       },
@@ -428,6 +605,7 @@ export const useDashboardStore = create<DashboardState>()(
           rawTransactions: [],
           availableDates: [],
           dailyHistory: {},
+          monthlyHistory: {},
           dataDate: null,
           comparisonConfig: initialComparisonConfig,
           comparisonResult: null,
@@ -471,6 +649,7 @@ export const useDashboardStore = create<DashboardState>()(
           transactions: filteredTrx,
           rawTransactions: filteredTrxRaw,
           dailyHistory: nextHistory,
+          monthlyHistory: buildMonthlyHistory(nextHistory),
           availableDates: remainingDates,
           dataDate: currentDate === date ? remainingDates[0] || null : currentDate,
           comparisonConfig: nextComparisonConfig,
@@ -508,6 +687,7 @@ export const useDashboardStore = create<DashboardState>()(
           if (shouldRebuildHistory) {
             useDashboardStore.setState({
               dailyHistory: rebuilt.nextHistory,
+              monthlyHistory: buildMonthlyHistory(rebuilt.nextHistory),
               availableDates: rebuilt.allDates,
               dataDate: state.dataDate && rebuilt.allDates.includes(state.dataDate)
                 ? state.dataDate
@@ -522,6 +702,7 @@ export const useDashboardStore = create<DashboardState>()(
             });
           } else {
             useDashboardStore.setState({
+              monthlyHistory: buildMonthlyHistory(state.dailyHistory ?? {}),
               comparisonConfig: sanitizeComparisonConfig(
                 state.comparisonConfig ?? initialComparisonConfig,
                 state.availableDates ?? []
@@ -550,6 +731,7 @@ export const useDashboardStore = create<DashboardState>()(
         aovChartMode: state.aovChartMode,
         activeWorkspaceView: state.activeWorkspaceView,
         commercialView: state.commercialView,
+        manualRepresentativeLinks: state.manualRepresentativeLinks,
       }),
     }
   )

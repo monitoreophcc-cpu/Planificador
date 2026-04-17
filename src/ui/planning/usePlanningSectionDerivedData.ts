@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { getEffectiveAssignmentsForPlanner } from '@/application/ui-adapters/getEffectiveAssignmentsForPlanner'
 import { getEffectiveDailyCoverage } from '@/application/ui-adapters/getEffectiveDailyCoverage'
 import { belongsToShiftThisWeek } from './belongsToShiftThisWeek'
+import { sortPlannerRepresentativesForShift } from './sortPlannerRepresentativesForShift'
 import type {
   CoverageRule,
   DayInfo,
@@ -76,7 +77,7 @@ export function usePlanningSectionDerivedData({
       weeklyPlan.agents.map(agent => [agent.representativeId, agent])
     )
 
-    return activeRepresentatives.filter(representative => {
+    const visibleRepresentatives = activeRepresentatives.filter(representative => {
       const agentPlan = planMap.get(representative.id)
       if (!agentPlan) {
         return false
@@ -90,6 +91,11 @@ export function usePlanningSectionDerivedData({
         specialSchedules
       )
     })
+
+    return sortPlannerRepresentativesForShift(
+      visibleRepresentatives,
+      activeShift
+    )
   }, [
     weeklyPlan,
     weekDays,

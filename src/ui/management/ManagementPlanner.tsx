@@ -4,6 +4,7 @@ import React from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useWeekNavigator } from '@/hooks/useWeekNavigator'
 import { useWeeklyPlan } from '@/hooks/useWeeklyPlan'
+import { ManagementPlannerToolbar } from './ManagementPlannerToolbar'
 
 /**
  * 🧩 PLANNER GERENCIAL — Vista filtrada del planner operativo
@@ -36,10 +37,14 @@ export function ManagementPlanner() {
     setPlanningAnchorDate: s.setPlanningAnchorDate,
   }))
 
-  const { weekDays, label } = useWeekNavigator(
-    planningAnchorDate,
-    setPlanningAnchorDate
-  )
+  const {
+    weekDays,
+    label,
+    isCurrentWeek,
+    handlePrevWeek,
+    handleNextWeek,
+    handleGoToday,
+  } = useWeekNavigator(planningAnchorDate, setPlanningAnchorDate)
 
   const { weeklyPlan } = useWeeklyPlan(weekDays)
 
@@ -51,18 +56,16 @@ export function ManagementPlanner() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
-          Horario Gerencial
-        </h2>
-        <span style={{ fontSize: '14px', color: '#6b7280' }}>
-          {label}
-        </span>
-      </header>
+      <ManagementPlannerToolbar
+        title="Horario Gerencial"
+        label={label}
+        anchorDate={planningAnchorDate}
+        isCurrentWeek={isCurrentWeek}
+        onGoToday={handleGoToday}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onSelectWeekDate={setPlanningAnchorDate}
+      />
 
       <div style={{
         display: 'grid',
@@ -130,4 +133,3 @@ export function ManagementPlanner() {
     </div>
   )
 }
-

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { addMonths, format, subMonths } from 'date-fns'
+import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useAppStore } from '@/store/useAppStore'
 import {
@@ -21,14 +21,11 @@ interface UsePointsReportViewResult {
   reorderModal: ReorderModalState
   summary: MonthlyPointsSummary
   closeReorderModal: () => void
-  goToNextMonth: () => void
-  goToPreviousMonth: () => void
   handleCopy: (text: string, title: string) => void
   openReorderModal: (shift: ShiftType) => void
 }
 
-export function usePointsReportView(): UsePointsReportViewResult {
-  const [currentDate, setCurrentDate] = useState(new Date())
+export function usePointsReportView(currentDate: Date): UsePointsReportViewResult {
   const [copiedTitle, setCopiedTitle] = useState<string | false>(false)
   const [reorderModal, setReorderModal] = useState<ReorderModalState>({
     isOpen: false,
@@ -64,8 +61,6 @@ export function usePointsReportView(): UsePointsReportViewResult {
     summary,
     closeReorderModal: () =>
       setReorderModal(currentState => ({ ...currentState, isOpen: false })),
-    goToNextMonth: () => setCurrentDate(month => addMonths(month, 1)),
-    goToPreviousMonth: () => setCurrentDate(month => subMonths(month, 1)),
     handleCopy,
     openReorderModal: shift => setReorderModal({ isOpen: true, shift }),
   }

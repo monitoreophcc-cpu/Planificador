@@ -24,6 +24,7 @@ import MonthlyOperationalReport from '@/ui/reports/analysis-beta/operation/Month
 import CommercialPerformancePanel from '@/ui/reports/analysis-beta/tables/CommercialPerformancePanel';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Toaster } from '@/ui/reports/analysis-beta/ui/toaster';
+import { useDashboardCloudSync } from '@/ui/reports/analysis-beta/hooks/useDashboardCloudSync';
 
 const PerformanceChart = dynamic(() => import('@/ui/reports/analysis-beta/charts/ShiftPerformanceChart'), { 
   ssr: false,
@@ -78,6 +79,7 @@ function buildAnalyzedPeriodLabel(dates: string[]) {
 
 export function CallCenterAnalysisView() {
   const { canEditData } = useAccess();
+  useDashboardCloudSync();
   const [mounted, setMounted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [showGlobalReadings, setShowGlobalReadings] = useState(false);

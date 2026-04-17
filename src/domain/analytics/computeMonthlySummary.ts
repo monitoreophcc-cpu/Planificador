@@ -26,6 +26,9 @@ const POINT_RULES: Record<
   ERROR: { weekday: 2, weekend: 2 },
 }
 
+const WARNING_RISK_POINTS_MIN = 5
+const DANGER_RISK_POINTS_MIN_EXCLUSIVE = 10
+
 export function calculatePoints(incident: Incident): number {
   if (!incident.startDate) return 0
 
@@ -106,15 +109,13 @@ export function computeMonthlySummary(
   // Post-process to calculate riskLevel
   const finalByPerson: PersonMonthlySummary[] = Object.values(byPersonMap).map(
     p => {
-      if (
-        p.totals.puntos >= 10 ||
-        p.totals.ausencias >= 2 ||
-        p.totals.tardanzas >= 3 ||
-        p.totals.errores >= 2
-      ) {
+      // The monthly status is driven only by accumulated incident points.
+      if (p.totals.puntos > DANGER_RISK_POINTS_MIN_EXCLUSIVE) {
         p.riskLevel = 'danger'
-      } else if (p.totals.puntos > 0) {
+      } else if (p.totals.puntos >= WARNING_RISK_POINTS_MIN) {
         p.riskLevel = 'warning'
+      } else {
+        p.riskLevel = 'ok'
       }
       return p
     }

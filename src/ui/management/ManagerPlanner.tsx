@@ -6,6 +6,7 @@ import { useWeeklyPlan } from '@/hooks/useWeeklyPlan'
 import { PlanRow } from '@/ui/planning/PlanRow'
 import { getEffectiveAssignmentsForPlanner } from '@/application/ui-adapters/getEffectiveAssignmentsForPlanner'
 import { useMemo, useState } from 'react'
+import { ManagementPlannerToolbar } from './ManagementPlannerToolbar'
 
 /**
  * 🧩 PLANNER GERENCIAL — Vista filtrada del planner operativo
@@ -46,10 +47,14 @@ export function ManagerPlanner() {
     specialSchedules: s.specialSchedules,
   }))
 
-  const { weekDays, label } = useWeekNavigator(
-    planningAnchorDate,
-    setPlanningAnchorDate
-  )
+  const {
+    weekDays,
+    label,
+    isCurrentWeek,
+    handlePrevWeek,
+    handleNextWeek,
+    handleGoToday,
+  } = useWeekNavigator(planningAnchorDate, setPlanningAnchorDate)
 
   const [activeShift, setActiveShift] = useState<'DAY' | 'NIGHT'>('DAY')
 
@@ -82,18 +87,74 @@ export function ManagerPlanner() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
-          Horario Gerencial
-        </h2>
-        <span style={{ fontSize: '14px', color: '#6b7280' }}>
-          {label}
-        </span>
-      </header>
+      <ManagementPlannerToolbar
+        title="Horario Gerencial"
+        label={label}
+        anchorDate={planningAnchorDate}
+        isCurrentWeek={isCurrentWeek}
+        trailing={
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px',
+              borderRadius: '14px',
+              border: '1px solid var(--shell-border)',
+              background: 'rgba(255,255,255,0.74)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveShift('DAY')}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '10px',
+                border: '1px solid transparent',
+                background:
+                  activeShift === 'DAY'
+                    ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.72) 100%)'
+                    : 'transparent',
+                color:
+                  activeShift === 'DAY'
+                    ? 'var(--accent-strong)'
+                    : 'var(--text-muted)',
+                fontWeight: activeShift === 'DAY' ? 700 : 600,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              Turno Día
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveShift('NIGHT')}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '10px',
+                border: '1px solid transparent',
+                background:
+                  activeShift === 'NIGHT'
+                    ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.72) 100%)'
+                    : 'transparent',
+                color:
+                  activeShift === 'NIGHT'
+                    ? 'var(--accent-strong)'
+                    : 'var(--text-muted)',
+                fontWeight: activeShift === 'NIGHT' ? 700 : 600,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              Turno Noche
+            </button>
+          </div>
+        }
+        onGoToday={handleGoToday}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onSelectWeekDate={setPlanningAnchorDate}
+      />
 
       <div style={{
         display: 'grid',

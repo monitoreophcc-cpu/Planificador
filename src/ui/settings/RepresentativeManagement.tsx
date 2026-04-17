@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { useEditMode } from '@/hooks/useEditMode'
+import { useAccess } from '@/hooks/useAccess'
 import { Representative, ShiftType } from '@/domain/types'
 import { getRepresentativesByShift } from '@/domain/representatives/getRepresentativesByShift'
 import { InactiveRepresentativesPanel } from './InactiveRepresentativesPanel'
@@ -46,6 +47,7 @@ export function RepresentativeManagement() {
 
   const { mode } = useEditMode()
   const advancedEditMode = mode === 'ADMIN_OVERRIDE'
+  const { canEditData } = useAccess()
 
   const [modalState, setModalState] = useState<RepresentativeModalState>({
     kind: 'closed',
@@ -91,6 +93,12 @@ export function RepresentativeManagement() {
     () => hasActiveRepresentativeFilters(representativeFilters),
     [representativeFilters]
   )
+  const canReorderActiveShift = canEditData && !hasActiveFilters
+  const reorderDisabledReason = !canEditData
+    ? 'Tu sesión actual es de solo lectura. No puedes reordenar la lista.'
+    : hasActiveFilters
+      ? 'Limpia los filtros para reordenar el turno completo.'
+      : undefined
   const filteredResultsCount = filteredActiveReps.length + filteredInactiveReps.length
   const activeModalRepId =
     modalState.kind === 'detail' || modalState.kind === 'edit' ? modalState.repId : null
@@ -510,6 +518,8 @@ export function RepresentativeManagement() {
               activeRepsCount={filteredActiveReps.length}
               activeShift={activeShift}
               advancedEditMode={advancedEditMode}
+              allowActiveShiftReorder={canReorderActiveShift}
+              activeShiftReorderDisabledReason={reorderDisabledReason}
               dayReps={dayReps}
               nightReps={nightReps}
               selectedRepId={activeModalRepId}

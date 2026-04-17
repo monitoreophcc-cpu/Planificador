@@ -71,11 +71,16 @@ export default function AgentPerformanceTable({
 }: AgentPerformanceTableProps) {
   const transactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const manualRepresentativeLinks = useDashboardStore(
+    (state) => state.manualRepresentativeLinks
+  );
+  const upsertManualRepresentativeLink = useDashboardStore(
+    (state) => state.upsertManualRepresentativeLink
+  );
   const representatives = useAppStore((state) => state.representatives);
   const [searchTerm, setSearchTerm] = useState('');
   const [linkingAgentName, setLinkingAgentName] = useState<string | null>(null);
   const [selectedRepresentativeName, setSelectedRepresentativeName] = useState('');
-  const [sessionManualLinks, setSessionManualLinks] = useState(MANUAL_REPRESENTATIVE_LINKS);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'ventas', direction: 'desc' });
   const formatCount = (value: number) => value.toLocaleString('en-US');
   const formatCurrency = (value: number) =>
@@ -150,8 +155,12 @@ export default function AgentPerformanceTable({
   }, [agentData, searchTerm, sortConfig]);
 
   const representativeLinks = useMemo(
-    () => buildRepresentativeLinkMap(agentData, representatives, sessionManualLinks),
-    [agentData, representatives, sessionManualLinks]
+    () =>
+      buildRepresentativeLinkMap(agentData, representatives, [
+        ...MANUAL_REPRESENTATIVE_LINKS,
+        ...manualRepresentativeLinks,
+      ]),
+    [agentData, representatives, manualRepresentativeLinks]
   );
   const coverageSummary = useMemo(
     () => summarizeRepresentativeCoverage(agentData, representativeLinks),
@@ -172,17 +181,10 @@ export default function AgentPerformanceTable({
       return;
     }
 
-    setSessionManualLinks((current) => {
-      const withoutCurrent = current.filter((item) => item.agentName !== linkingAgentName);
-      return [
-        ...withoutCurrent,
-        {
-          agentName: linkingAgentName,
-          representativeName: selectedRepresentativeName,
-        },
-      ];
+    upsertManualRepresentativeLink({
+      agentName: linkingAgentName,
+      representativeName: selectedRepresentativeName,
     });
-
     setLinkingAgentName(null);
     setSelectedRepresentativeName('');
   };

@@ -17,51 +17,82 @@ export function MonthlySummarySearch({
     <div
       style={{
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         gap: '12px',
-        padding: '18px',
-        borderRadius: '20px',
-        border: '1px solid var(--shell-border)',
+        flexWrap: 'wrap',
+        padding: '14px 16px',
+        borderRadius: '18px',
+        border: '1px solid rgba(202, 189, 168, 0.42)',
         background:
-          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.42) 100%)',
-        boxShadow: 'var(--shadow-sm)',
+          'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(248,242,233,0.34) 100%)',
       }}
     >
-      <label
-        htmlFor="monthly-summary-search"
-        style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}
-      >
-        Buscar Representante
-      </label>
-      <input
-        id="monthly-summary-search"
-        type="text"
-        placeholder="Escribe el nombre del representante..."
-        value={searchTerm}
-        onChange={event => onSearchTermChange(event.target.value)}
-        style={{
-          width: '100%',
-          padding: '12px 14px',
-          border: '1px solid var(--shell-border)',
-          borderRadius: '16px',
-          fontSize: '14px',
-          outline: 'none',
-          transition: 'border-color 0.2s',
-          background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
-          color: 'var(--text-main)',
-        }}
-        onFocus={event => {
-          event.target.style.borderColor = 'rgba(var(--accent-rgb), 0.38)'
-        }}
-        onBlur={event => {
-          event.target.style.borderColor = 'var(--shell-border)'
-        }}
-      />
-      {searchTerm && (
-        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          Mostrando {filteredCount} de {totalCount} representantes
+      <div style={{ minWidth: 0 }}>
+        <label
+          htmlFor="monthly-summary-search"
+          style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}
+        >
+          Filtrar ranking
+        </label>
+        <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
+          Busca una persona sin abrir otro bloque de navegación.
         </div>
-      )}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          flexWrap: 'wrap',
+          marginLeft: 'auto',
+        }}
+      >
+        <input
+          id="monthly-summary-search"
+          type="text"
+          placeholder="Nombre del representante"
+          value={searchTerm}
+          onChange={event => onSearchTermChange(event.target.value)}
+          style={{
+            width: 'min(100%, 300px)',
+            minWidth: '220px',
+            padding: '10px 14px',
+            border: '1px solid rgba(202, 189, 168, 0.5)',
+            borderRadius: '14px',
+            fontSize: '14px',
+            outline: 'none',
+            transition: 'border-color 0.2s',
+            background: 'rgba(255,255,255,0.78)',
+            color: 'var(--text-main)',
+          }}
+          onFocus={event => {
+            event.target.style.borderColor = 'rgba(var(--accent-rgb), 0.38)'
+          }}
+          onBlur={event => {
+            event.target.style.borderColor = 'rgba(202, 189, 168, 0.5)'
+          }}
+        />
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '9px 12px',
+            borderRadius: '999px',
+            border: '1px solid rgba(202, 189, 168, 0.42)',
+            background: 'rgba(255,255,255,0.7)',
+            color: 'var(--text-main)',
+            fontSize: '12px',
+            fontWeight: 700,
+          }}
+        >
+          {searchTerm
+            ? `Mostrando ${filteredCount} de ${totalCount}`
+            : `${totalCount} representantes`}
+        </div>
+      </div>
     </div>
   )
 }

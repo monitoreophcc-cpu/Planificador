@@ -94,6 +94,17 @@ describe('getStatsOverview', () => {
     expect(result.peopleAtRisk).toBe(1)
   })
 
+  it('should not count 10-point reps as people at risk', () => {
+    const incidents: Incident[] = [
+      { id: 'i1', representativeId: 'r2', type: 'AUSENCIA', startDate: '2025-01-04', duration: 1, createdAt: '' }, // Sab, 6 pts
+      { id: 'i2', representativeId: 'r2', type: 'ERROR', startDate: '2025-01-07', duration: 1, createdAt: '' }, // 2 pts
+      { id: 'i3', representativeId: 'r2', type: 'TARDANZA', startDate: '2025-01-08', duration: 1, createdAt: '' }, // 2 pts
+    ]
+
+    const result = getStatsOverview({ ...baseInput, incidents })
+    expect(result.peopleAtRisk).toBe(0)
+  })
+
   it('should count total swaps within the month', () => {
     const swaps: SwapEvent[] = [
       { id: 's1', type: 'COVER', date: '2025-01-15', shift: 'DAY', fromRepresentativeId: 'r1', toRepresentativeId: 'r2', createdAt: '' },

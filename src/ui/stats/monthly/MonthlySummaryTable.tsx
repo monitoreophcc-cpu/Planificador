@@ -13,19 +13,19 @@ interface MonthlySummaryTableProps {
 }
 
 const headerStyle: CSSProperties = {
-  padding: '12px 14px',
+  padding: '10px 14px',
   textAlign: 'left',
-  fontSize: '12px',
+  fontSize: '11px',
   fontWeight: 700,
   color: 'var(--text-muted)',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
-  borderBottom: '1px solid var(--shell-border)',
-  background: 'rgba(244, 238, 228, 0.7)',
+  borderBottom: '1px solid rgba(202, 189, 168, 0.36)',
+  background: 'rgba(244, 238, 228, 0.56)',
 }
 
 const cellStyle: CSSProperties = {
-  padding: '14px',
+  padding: '12px 14px',
   borderTop: '1px solid rgba(202, 189, 168, 0.38)',
   fontSize: '14px',
   color: 'var(--text-main)',
@@ -148,12 +148,11 @@ export function MonthlySummaryTable({
   return (
     <div
       style={{
-        borderRadius: '22px',
-        border: '1px solid var(--shell-border)',
+        borderRadius: '20px',
+        border: '1px solid rgba(202, 189, 168, 0.42)',
         overflow: 'hidden',
         background:
-          'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.44) 100%)',
-        boxShadow: 'var(--shadow-sm)',
+          'linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(248,242,233,0.34) 100%)',
       }}
     >
       <style jsx global>{`
@@ -163,15 +162,13 @@ export function MonthlySummaryTable({
       `}</style>
       <div
         style={{
-          padding: '20px',
+          padding: '16px 18px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           gap: '16px',
           flexWrap: 'wrap',
-          borderBottom: '1px solid var(--shell-border)',
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(248,242,233,0.72) 100%)',
+          borderBottom: '1px solid rgba(202, 189, 168, 0.36)',
         }}
       >
         <div>
@@ -190,8 +187,8 @@ export function MonthlySummaryTable({
           <h3
             style={{
               margin: 0,
-              fontSize: '18px',
-              fontWeight: 700,
+              fontSize: '16px',
+              fontWeight: 800,
               color: 'var(--text-main)',
               letterSpacing: '-0.02em',
             }}
