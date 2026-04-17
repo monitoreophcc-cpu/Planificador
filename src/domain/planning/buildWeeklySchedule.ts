@@ -198,8 +198,8 @@ export function buildWeeklySchedule(
           coverage // Pass coverage to resolution
         )
 
-        // 🔄 TEMPORARY: Use adapter for backward compatibility
-        // TODO: Migrate consumers to use resolution.computed directly
+        // Keep the compatibility adapter as the supported bridge while
+        // legacy WeeklyPlan consumers still expect DailyPresence.
         const legacyPresence = dayResolutionToDailyPresence(resolution, coverage)
 
         days[date] = legacyPresence

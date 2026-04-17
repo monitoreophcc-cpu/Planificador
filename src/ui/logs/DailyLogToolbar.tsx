@@ -39,143 +39,127 @@ export function DailyLogToolbar({
   return (
     <section
       style={{
-        borderRadius: '32px',
+        borderRadius: '24px',
         border: '1px solid var(--shell-border)',
         background:
-          'linear-gradient(135deg, rgba(255, 253, 249, 0.98) 0%, rgba(248, 242, 233, 0.96) 60%, rgba(var(--accent-rgb), 0.05) 100%)',
-        boxShadow: '0 24px 48px rgba(24, 34, 48, 0.08)',
-        padding: '30px 36px',
+          'linear-gradient(180deg, rgba(255, 254, 251, 0.98) 0%, rgba(250, 246, 239, 0.96) 100%)',
+        boxShadow: '0 12px 28px rgba(24, 34, 48, 0.06)',
+        padding: '14px 18px',
         display: 'flex',
-        flexDirection: 'column',
-        gap: '28px',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '14px',
+        flexWrap: 'wrap',
       }}
     >
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(320px, 1.2fr) minmax(360px, 0.95fr)',
-          gap: '24px',
-          alignItems: 'start',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          minWidth: 0,
+          flex: '0 1 auto',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            minWidth: 0,
-          }}
-        >
-          <div style={{ maxWidth: '38rem' }}>
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '4px',
+            }}
+          >
             <div
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: '14px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--accent)',
               }}
             >
-              <div
-                style={{
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: 'var(--accent)',
-                }}
-              >
-                Centro operativo del día
-              </div>
-
-              <Popover.Root>
-                <Popover.Trigger asChild>
-                  <button
-                    type="button"
-                    aria-label={`Ver contexto de ${summaryMeta.title}`}
-                    style={getInfoButtonStyle()}
-                  >
-                    <Info size={16} />
-                  </button>
-                </Popover.Trigger>
-                <Popover.Portal>
-                  <Popover.Content
-                    side="bottom"
-                    align="start"
-                    sideOffset={10}
-                    style={getInfoPopoverStyle()}
-                  >
-                    <div style={getPopoverEyebrowStyle()}>{summaryMeta.eyebrow}</div>
-                    <div style={getPopoverTitleStyle()}>{summaryMeta.title}</div>
-                    <div style={getPopoverDescriptionStyle()}>{summaryMeta.description}</div>
-                    <div style={getPopoverContextStyle()}>{summaryMeta.context}</div>
-                    <Popover.Arrow style={getPopoverArrowStyle()} />
-                  </Popover.Content>
-                </Popover.Portal>
-              </Popover.Root>
+              Centro operativo del día
             </div>
 
-            <h2
-              style={{
-                margin: 0,
-                fontSize: '2.1rem',
-                lineHeight: 1.08,
-                fontWeight: 500,
-                letterSpacing: '-0.04em',
-                color: 'var(--text-main)',
-              }}
-            >
-              Registro Diario
-            </h2>
-            <p
-              style={{
-                margin: '14px 0 0',
-                fontSize: '1.02rem',
-                color: 'var(--text-muted)',
-                lineHeight: 1.6,
-              }}
-            >
-              {isExpanded
-                ? 'Aquí ves el resumen operativo completo antes de registrar algo.'
-                : 'Vista compacta para entrar directo al registro. Puedes abrir el resumen cuando lo necesites.'}
-            </p>
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Ver contexto de ${summaryMeta.title}`}
+                  style={getInfoButtonStyle()}
+                >
+                  <Info size={14} />
+                </button>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content
+                  side="bottom"
+                  align="start"
+                  sideOffset={10}
+                  style={getInfoPopoverStyle()}
+                >
+                  <div style={getPopoverEyebrowStyle()}>{summaryMeta.eyebrow}</div>
+                  <div style={getPopoverTitleStyle()}>{summaryMeta.title}</div>
+                  <div style={getPopoverDescriptionStyle()}>{summaryMeta.description}</div>
+                  <div style={getPopoverContextStyle()}>{summaryMeta.context}</div>
+                  <Popover.Arrow style={getPopoverArrowStyle()} />
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
           </div>
 
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            justifyItems: 'end',
-            alignContent: 'start',
-            gap: '18px',
-            minWidth: 0,
-          }}
-        >
-          <button
-            type="button"
-            onClick={onToggleExpanded}
-            aria-pressed={isExpanded}
-            style={getSummaryButtonStyle(isExpanded)}
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '1.5rem',
+              lineHeight: 1.02,
+              fontWeight: 550,
+              letterSpacing: '-0.035em',
+              color: 'var(--text-main)',
+              whiteSpace: 'nowrap',
+            }}
           >
-            <span style={getSummaryButtonIconStyle(isExpanded)} aria-hidden="true">
-              {isExpanded ? (
-                <ChevronUp size={17} strokeWidth={2.35} />
-              ) : (
-                <ChevronDown size={17} strokeWidth={2.35} />
-              )}
-            </span>
-            <span style={getSummaryButtonLabelStyle()}>
-              {isExpanded ? 'Ocultar resumen operativo' : 'Ver resumen operativo'}
-            </span>
-          </button>
-
-          <DailyLogDateNavigator date={date} onDateChange={onDateChange} />
-
-          <DailyLogFilterTabs
-            filterMode={filterMode}
-            onFilterModeChange={onFilterModeChange}
-          />
+            Registro Diario
+          </h2>
         </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: '10px',
+          flex: '1 1 720px',
+          flexWrap: 'wrap',
+          minWidth: 0,
+        }}
+      >
+        <DailyLogDateNavigator date={date} onDateChange={onDateChange} />
+
+        <DailyLogFilterTabs
+          filterMode={filterMode}
+          onFilterModeChange={onFilterModeChange}
+        />
+
+        <button
+          type="button"
+          onClick={onToggleExpanded}
+          aria-pressed={isExpanded}
+          style={getSummaryButtonStyle(isExpanded)}
+        >
+          <span style={getSummaryButtonIconStyle(isExpanded)} aria-hidden="true">
+            {isExpanded ? (
+              <ChevronUp size={15} strokeWidth={2.3} />
+            ) : (
+              <ChevronDown size={15} strokeWidth={2.3} />
+            )}
+          </span>
+          <span style={getSummaryButtonLabelStyle()}>
+            {isExpanded ? 'Ocultar resumen' : 'Ver resumen'}
+          </span>
+        </button>
       </div>
     </section>
   )
@@ -185,33 +169,34 @@ function getSummaryButtonStyle(isExpanded: boolean): React.CSSProperties {
   return {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '8px',
     justifyContent: 'center',
-    minHeight: '54px',
-    padding: '6px 18px 6px 8px',
+    minHeight: '38px',
+    padding: '4px 12px 4px 6px',
     borderRadius: '999px',
     border: isExpanded
       ? '1px solid rgba(var(--accent-rgb), 0.24)'
-      : '1px solid rgba(137, 149, 161, 0.28)',
+      : '1px solid rgba(137, 149, 161, 0.22)',
     background: isExpanded
-      ? 'linear-gradient(180deg, rgba(236, 242, 246, 0.98) 0%, rgba(222, 230, 236, 0.98) 100%)'
-      : 'linear-gradient(180deg, rgba(248, 250, 251, 0.98) 0%, rgba(235, 239, 241, 0.98) 100%)',
+      ? 'linear-gradient(180deg, rgba(236, 242, 246, 0.96) 0%, rgba(225, 233, 238, 0.98) 100%)'
+      : 'rgba(255, 255, 255, 0.78)',
     color: 'var(--accent-strong)',
-    fontSize: '0.98rem',
-    fontWeight: 800,
+    fontSize: '0.84rem',
+    fontWeight: 750,
     letterSpacing: '-0.01em',
     cursor: 'pointer',
     boxShadow: isExpanded
-      ? '0 18px 30px rgba(24, 34, 48, 0.12), inset 0 1px 0 rgba(255,255,255,0.75)'
-      : '0 12px 24px rgba(24, 34, 48, 0.08), inset 0 1px 0 rgba(255,255,255,0.82)',
+      ? '0 10px 18px rgba(24, 34, 48, 0.08), inset 0 1px 0 rgba(255,255,255,0.75)'
+      : '0 8px 16px rgba(24, 34, 48, 0.05), inset 0 1px 0 rgba(255,255,255,0.82)',
     maxWidth: '100%',
+    whiteSpace: 'nowrap',
   }
 }
 
 function getSummaryButtonIconStyle(isExpanded: boolean): React.CSSProperties {
   return {
-    width: '38px',
-    height: '38px',
+    width: '26px',
+    height: '26px',
     borderRadius: '999px',
     display: 'inline-flex',
     alignItems: 'center',
@@ -236,11 +221,11 @@ function getSummaryButtonLabelStyle(): React.CSSProperties {
 
 function getInfoButtonStyle(): React.CSSProperties {
   return {
-    width: '28px',
-    height: '28px',
+    width: '22px',
+    height: '22px',
     borderRadius: '999px',
-    border: '1px solid rgba(var(--accent-rgb), 0.16)',
-    background: 'rgba(255,255,255,0.62)',
+    border: '1px solid rgba(var(--accent-rgb), 0.12)',
+    background: 'rgba(255,255,255,0.72)',
     color: 'var(--text-muted)',
     display: 'inline-flex',
     alignItems: 'center',

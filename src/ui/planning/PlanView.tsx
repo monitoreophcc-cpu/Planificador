@@ -1,7 +1,6 @@
 'use client'
 
 import React, { Dispatch, SetStateAction } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import type {
   WeeklyPlan,
   Representative,
@@ -26,14 +25,9 @@ interface PlanViewProps {
   activeShift: ShiftType
   assignmentsMap: PlannerAssignmentsMap
   coverageData: Record<ISODate, EffectiveCoverageResult>
-  isCurrentWeek: boolean
-  weekLabel: string
   onCellClick: (repId: string, date: ISODate) => Promise<void>
   onCellContextMenu: (repId: string, date: ISODate, e: React.MouseEvent) => void
   onEditDay: Dispatch<SetStateAction<DayInfo | null>>
-  onGoToday: () => void
-  onPrevWeek: () => void
-  onNextWeek: () => void
 }
 
 function Row({
@@ -82,14 +76,9 @@ export function PlanView({
   activeShift,
   assignmentsMap,
   coverageData,
-  isCurrentWeek,
-  weekLabel,
   onCellClick,
   onCellContextMenu,
   onEditDay,
-  onGoToday,
-  onPrevWeek,
-  onNextWeek,
 }: PlanViewProps) {
   const itemData = React.useMemo(
     () => ({
@@ -106,7 +95,7 @@ export function PlanView({
   const todayIso = format(new Date(), 'yyyy-MM-dd') as ISODate
   const tableBodyHeight =
     typeof window !== 'undefined'
-      ? Math.max(340, Math.min(600, window.innerHeight - 400))
+      ? Math.max(360, Math.min(640, window.innerHeight - 350))
       : 400
 
   const coverageColor = (date: ISODate) => {
@@ -125,115 +114,16 @@ export function PlanView({
         background: PLANNER_THEME.surfaceRaised,
         borderRadius: '20px',
         border: `1px solid ${PLANNER_THEME.borderStrong}`,
-        boxShadow: '0 24px 48px rgba(10, 8, 6, 0.26)',
+        boxShadow: PLANNER_THEME.shellShadow,
         overflow: 'hidden',
       }}
     >
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          padding: '14px 18px',
-          background: PLANNER_THEME.shellSurfacePaper,
-          borderBottom: `1px solid ${PLANNER_THEME.shellBorderSoftAccent}`,
-          boxShadow: 'inset 0 -1px 0 rgba(var(--accent-rgb), 0.08)',
-          flexWrap: 'wrap',
-        }}
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={weekLabel}
-            initial={{ opacity: 0, y: 3 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -3 }}
-            transition={{ duration: 0.12, ease: 'easeOut' }}
-            style={{
-              color: PLANNER_THEME.shellText,
-              fontWeight: 800,
-              fontSize: '1rem',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {weekLabel}
-          </motion.div>
-        </AnimatePresence>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {!isCurrentWeek && (
-            <button
-              onClick={onGoToday}
-              style={{
-                border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
-                background: PLANNER_THEME.controlBg,
-                color: PLANNER_THEME.controlTextMuted,
-                borderRadius: '999px',
-                padding: '7px 12px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '0.84rem',
-              }}
-            >
-              Hoy
-            </button>
-          )}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              border: `1px solid ${PLANNER_THEME.controlBorder}`,
-              borderRadius: '999px',
-              padding: '4px',
-              background: PLANNER_THEME.controlBg,
-            }}
-          >
-            <button
-              onClick={onPrevWeek}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: PLANNER_THEME.controlText,
-                cursor: 'pointer',
-                padding: '6px 9px',
-                borderRadius: '999px',
-              }}
-            >
-              &lt;
-            </button>
-            <span
-              style={{
-                color: PLANNER_THEME.controlTextMuted,
-                fontSize: '0.86rem',
-                minWidth: '158px',
-                textAlign: 'center',
-              }}
-            >
-              {activeShift === 'DAY' ? 'Turno Día' : 'Turno Noche'}
-            </span>
-            <button
-              onClick={onNextWeek}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: PLANNER_THEME.controlText,
-                cursor: 'pointer',
-                padding: '6px 9px',
-                borderRadius: '999px',
-              }}
-            >
-              &gt;
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div
-        style={{
           display: 'grid',
           gridTemplateColumns: `${PLANNER_WIDTHS.AGENT_NAME}px repeat(7, 1fr)`,
           borderBottom: `1px solid ${PLANNER_THEME.border}`,
-          padding: '12px 0 10px',
+          padding: '14px 0 10px',
           fontWeight: 600,
           background: PLANNER_THEME.surfacePanelSoft,
           color: 'var(--color-text-secondary)',

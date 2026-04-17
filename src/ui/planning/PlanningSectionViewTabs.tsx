@@ -1,6 +1,9 @@
 'use client'
 
-import type { ShiftType } from '@/domain/types'
+import * as Popover from '@radix-ui/react-popover'
+import { CalendarDays, ChevronLeft, ChevronRight, Info, PencilLine } from 'lucide-react'
+import { useRef } from 'react'
+import type { ISODate, ShiftType } from '@/domain/types'
 import { PLANNER_THEME } from '@/ui/theme/plannerTheme'
 
 export type PlanningSectionViewMode = 'OPERATIONAL' | 'MANAGERIAL'
@@ -8,7 +11,14 @@ export type PlanningSectionViewMode = 'OPERATIONAL' | 'MANAGERIAL'
 interface PlanningSectionViewTabsProps {
   activeShift: ShiftType
   canEditData?: boolean
+  isCurrentWeek: boolean
+  planningAnchorDate: ISODate
   viewMode: PlanningSectionViewMode
+  weekControlLabel: string
+  onGoToday: () => void
+  onPrevWeek: () => void
+  onNextWeek: () => void
+  onSelectWeekDate: (date: ISODate) => void
   onSelectDay: () => void
   onSelectNight: () => void
   onSelectManagerial: () => void
@@ -17,42 +27,102 @@ interface PlanningSectionViewTabsProps {
 
 function shiftTabStyle(isActive: boolean) {
   return {
-    padding: '14px 34px',
+    padding: '8px 14px',
     cursor: 'pointer',
-    border: '1px solid var(--color-border)',
-    color: 'var(--color-text-primary)',
+    border: '1px solid transparent',
+    color: isActive ? PLANNER_THEME.controlText : PLANNER_THEME.controlTextMuted,
     fontWeight: isActive ? 700 : 600,
-    background: isActive ? 'rgba(var(--accent-rgb), 0.06)' : 'transparent',
-    fontSize: '14px',
-    marginRight: '8px',
-    borderRadius: '18px',
+    background: isActive ? PLANNER_THEME.controlBgActive : 'transparent',
+    fontSize: '13px',
+    borderRadius: '12px',
     boxShadow: 'none',
+    whiteSpace: 'nowrap',
+  } as const
+}
+
+function secondaryControlStyle() {
+  return {
+    padding: '8px 12px',
+    background: PLANNER_THEME.controlBg,
+    color: PLANNER_THEME.controlTextMuted,
+    border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+    borderRadius: '12px',
+    fontWeight: 600,
+    fontSize: '13px',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    whiteSpace: 'nowrap',
   } as const
 }
 
 export function PlanningSectionViewTabs({
   activeShift,
   canEditData = true,
+  isCurrentWeek,
+  planningAnchorDate,
   viewMode,
+  weekControlLabel,
+  onGoToday,
+  onPrevWeek,
+  onNextWeek,
+  onSelectWeekDate,
   onSelectDay,
   onSelectNight,
   onSelectManagerial,
   onOpenSwapManager,
 }: PlanningSectionViewTabsProps) {
+  const dateInputRef = useRef<HTMLInputElement | null>(null)
+
+  const openDatePicker = () => {
+    const input = dateInputRef.current
+
+    if (!input) return
+
+    if (typeof input.showPicker === 'function') {
+      input.showPicker()
+      return
+    }
+
+    input.click()
+  }
+
   return (
-    <div style={{ marginBottom: '4px' }}>
+    <section
+      style={{
+        border: `1px solid ${PLANNER_THEME.shellBorderStrong}`,
+        borderRadius: '22px',
+        background: PLANNER_THEME.shellSurfacePaper,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        padding: '14px 16px',
+        boxShadow: PLANNER_THEME.shellShadow,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <h2
+          style={{
+            margin: 0,
+            color: PLANNER_THEME.shellText,
+            fontSize: '1.15rem',
+            lineHeight: 1.15,
+            letterSpacing: '-0.02em',
+            fontWeight: 800,
+          }}
+        >
+          Armado y ajuste de semanas
+        </h2>
+      </div>
+
       <div
         style={{
-          border: `1px solid ${PLANNER_THEME.shellBorderStrong}`,
-          borderRadius: '22px',
-          background: PLANNER_THEME.shellSurfaceTinted,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
           flexWrap: 'wrap',
-          padding: '14px 16px',
-          boxShadow: PLANNER_THEME.shellShadow,
         }}
       >
         <div
@@ -60,70 +130,217 @@ export function PlanningSectionViewTabs({
             display: 'flex',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '4px',
+            gap: '10px',
+            flex: '1 1 720px',
           }}
         >
-          <button
-            style={shiftTabStyle(
-              activeShift === 'DAY' && viewMode === 'OPERATIONAL'
-            )}
-            onClick={onSelectDay}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px',
+              borderRadius: '14px',
+              border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+              background: PLANNER_THEME.controlBg,
+            }}
           >
-            Turno Día
+            <button
+              type="button"
+              onClick={onPrevWeek}
+              aria-label="Semana anterior"
+              style={{
+                ...secondaryControlStyle(),
+                padding: '8px',
+                border: 'none',
+                background: 'transparent',
+                color: PLANNER_THEME.controlText,
+              }}
+            >
+              <ChevronLeft size={16} strokeWidth={2.4} />
+            </button>
+            <div
+              style={{
+                minWidth: '170px',
+                padding: '0 10px',
+                textAlign: 'center',
+                color: PLANNER_THEME.controlText,
+                fontSize: '13px',
+                fontWeight: 700,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {weekControlLabel}
+            </div>
+            <button
+              type="button"
+              onClick={onNextWeek}
+              aria-label="Semana siguiente"
+              style={{
+                ...secondaryControlStyle(),
+                padding: '8px',
+                border: 'none',
+                background: 'transparent',
+                color: PLANNER_THEME.controlText,
+              }}
+            >
+              <ChevronRight size={16} strokeWidth={2.4} />
+            </button>
+          </div>
+
+          <button type="button" onClick={openDatePicker} style={secondaryControlStyle()}>
+            <CalendarDays size={16} strokeWidth={2.2} />
+            Semana
           </button>
-          <button
-            style={shiftTabStyle(
-              activeShift === 'NIGHT' && viewMode === 'OPERATIONAL'
-            )}
-            onClick={onSelectNight}
+
+          {!isCurrentWeek ? (
+            <button type="button" onClick={onGoToday} style={secondaryControlStyle()}>
+              Hoy
+            </button>
+          ) : null}
+
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={planningAnchorDate}
+            onChange={event => {
+              if (event.target.value) {
+                onSelectWeekDate(event.target.value as ISODate)
+              }
+            }}
+            aria-label="Elegir semana"
+            style={{
+              position: 'absolute',
+              opacity: 0,
+              pointerEvents: 'none',
+              width: 1,
+              height: 1,
+            }}
+          />
+
+          <div
+            aria-hidden="true"
+            style={{
+              width: '1px',
+              height: '26px',
+              background: 'rgba(var(--accent-rgb), 0.14)',
+            }}
+          />
+
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px',
+              borderRadius: '14px',
+              border: `1px solid ${PLANNER_THEME.controlBorderStrong}`,
+              background: PLANNER_THEME.controlBg,
+              flexWrap: 'wrap',
+            }}
           >
-            Turno Noche
-          </button>
-          <button
-            style={shiftTabStyle(viewMode === 'MANAGERIAL')}
-            onClick={onSelectManagerial}
-          >
-            Horario Gerencial
-          </button>
+            <button
+              type="button"
+              style={shiftTabStyle(
+                activeShift === 'DAY' && viewMode === 'OPERATIONAL'
+              )}
+              onClick={onSelectDay}
+            >
+              Turno Día
+            </button>
+            <button
+              type="button"
+              style={shiftTabStyle(
+                activeShift === 'NIGHT' && viewMode === 'OPERATIONAL'
+              )}
+              onClick={onSelectNight}
+            >
+              Turno Noche
+            </button>
+            <button
+              type="button"
+              style={shiftTabStyle(viewMode === 'MANAGERIAL')}
+              onClick={onSelectManagerial}
+            >
+              Gerencial
+            </button>
+          </div>
         </div>
 
-        {viewMode === 'OPERATIONAL' && (
-          <button
-            onClick={canEditData ? onOpenSwapManager : undefined}
-            style={{
-              padding: '14px 22px',
-              background: 'transparent',
-              color: 'var(--color-text-primary)',
-              border: '1px solid var(--color-border)',
-              borderRadius: '18px',
-              fontWeight: 600,
-              fontSize: '14px',
-              cursor: canEditData ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              boxShadow: 'none',
-              opacity: canEditData ? 1 : 0.6,
-            }}
-            disabled={!canEditData}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+            marginLeft: 'auto',
+          }}
+        >
+          <Popover.Root>
+            <Popover.Trigger asChild>
+              <button type="button" style={secondaryControlStyle()}>
+                <Info size={15} strokeWidth={2.2} />
+                Resumen
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content
+                className="app-shell-view-popover"
+                align="end"
+                sideOffset={10}
+              >
+                <p className="app-shell-view-popover__eyebrow">Planificación</p>
+                <p className="app-shell-view-popover__title">
+                  Armado y ajuste de semanas
+                </p>
+                <p className="app-shell-view-popover__description">
+                  Calendario, reglas y escenarios para preparar el equipo antes de
+                  que el día empiece.
+                </p>
+                <div className="app-shell-view-popover__context">
+                  La semana seleccionada controla KPIs, filtros y tabla.
+                </div>
+                <Popover.Arrow className="app-shell-view-popover__arrow" />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+
+          {viewMode === 'OPERATIONAL' ? (
+            <button
+              type="button"
+              onClick={canEditData ? onOpenSwapManager : undefined}
+              disabled={!canEditData}
+              aria-disabled={!canEditData}
+              style={{
+                padding: '10px 14px',
+                background:
+                  canEditData
+                    ? 'linear-gradient(135deg, var(--accent-strong) 0%, var(--accent) 100%)'
+                    : PLANNER_THEME.controlBg,
+                color: canEditData ? '#fff' : PLANNER_THEME.controlTextMuted,
+                border: `1px solid ${
+                  canEditData
+                    ? 'rgba(var(--accent-rgb), 0.2)'
+                    : PLANNER_THEME.controlBorderStrong
+                }`,
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: canEditData ? 'pointer' : 'not-allowed',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                whiteSpace: 'nowrap',
+                boxShadow: canEditData ? '0 10px 20px rgba(var(--accent-rgb), 0.18)' : 'none',
+                opacity: canEditData ? 1 : 0.66,
+              }}
             >
-              <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-            </svg>
-            Gestionar Cambios
-          </button>
-        )}
+              <PencilLine size={16} strokeWidth={2.2} />
+              Gestionar cambios
+            </button>
+          ) : null}
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

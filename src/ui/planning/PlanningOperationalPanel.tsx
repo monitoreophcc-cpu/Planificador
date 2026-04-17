@@ -43,10 +43,7 @@ interface PlanningOperationalPanelProps {
     event: MouseEvent
   ) => void
   onEditDay: Dispatch<SetStateAction<DayInfo | null>>
-  onGoToday: () => void
-  onNextWeek: () => void
   onNavigateToSettings: () => void
-  onPrevWeek: () => void
 }
 
 type PlannerQuickFilter = 'ALL' | 'ABSENCE_WEEK' | 'OFF_TODAY' | 'ACTIVE_TODAY'
@@ -66,10 +63,7 @@ export function PlanningOperationalPanel({
   onCellClick,
   onCellContextMenu,
   onEditDay,
-  onGoToday,
-  onNextWeek,
   onNavigateToSettings,
-  onPrevWeek,
 }: PlanningOperationalPanelProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [quickFilter, setQuickFilter] = useState<PlannerQuickFilter>('ALL')
@@ -150,6 +144,7 @@ export function PlanningOperationalPanel({
     OFF_TODAY: 'OFF hoy',
     ACTIVE_TODAY: 'Activos hoy',
   }
+  const shiftContextLabel = activeShift === 'DAY' ? 'Turno Día' : 'Turno Noche'
 
   return (
     <>
@@ -158,14 +153,33 @@ export function PlanningOperationalPanel({
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px',
+              gap: '18px',
             }}
           >
             <div
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+                padding: '2px 4px 0',
+                color: PLANNER_THEME.shellTextMuted,
+                fontSize: '0.88rem',
+                fontWeight: 600,
+              }}
+            >
+              <span>{weekLabel}</span>
+              <span aria-hidden="true" style={{ opacity: 0.5 }}>
+                ·
+              </span>
+              <span>{shiftContextLabel}</span>
+            </div>
+
+            <div
+              style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-                gap: '10px',
+                gap: '12px',
               }}
             >
               {[
@@ -229,7 +243,7 @@ export function PlanningOperationalPanel({
                         : PLANNER_THEME.shellBorder
                     }`,
                     padding: '14px 16px',
-                    minHeight: '104px',
+                    minHeight: '98px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
@@ -280,7 +294,7 @@ export function PlanningOperationalPanel({
                 justifyContent: 'space-between',
                 gap: '12px',
                 flexWrap: 'wrap',
-                padding: '10px 14px',
+                padding: '12px 14px',
                 background: PLANNER_THEME.shellSurfaceTinted,
                 borderRadius: '16px',
                 border: `1px solid ${PLANNER_THEME.shellBorderStrong}`,
@@ -374,14 +388,9 @@ export function PlanningOperationalPanel({
                 activeShift={activeShift}
                 assignmentsMap={assignmentsMap}
                 coverageData={coverageData}
-                isCurrentWeek={isCurrentWeek}
-                weekLabel={weekLabel}
                 onCellClick={isReadOnly ? async () => undefined : onCellClick}
                 onCellContextMenu={isReadOnly ? () => undefined : onCellContextMenu}
                 onEditDay={isReadOnly ? (() => undefined) as typeof onEditDay : onEditDay}
-                onGoToday={onGoToday}
-                onPrevWeek={onPrevWeek}
-                onNextWeek={onNextWeek}
               />
             ) : (
               <section

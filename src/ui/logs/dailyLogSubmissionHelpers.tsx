@@ -10,6 +10,8 @@ import type {
 } from '@/domain/types'
 import type { DailyLogBulkMode } from './dailyLogTypes'
 import { checkIncidentConflicts } from '@/domain/incidents/checkIncidentConflicts'
+import { evaluateAnnualVacationLimit } from '@/domain/incidents/evaluateAnnualVacationLimit'
+import type { ToastType } from '@/ui/components/ToastProvider'
 
 type ShowConfirm = (options: {
   title: string
@@ -18,6 +20,19 @@ type ShowConfirm = (options: {
   confirmLabel?: string
   cancelLabel?: string
 }) => Promise<boolean>
+
+type ShowToast = (options: {
+  title: string
+  message: string
+  type?: ToastType
+}) => void
+
+function appendVacationExceptionNote(note?: string): string {
+  const trimmedNote = note?.trim()
+  const exceptionNote = '[Excepción: límite anual de vacaciones excedido]'
+
+  return trimmedNote ? `${trimmedNote} ${exceptionNote}` : exceptionNote
+}
 
 export function buildAbsenceIncidentInput(args: {
   logDate: ISODate
@@ -62,6 +77,7 @@ export async function submitDailyLogIncident(args: {
   setCustomPoints: (value: number | '') => void
   setNote: (value: string) => void
   showConfirm: ShowConfirm
+  showToast: ShowToast
 }) {
   const {
     addIncident,
@@ -74,13 +90,43 @@ export async function submitDailyLogIncident(args: {
     setCustomPoints,
     setNote,
     showConfirm,
+    showToast,
   } = args
+  let preparedInput = input
+
+  if (input.type === 'VACACIONES') {
+    const vacationLimit = evaluateAnnualVacationLimit({
+      incidents,
+      representativeId: representative.id,
+      startDate: input.startDate,
+      requestedDays: input.duration,
+    })
+
+    if (vacationLimit.status === 'excess') {
+      const proceed = await showConfirm({
+        title: 'Límite anual de vacaciones excedido',
+        description: ` ${representative.name} ya tiene ${vacationLimit.usedDays} días en ${vacationLimit.year}. Esta solicitud sumará ${vacationLimit.projectedDays} de ${vacationLimit.limit}. ¿Registrar como excepción?`.trim(),
+        intent: 'warning',
+        confirmLabel: 'Registrar excepción',
+        cancelLabel: 'Cancelar',
+      })
+
+      if (!proceed) {
+        return
+      }
+
+      preparedInput = {
+        ...input,
+        note: appendVacationExceptionNote(input.note),
+      }
+    }
+  }
 
   const conflicts = checkIncidentConflicts(
-    input.representativeId,
-    input.startDate,
-    input.type,
-    input.duration,
+    preparedInput.representativeId,
+    preparedInput.startDate,
+    preparedInput.type,
+    preparedInput.duration,
     incidents,
     allCalendarDaysForRelevantMonths,
     representative
@@ -107,7 +153,7 @@ export async function submitDailyLogIncident(args: {
     }
   }
 
-  const result = await addIncident(input)
+  const result = await addIncident(preparedInput)
 
   if (result.ok) {
     setNote('')
@@ -123,7 +169,11 @@ export async function submitDailyLogIncident(args: {
     return
   }
 
-  alert(`Error: ${result.reason}`)
+  showToast({
+    title: 'No se pudo registrar la incidencia',
+    message: result.reason,
+    type: 'error',
+  })
 }
 
 export async function submitDailyLogIncidentBatch(args: {

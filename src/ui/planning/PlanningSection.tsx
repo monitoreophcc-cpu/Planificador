@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { useAccess } from '@/hooks/useAccess'
 import type {
   DayInfo,
+  ISODate,
   ShiftType,
 } from '@/domain/types'
 import { useAppStore } from '@/store/useAppStore'
@@ -65,6 +68,29 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
   } = useWeekNavigator(planningAnchorDate, setPlanningAnchorDate)
 
   const { weeklyPlan } = useWeeklyPlan(weekDays)
+  const weekControlLabel = useMemo(() => {
+    if (weekDays.length === 0) {
+      return weekLabel
+    }
+
+    const start = new Date(`${weekDays[0].date}T12:00:00Z`)
+    const end = new Date(`${weekDays[weekDays.length - 1].date}T12:00:00Z`)
+    const sameMonthYear =
+      format(start, 'MMMM yyyy', { locale: es }) ===
+      format(end, 'MMMM yyyy', { locale: es })
+
+    if (sameMonthYear) {
+      return `${format(start, 'd')}–${format(end, 'd MMMM yyyy', {
+        locale: es,
+      })}`
+    }
+
+    return `${format(start, 'd MMM', { locale: es })}–${format(
+      end,
+      'd MMM yyyy',
+      { locale: es }
+    )}`
+  }, [weekDays, weekLabel])
 
   const [activeShift, setActiveShift] = useState<ShiftType>('DAY')
   const [viewMode, setViewMode] =
@@ -124,7 +150,14 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
       <PlanningSectionViewTabs
         activeShift={activeShift}
         canEditData={canEditData}
+        isCurrentWeek={isCurrentWeek}
+        planningAnchorDate={planningAnchorDate}
         viewMode={viewMode}
+        weekControlLabel={weekControlLabel}
+        onGoToday={handleGoToday}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onSelectWeekDate={(date: ISODate) => setPlanningAnchorDate(date)}
         onSelectDay={() => {
           setActiveShift('DAY')
           setViewMode('OPERATIONAL')
@@ -150,12 +183,9 @@ export function PlanningSection({ onNavigateToSettings }: { onNavigateToSettings
         isCurrentWeek={isCurrentWeek}
         isReadOnly={!canEditData}
         onEditDay={setEditingDay}
-        onGoToday={handleGoToday}
-        onNextWeek={handleNextWeek}
         onNavigateToSettings={onNavigateToSettings}
         onTogglePlanOverride={togglePlanOverride}
         onCellContextMenu={handleCellContextMenu}
-        onPrevWeek={handlePrevWeek}
         representatives={representatives}
         viewMode={viewMode}
         weekDays={weekDays}

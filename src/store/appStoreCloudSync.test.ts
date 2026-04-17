@@ -1,6 +1,7 @@
 import type { CloudSnapshot } from '@/persistence/supabase-sync'
 import {
   computeCloudSnapshotSignature,
+  hasReadyCloudAccess,
   shouldApplyRemoteRefresh,
   shouldHydrateFromCloud,
 } from './appStoreCloudSync'
@@ -89,6 +90,32 @@ describe('appStoreCloudSync', () => {
     expect(computeCloudSnapshotSignature(snapshotA)).toBe(
       computeCloudSnapshotSignature(snapshotB)
     )
+  })
+
+  it('requires a ready session and data owner id before enabling cloud access', () => {
+    expect(
+      hasReadyCloudAccess({
+        status: 'ready',
+        canEditData: true,
+        dataOwnerUserId: 'user-1',
+      })
+    ).toBe(true)
+
+    expect(
+      hasReadyCloudAccess({
+        status: 'loading',
+        canEditData: true,
+        dataOwnerUserId: 'user-1',
+      })
+    ).toBe(false)
+
+    expect(
+      hasReadyCloudAccess({
+        status: 'ready',
+        canEditData: true,
+        dataOwnerUserId: null,
+      })
+    ).toBe(false)
   })
 })
 

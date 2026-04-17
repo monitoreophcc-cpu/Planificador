@@ -11,8 +11,8 @@ type DailyLogFilterTabsProps = {
 
 const FILTER_OPTIONS: Array<{ mode: DailyLogFilterMode; label: string }> = [
   { mode: 'TODAY', label: 'Hoy' },
-  { mode: 'WEEK', label: 'Esta Semana' },
-  { mode: 'MONTH', label: 'Mes Actual' },
+  { mode: 'WEEK', label: 'Esta semana' },
+  { mode: 'MONTH', label: 'Mes actual' },
 ]
 
 export function DailyLogFilterTabs({
@@ -22,8 +22,13 @@ export function DailyLogFilterTabs({
   return (
     <div
       style={{
-        display: 'flex',
-        gap: 'var(--space-sm)',
+        display: 'inline-flex',
+        gap: '4px',
+        padding: '4px',
+        borderRadius: '999px',
+        border: '1px solid rgba(137, 149, 161, 0.2)',
+        background: 'rgba(255, 255, 255, 0.78)',
+        boxShadow: '0 8px 16px rgba(24, 34, 48, 0.04)',
         flexWrap: 'wrap',
         justifyContent: 'flex-end',
       }}

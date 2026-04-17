@@ -68,14 +68,13 @@ export function getEffectiveDailyLogData(
                     break
                 case 'NONE':
                     // If base was working but now NONE, check reason
-                    // AUSENCIA means they should have worked but didn't show up
-                    // VACACIONES/LICENCIA are justified absences
+                    // AUSENCIA remains an operational hole in the Daily Log.
+                    // VACACIONES/LICENCIA also render as ABSENT here, but the
+                    // denominator logic in dailyLogUtils excludes them there.
                     if (duty.reason === 'AUSENCIA') {
                         logStatus = 'ABSENT'
                     } else if (duty.reason && ['VACACIONES', 'LICENCIA'].includes(duty.reason)) {
-                        // TODO: Refine Semantics. Consider splitting 'ABSENT' into 'ABSENT_JUSTIFIED' vs 'ABSENT_UNJUSTIFIED'.
-                        // Currently "Vacaciones" = "Absent" works for accounting but is visually coarse.
-                        logStatus = 'ABSENT'  // Justified absences are still absences
+                        logStatus = 'ABSENT'
                     } else {
                         logStatus = 'OFF'
                     }

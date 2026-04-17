@@ -30,6 +30,17 @@ type CloudStateSlice = {
   historyEvents: HistoryEvent[]
 }
 
+type CloudAccessState = {
+  status: ReturnType<typeof useAccessStore.getState>['status']
+  canEditData: boolean
+  dataOwnerUserId: string | null
+}
+
+type ReadyCloudAccessState = CloudAccessState & {
+  status: 'ready'
+  dataOwnerUserId: string
+}
+
 export type AppStoreCloudCapabilities = CloudStateSlice & {
   isLoading: boolean
   triggerCloudSync: () => Promise<void>
@@ -47,10 +58,16 @@ function getSharedAccessState() {
   const accessState = useAccessStore.getState()
 
   return {
+    status: accessState.status,
     canEditData: accessState.canEditData,
     dataOwnerUserId: accessState.dataOwnerUserId,
-    hasAuthenticatedAppAccess: accessState.hasAuthenticatedAppAccess,
   }
+}
+
+export function hasReadyCloudAccess(
+  accessState: CloudAccessState
+): accessState is ReadyCloudAccessState {
+  return accessState.status === 'ready' && Boolean(accessState.dataOwnerUserId)
 }
 
 async function readPendingSummaryForUser(userId?: string) {
@@ -236,7 +253,7 @@ async function executeCloudSync(
 
     syncHealth.setPendingSummary(initialPendingSummary)
 
-    if (!accessState.hasAuthenticatedAppAccess || !accessState.dataOwnerUserId) {
+    if (!hasReadyCloudAccess(accessState)) {
       setCloudStatus('unauthenticated')
       syncHealth.markCloudUnauthenticated(initialPendingSummary)
       return
@@ -314,7 +331,7 @@ export async function loadCloudSnapshotIfNeeded(
 
   const accessState = getSharedAccessState()
 
-  if (!accessState.hasAuthenticatedAppAccess || !accessState.dataOwnerUserId) {
+  if (!hasReadyCloudAccess(accessState)) {
     resetCloudSignatures()
     return null
   }
@@ -371,7 +388,7 @@ async function refreshCloudSnapshotIfNeeded(
   try {
     const accessState = getSharedAccessState()
 
-    if (!accessState.hasAuthenticatedAppAccess || !accessState.dataOwnerUserId) {
+    if (!hasReadyCloudAccess(accessState)) {
       resetCloudSignatures()
       const emptySummary = await readPendingSummaryForUser()
       setCloudStatus('unauthenticated')
@@ -444,10 +461,7 @@ export function ensureCloudSyncWatcher(
 
       syncHealth.setPendingSummary(summary)
 
-      if (
-        !accessState.hasAuthenticatedAppAccess ||
-        !accessState.dataOwnerUserId
-      ) {
+      if (!hasReadyCloudAccess(accessState)) {
         setCloudStatus('unauthenticated')
         syncHealth.markCloudUnauthenticated(summary)
         return

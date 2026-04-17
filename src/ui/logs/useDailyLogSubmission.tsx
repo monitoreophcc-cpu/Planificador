@@ -63,6 +63,11 @@ interface UseDailyLogSubmissionParams {
     confirmLabel?: string
     cancelLabel?: string
   }) => Promise<boolean>
+  showToast: (options: {
+    title: string
+    message: string
+    type?: 'success' | 'error' | 'info' | 'warning'
+  }) => void
 }
 
 export function useDailyLogSubmission({
@@ -87,6 +92,7 @@ export function useDailyLogSubmission({
   setCustomPoints,
   setNote,
   showConfirm,
+  showToast,
 }: UseDailyLogSubmissionParams) {
   const submit = async (input: IncidentInput, representative: Representative) => {
     await submitDailyLogIncident({
@@ -100,6 +106,7 @@ export function useDailyLogSubmission({
       setCustomPoints,
       setNote,
       showConfirm,
+      showToast,
     })
   }
 

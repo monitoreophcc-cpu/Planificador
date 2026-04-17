@@ -57,18 +57,28 @@ describe('getEffectiveDailyLogData', () => {
         expect(agentB?.isResponsible).toBe(true)
     })
 
-    it('identifies ABSENT status via Incident', () => {
-        const incident: Incident = {
+    it('identifies ABSENT status for formal incidents without changing the visible log semantics', () => {
+        const vacation: Incident = {
             id: 'i1', type: 'VACACIONES', startDate: date, representativeId: 'A',
             createdAt: '', duration: 1
         }
-        const res = getEffectiveDailyLogData(mockPlan, [], [incident], date, mockCalendarDays, mockRepresentatives)
+        const license: Incident = {
+            id: 'i2', type: 'LICENCIA', startDate: date, representativeId: 'A',
+            createdAt: '', duration: 1
+        }
 
-        const agentA = res.find(e => e.representativeId === 'A' && e.shift === 'DAY')
+        const vacationResult = getEffectiveDailyLogData(mockPlan, [], [vacation], date, mockCalendarDays, mockRepresentatives)
+        const licenseResult = getEffectiveDailyLogData(mockPlan, [], [license], date, mockCalendarDays, mockRepresentatives)
 
-        // resolveEffectiveDuty returns NONE with reason VACACIONES
-        // Adapter logic should map this to ABSENT
-        expect(agentA?.logStatus).toBe('ABSENT')
-        expect(agentA?.isResponsible).toBe(false) // Not responsible if excused
+        const vacationEntry = vacationResult.find(e => e.representativeId === 'A' && e.shift === 'DAY')
+        const licenseEntry = licenseResult.find(e => e.representativeId === 'A' && e.shift === 'DAY')
+
+        expect(vacationEntry?.logStatus).toBe('ABSENT')
+        expect(vacationEntry?.details).toBe('VACACIONES')
+        expect(vacationEntry?.isResponsible).toBe(false)
+
+        expect(licenseEntry?.logStatus).toBe('ABSENT')
+        expect(licenseEntry?.details).toBe('LICENCIA')
+        expect(licenseEntry?.isResponsible).toBe(false)
     })
 })

@@ -38,15 +38,20 @@ export function DailyLogDateNavigator({
   return (
     <div
       style={{
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
-        gap: '14px',
+        gap: '6px',
         position: 'relative',
-        flexWrap: 'wrap',
         justifyContent: 'flex-end',
+        minWidth: 0,
+        padding: '4px',
+        borderRadius: '999px',
+        border: '1px solid rgba(137, 149, 161, 0.2)',
+        background: 'rgba(255, 255, 255, 0.78)',
+        boxShadow: '0 8px 16px rgba(24, 34, 48, 0.04)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <button
           onClick={() => onDateChange(subMonths(date, 1))}
           style={getDailyLogControlButtonStyle()}
@@ -67,18 +72,19 @@ export function DailyLogDateNavigator({
       <div
         style={{
           fontWeight: 700,
-          fontSize: '15px',
+          fontSize: '0.9rem',
           color: 'var(--text-main)',
-          minWidth: '250px',
+          minWidth: '190px',
           textAlign: 'center',
-          padding: '0 14px',
+          padding: '0 8px',
           letterSpacing: '-0.01em',
+          whiteSpace: 'nowrap',
         }}
       >
         {formatWithLeadingCapital(date, "EEEE, d 'de' MMMM")}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <button
           onClick={() => onDateChange(addDays(date, 1))}
           style={getDailyLogControlButtonStyle()}
@@ -110,7 +116,7 @@ export function DailyLogDateNavigator({
             position: 'absolute',
             top: '100%',
             right: 0,
-            marginTop: 'var(--space-sm)',
+            marginTop: '8px',
             background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--bg-panel) 100%)',
             border: '1px solid var(--shell-border)',
             borderRadius: '20px',

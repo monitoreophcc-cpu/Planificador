@@ -1,10 +1,8 @@
 /**
  * 🔄 COMPATIBILITY ADAPTER
  * 
- * Temporary bridge to convert DayResolution back to legacy DailyPresence format.
- * This allows gradual migration of consumers without breaking existing code.
- * 
- * ⚠️ This should be removed once all consumers migrate to DayResolution.
+ * Supported bridge to convert DayResolution back to legacy DailyPresence
+ * while WeeklyPlan consumers still depend on the older shape.
  */
 
 import { DayResolution } from './dayResolution'

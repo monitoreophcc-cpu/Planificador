@@ -3,12 +3,13 @@
 import { useDeferredValue, useEffect, useMemo } from 'react'
 import { parseISO } from 'date-fns'
 import { useAppStore } from '@/store/useAppStore'
+import { useToast } from '@/ui/components/ToastProvider'
 import { useDailyLogDerivedData } from './useDailyLogDerivedData'
-import { initialAbsenceConfirmState } from './dailyLogControllerTypes'
 import { useDailyLogFormState } from './useDailyLogFormState'
 import { useDailyLogSubmission } from './useDailyLogSubmission'
 
 export function useDailyLogController() {
+  const { showToast } = useToast()
   const {
     representatives,
     incidents,
@@ -98,28 +99,29 @@ export function useDailyLogController() {
 
   const { handleBulkSubmit, handleSubmit, onCoverageResolutionConfirm } =
     useDailyLogSubmission({
-    activeCoveragesForDay: derived.activeCoveragesForDay,
-    activeShift: formState.activeShift,
-    activeWeeklyPlan: derived.activeWeeklyPlan,
-    addIncident,
-    allCalendarDaysForRelevantMonths,
-    customPoints: formState.customPoints,
-    duration: formState.duration,
-    incidentType,
-    incidents,
-    logDate,
-    note: formState.note,
-    pushUndo,
-    removeIncident,
-    removeIncidents,
-    representatives,
-    selectedRep,
-    setAbsenceConfirmState: formState.setAbsenceConfirmState,
-    setCoverageResolution: formState.setCoverageResolution,
-    setCustomPoints: formState.setCustomPoints,
-    setNote: formState.setNote,
-    showConfirm,
-  })
+      activeCoveragesForDay: derived.activeCoveragesForDay,
+      activeShift: formState.activeShift,
+      activeWeeklyPlan: derived.activeWeeklyPlan,
+      addIncident,
+      allCalendarDaysForRelevantMonths,
+      customPoints: formState.customPoints,
+      duration: formState.duration,
+      incidentType,
+      incidents,
+      logDate,
+      note: formState.note,
+      pushUndo,
+      removeIncident,
+      removeIncidents,
+      representatives,
+      selectedRep,
+      setAbsenceConfirmState: formState.setAbsenceConfirmState,
+      setCoverageResolution: formState.setCoverageResolution,
+      setCustomPoints: formState.setCustomPoints,
+      setNote: formState.setNote,
+      showConfirm,
+      showToast,
+    })
 
   const onSubmitBulkRegistration = async () => {
     if (!formState.bulkMode) {

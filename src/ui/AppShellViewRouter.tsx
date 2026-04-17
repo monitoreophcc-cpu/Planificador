@@ -71,6 +71,8 @@ export function AppShellViewRouter({
   onNavigateToSettings,
 }: AppShellViewRouterProps) {
   const viewMeta = VIEW_META[activeView]
+  const shouldShowBanner =
+    activeView !== 'DAILY_LOG' && activeView !== 'PLANNING'
   const content =
     activeView === 'DAILY_LOG' ? (
       <DailyLogView summaryMeta={viewMeta} />
@@ -84,7 +86,7 @@ export function AppShellViewRouter({
 
   return (
     <div className="app-shell-view-frame">
-      {activeView !== 'DAILY_LOG' ? (
+      {shouldShowBanner ? (
         <section className="app-shell-view-banner" aria-label={`Contexto de ${viewMeta.title}`}>
           <div className="app-shell-view-banner__copy">
             <p className="app-shell-view-banner__eyebrow">{viewMeta.eyebrow}</p>

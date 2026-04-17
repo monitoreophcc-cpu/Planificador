@@ -23,8 +23,6 @@ type PlanningSectionContentProps = {
   isCurrentWeek: boolean
   isReadOnly?: boolean
   onEditDay: React.Dispatch<React.SetStateAction<DayInfo | null>>
-  onGoToday: () => void
-  onNextWeek: () => void
   onNavigateToSettings: () => void
   onTogglePlanOverride: (
     representativeId: string,
@@ -35,7 +33,6 @@ type PlanningSectionContentProps = {
     date: ISODate,
     event: React.MouseEvent
   ) => void
-  onPrevWeek: () => void
   representatives: Representative[]
   viewMode: PlanningSectionViewMode
   weekDays: DayInfo[]
@@ -52,12 +49,9 @@ export function PlanningSectionContent({
   isCurrentWeek,
   isReadOnly = false,
   onEditDay,
-  onGoToday,
-  onNextWeek,
   onNavigateToSettings,
   onTogglePlanOverride,
   onCellContextMenu,
-  onPrevWeek,
   representatives,
   viewMode,
   weekDays,
@@ -84,10 +78,7 @@ export function PlanningSectionContent({
       onCellClick={onTogglePlanOverride}
       onCellContextMenu={onCellContextMenu}
       onEditDay={onEditDay}
-      onGoToday={onGoToday}
-      onNextWeek={onNextWeek}
       onNavigateToSettings={onNavigateToSettings}
-      onPrevWeek={onPrevWeek}
     />
   )
 }

@@ -121,10 +121,8 @@ describe('Page bootstrap', () => {
       error: null,
       canEditData: true,
       canAccessSettings: true,
-      hasAuthenticatedAppAccess: true,
       isReadOnly: false,
       dataOwnerUserId: 'user-1',
-      accessLabel: 'Sesión activa',
     })
   })
 
@@ -194,10 +192,8 @@ describe('Page bootstrap', () => {
       error: 'No se pudo validar la sesión.',
       canEditData: false,
       canAccessSettings: false,
-      hasAuthenticatedAppAccess: false,
       isReadOnly: false,
       dataOwnerUserId: null,
-      accessLabel: 'Acceso pendiente',
     })
 
     await act(async () => {

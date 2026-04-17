@@ -45,6 +45,8 @@ export const useAccessStore = create<AccessState>()(set => ({
         ...getAuthenticatedAccessCapabilities(),
         status: 'ready',
         sessionUserId: userId,
+        // Google login is the only access model now, so the sync owner is
+        // the same authenticated user.
         dataOwnerUserId: userId,
         error: null,
       })
