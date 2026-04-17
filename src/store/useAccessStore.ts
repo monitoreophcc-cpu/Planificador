@@ -1,19 +1,12 @@
 'use client'
 
 import { create } from 'zustand'
-import { createClient } from '@/lib/supabase/client'
 import {
-  ACCESS_DENIED_MESSAGE,
   getAccessCapabilities,
   type AccessCapabilities,
   type AccessStatus,
   type AppAccessRole,
 } from '@/lib/access/access'
-
-type AccessRoleRow = {
-  user_id: string
-  role: 'OWNER' | 'READER'
-}
 
 type AccessResolution = AccessCapabilities & {
   status: AccessStatus
@@ -37,18 +30,6 @@ const baseAccessState: AccessResolution = {
   error: null,
   sessionUserId: null,
   dataOwnerUserId: null,
-}
-
-function createClientSafely() {
-  try {
-    return createClient()
-  } catch (error) {
-    console.warn(
-      '[Access] Supabase no está configurado; no se pudo resolver el acceso.',
-      error
-    )
-    return null
-  }
 }
 
 function buildResolvedAccessState(
@@ -235,12 +216,9 @@ export const useAccessStore = create<AccessState>()(set => ({
         ...baseAccessState,
         status: 'error',
         sessionUserId: userId,
-        error:
-          error instanceof Error
-            ? error.message
-            : 'No se pudo validar el acceso de esta cuenta.',
+        dataOwnerUserId: userId,
       })
-    }
+    )
   },
 }))
 
