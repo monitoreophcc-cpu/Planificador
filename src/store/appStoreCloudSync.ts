@@ -54,6 +54,23 @@ let lastSyncedCloudSignature: string | null = null
 
 const REMOTE_REFRESH_INTERVAL_MS = 15000
 
+function describeCloudSyncError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  if (error && typeof error === 'object') {
+    const message =
+      'message' in error ? String((error as { message?: unknown }).message ?? '') : ''
+    const code =
+      'code' in error ? String((error as { code?: unknown }).code ?? '') : ''
+
+    return [code, message].filter(Boolean).join(' - ') || 'Error desconocido'
+  }
+
+  return String(error ?? 'Error desconocido')
+}
+
 function getSharedAccessState() {
   const accessState = useAccessStore.getState()
 
@@ -289,11 +306,14 @@ async function executeCloudSync(
       )
     }
   } catch (error) {
-    console.error('[Cloud Sync] No se pudo sincronizar con Supabase.', error)
+    console.warn(
+      '[Cloud Sync] No se pudo sincronizar con Supabase:',
+      describeCloudSyncError(error)
+    )
     setCloudStatus('error')
     syncHealth.markCloudFailure(
       'error',
-      error instanceof Error ? error.message : 'unexpected_sync_error',
+      describeCloudSyncError(error),
       await readPendingSummaryForUser()
     )
   }
@@ -432,7 +452,10 @@ async function refreshCloudSnapshotIfNeeded(
       recordCloudSignature(remoteSignature)
     }
   } catch (error) {
-    console.error('[Cloud Sync] No se pudo refrescar el snapshot remoto.', error)
+    console.warn(
+      '[Cloud Sync] No se pudo refrescar el snapshot remoto:',
+      describeCloudSyncError(error)
+    )
   }
 }
 
@@ -472,7 +495,10 @@ export function ensureCloudSyncWatcher(
         syncHealth.markCloudFailure('offline', null, summary)
       }
     } catch (error) {
-      console.error('[Cloud Sync] No se pudo refrescar la cola pendiente.', error)
+      console.warn(
+        '[Cloud Sync] No se pudo refrescar la cola pendiente:',
+        describeCloudSyncError(error)
+      )
     }
   }
 

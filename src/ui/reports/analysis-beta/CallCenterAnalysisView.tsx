@@ -58,6 +58,20 @@ const HourlyConversionRateChart = dynamic(() => import('@/ui/reports/analysis-be
   ssr: false,
   loading: () => <div className="h-80 w-full bg-slate-50 animate-pulse rounded-2xl" />
 });
+const MonthlyCumulativeChart = dynamic(
+  () => import('@/ui/reports/analysis-beta/charts/MonthlyCumulativeChart'),
+  {
+    ssr: false,
+    loading: () => <div className="h-80 w-full bg-slate-50 animate-pulse rounded-2xl" />,
+  }
+);
+const QuarterlyComparisonChart = dynamic(
+  () => import('@/ui/reports/analysis-beta/charts/QuarterlyComparisonChart'),
+  {
+    ssr: false,
+    loading: () => <div className="h-80 w-full bg-slate-50 animate-pulse rounded-2xl" />,
+  }
+);
 
 function formatDisplayDate(date: string) {
   const [year, month, day] = date.split('-');
@@ -277,6 +291,8 @@ export function CallCenterAnalysisView() {
 
             <TabsContent value="analysis" className="focus-visible:outline-none">
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                <MonthlyCumulativeChart />
+                <QuarterlyComparisonChart />
                 <PerformanceChart />
                 <HourlyDistributionChart />
                 <HourlyAbandonmentRateChart />

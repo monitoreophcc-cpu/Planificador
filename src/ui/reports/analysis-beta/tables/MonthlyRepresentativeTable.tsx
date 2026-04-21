@@ -44,7 +44,8 @@ export default function MonthlyRepresentativeTable({
   embedded = false,
 }: MonthlyRepresentativeTableProps) {
   const transactions = useDashboardStore((state) => state.transactions);
-  const dataDate = useDashboardStore((state) => state.dataDate);
+  const selectedMonthKey = useDashboardStore((state) => state.selectedMonthKey);
+  const monthlySnapshots = useDashboardStore((state) => state.monthlySnapshots);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -61,8 +62,23 @@ export default function MonthlyRepresentativeTable({
     value.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 
   const monthlySnapshot = useMemo(
-    () => buildMonthlyRepresentativeSnapshot(transactions, dataDate),
-    [transactions, dataDate]
+    () => {
+      const syncedSnapshot = selectedMonthKey
+        ? monthlySnapshots[selectedMonthKey]
+        : null;
+
+      if (syncedSnapshot && syncedSnapshot.representatives.length > 0) {
+        return {
+          monthLabel: syncedSnapshot.monthLabel,
+          loadedDays: syncedSnapshot.loadedDays,
+          expectedDays: syncedSnapshot.expectedDays,
+          rows: syncedSnapshot.representatives,
+        };
+      }
+
+      return buildMonthlyRepresentativeSnapshot(transactions, selectedMonthKey);
+    },
+    [monthlySnapshots, selectedMonthKey, transactions]
   );
 
   const handleSort = (key: keyof AgentKPIs) => {

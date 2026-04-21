@@ -27,6 +27,37 @@ import type {
 export type { CloudSnapshot, SyncResult } from './supabase-sync-types'
 export { extractWeeklyPlansFromHistoryEvents } from './supabase-sync-data'
 
+const SNAPSHOT_TABLES = [
+  'representatives',
+  'weekly_plans',
+  'incidents',
+  'swaps',
+  'coverage_rules',
+] as const
+
+function isMissingSnapshotTableError(error: unknown): boolean {
+  if (!(error instanceof Error) && typeof error !== 'object') {
+    return false
+  }
+
+  const message =
+    error instanceof Error
+      ? error.message
+      : String((error as { message?: unknown }).message ?? '')
+  const code =
+    error instanceof Error
+      ? ''
+      : String((error as { code?: unknown }).code ?? '')
+  const normalizedMessage = message.toLowerCase()
+
+  return (
+    code === '42P01' ||
+    SNAPSHOT_TABLES.some(tableName =>
+      normalizedMessage.includes(tableName.toLowerCase())
+    )
+  )
+}
+
 export async function loadFromSupabase(
   dataOwnerUserId: string
 ): Promise<CloudSnapshot> {
@@ -78,6 +109,10 @@ export async function loadFromSupabase(
     coverageRulesRes.error
 
   if (firstError) {
+    if (isMissingSnapshotTableError(firstError)) {
+      return createEmptySnapshot()
+    }
+
     throw firstError
   }
 

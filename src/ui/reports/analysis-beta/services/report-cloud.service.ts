@@ -10,12 +10,36 @@ import type { DailySnapshot } from '@/ui/reports/analysis-beta/types/dashboard.t
 const GLOBAL_TABLE = 'call_center_global_kpis';
 const SHIFT_TABLE = 'call_center_shift_kpis';
 const DETAIL_TABLE = 'call_center_operational_details';
+const HISTORY_TABLES = [GLOBAL_TABLE, SHIFT_TABLE, DETAIL_TABLE] as const;
 
 function sortSnapshots(
   dailyHistory: Record<string, DailySnapshot>
 ): DailySnapshot[] {
   return Object.values(dailyHistory).sort((left, right) =>
     left.date.localeCompare(right.date)
+  );
+}
+
+function isMissingHistoryTableError(error: unknown): boolean {
+  if (!(error instanceof Error) && typeof error !== 'object') {
+    return false;
+  }
+
+  const message =
+    error instanceof Error
+      ? error.message
+      : String((error as { message?: unknown }).message ?? '');
+  const code =
+    error instanceof Error
+      ? ''
+      : String((error as { code?: unknown }).code ?? '');
+  const normalizedMessage = message.toLowerCase();
+
+  return (
+    code === '42P01' ||
+    HISTORY_TABLES.some((tableName) =>
+      normalizedMessage.includes(tableName.toLowerCase())
+    )
   );
 }
 
@@ -52,6 +76,10 @@ async function deleteHistoryDates(params: {
     globalDelete.error ?? shiftDelete.error ?? detailDelete.error;
 
   if (firstError) {
+    if (isMissingHistoryTableError(firstError)) {
+      return;
+    }
+
     throw firstError;
   }
 }
@@ -84,6 +112,10 @@ export async function loadReportHistoryFromSupabase(
   const firstError = globalRes.error ?? shiftRes.error ?? detailRes.error;
 
   if (firstError) {
+    if (isMissingHistoryTableError(firstError)) {
+      return {};
+    }
+
     throw firstError;
   }
 
@@ -114,6 +146,10 @@ export async function syncReportHistoryToSupabase(params: {
       globalDelete.error ?? shiftDelete.error ?? detailDelete.error;
 
     if (deleteError) {
+      if (isMissingHistoryTableError(deleteError)) {
+        return;
+      }
+
       throw deleteError;
     }
 
@@ -126,6 +162,10 @@ export async function syncReportHistoryToSupabase(params: {
     .eq('user_id', userId);
 
   if (remoteDatesRes.error) {
+    if (isMissingHistoryTableError(remoteDatesRes.error)) {
+      return;
+    }
+
     throw remoteDatesRes.error;
   }
 
@@ -162,6 +202,10 @@ export async function syncReportHistoryToSupabase(params: {
     globalUpsert.error ?? shiftUpsert.error ?? detailUpsert.error;
 
   if (upsertError) {
+    if (isMissingHistoryTableError(upsertError)) {
+      return;
+    }
+
     throw upsertError;
   }
 

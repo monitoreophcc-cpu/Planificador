@@ -121,11 +121,11 @@ export async function syncReportSourceDataToSupabase(params: {
   rawTransactions: Transaction[];
 }): Promise<void> {
   const supabase = createClient();
-  const rows = buildDailySourceSyncRows(params);
-  const { data: remoteRows, error: remoteError } = await supabase
+  const { error: remoteError } = await supabase
     .from(SOURCE_TABLE)
     .select('report_date')
-    .eq('user_id', params.userId);
+    .eq('user_id', params.userId)
+    .limit(1);
 
   if (remoteError) {
     if (isMissingDailySourceTableError(remoteError)) {
@@ -135,16 +135,9 @@ export async function syncReportSourceDataToSupabase(params: {
     throw remoteError;
   }
 
+  const rows = buildDailySourceSyncRows(params);
+
   if (rows.length === 0) {
-    const { error } = await supabase
-      .from(SOURCE_TABLE)
-      .delete()
-      .eq('user_id', params.userId);
-
-    if (error) {
-      throw error;
-    }
-
     return;
   }
 
@@ -158,24 +151,5 @@ export async function syncReportSourceDataToSupabase(params: {
     }
 
     throw upsertError;
-  }
-
-  const localDates = new Set(rows.map((row) => row.report_date));
-  const datesToDelete = (remoteRows ?? [])
-    .map((row) => String((row as { report_date: string }).report_date))
-    .filter((date) => !localDates.has(date));
-
-  if (datesToDelete.length === 0) {
-    return;
-  }
-
-  const { error: deleteError } = await supabase
-    .from(SOURCE_TABLE)
-    .delete()
-    .eq('user_id', params.userId)
-    .in('report_date', datesToDelete);
-
-  if (deleteError) {
-    throw deleteError;
   }
 }

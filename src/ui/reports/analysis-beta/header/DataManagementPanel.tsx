@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   Beaker,
   Coins,
@@ -26,6 +26,7 @@ import {
 } from '@/ui/reports/analysis-beta/lib/demo-data';
 import { useToast } from '@/ui/reports/analysis-beta/hooks/use-toast';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
+import type { SourceManifestEntry } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,87 @@ function summarizeLoadedDates(dates: string[]): string {
   return `${sortedDates.length} fechas (${sortedDates[0]} a ${sortedDates[sortedDates.length - 1]})`;
 }
 
+type FileType = 'answered' | 'abandoned' | 'transactions';
+
+type ParsedFileSummary = {
+  fileName: string;
+  rows: number;
+  dates: string[];
+  saturatedLegacyXls: boolean;
+};
+
+async function parseFiles(files: File[]) {
+  const parserModule = await import('@/ui/reports/analysis-beta/services/parser.service');
+  const aggregated: {
+    rows: any[];
+    fileNames: string[];
+    fileSummaries: ParsedFileSummary[];
+    errors: string[];
+    saturatedLegacyFiles: string[];
+  } = {
+    rows: [],
+    fileNames: [],
+    fileSummaries: [],
+    errors: [],
+    saturatedLegacyFiles: [],
+  };
+
+  for (const file of files) {
+    try {
+      const isCsv = file.name.toLowerCase().endsWith('.csv');
+      const rows = isCsv
+        ? await parserModule.parseCsvFile<any>(file)
+        : await parserModule.parseXlsxFile<any>(file);
+      const dates = getUniqueDates(rows);
+      const saturatedLegacyXls =
+        file.name.toLowerCase().endsWith('.xls') && rows.length >= 65534;
+
+      aggregated.fileNames.push(file.name);
+      aggregated.rows.push(...rows);
+      aggregated.fileSummaries.push({
+        fileName: file.name,
+        rows: rows.length,
+        dates,
+        saturatedLegacyXls,
+      });
+
+      if (saturatedLegacyXls) {
+        aggregated.saturatedLegacyFiles.push(file.name);
+      }
+    } catch (error) {
+      aggregated.errors.push(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo procesar uno de los archivos seleccionados.'
+      );
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+  }
+
+  return aggregated;
+}
+
+function buildSourceManifestEntries(params: {
+  fileType: FileType;
+  fileSummaries: ParsedFileSummary[];
+  importedAt: string;
+}): SourceManifestEntry[] {
+  return params.fileSummaries.map((summary) => {
+    const dates = [...summary.dates].sort();
+
+    return {
+      source: params.fileType,
+      fileName: summary.fileName,
+      rows: summary.rows,
+      dateStart: dates[0] ?? null,
+      dateEnd: dates[dates.length - 1] ?? null,
+      importedAt: params.importedAt,
+      saturatedLegacyXls: summary.saturatedLegacyXls,
+    };
+  });
+}
+
 export default function DataManagementPanel() {
   const { canEditData } = useAccess();
   const addAnsweredCalls = useDashboardStore((state) => state.addAnsweredCalls);
@@ -54,7 +136,11 @@ export default function DataManagementPanel() {
   const clearAllData = useDashboardStore((state) => state.clearAllData);
   const availableDates = useDashboardStore((state) => state.availableDates);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const setIsImportingBatch = useDashboardStore(
+    (state) => state.setIsImportingBatch
+  );
   const { toast } = useToast();
+  const [activeBatch, setActiveBatch] = useState<FileType | null>(null);
 
   const answeredInputRef = useRef<HTMLInputElement>(null);
   const abandonedInputRef = useRef<HTMLInputElement>(null);
@@ -62,21 +148,27 @@ export default function DataManagementPanel() {
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    fileType: 'answered' | 'abandoned' | 'transactions'
+    fileType: FileType
   ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const input = event.currentTarget;
+    const files = Array.from(input.files ?? []);
+
+    if (files.length === 0) return;
+
+    setActiveBatch(fileType);
+    setIsImportingBatch(true);
 
     try {
-      const isCsv = file.name.toLowerCase().endsWith('.csv');
-      let data: any[];
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
 
-      if (isCsv) {
-        const { parseCsvFile } = await import('@/ui/reports/analysis-beta/services/parser.service');
-        data = await parseCsvFile<any>(file);
-      } else {
-        const { parseXlsxFile } = await import('@/ui/reports/analysis-beta/services/parser.service');
-        data = await parseXlsxFile<any>(file);
+      const importedAt = new Date().toISOString();
+      const parsedBatch = await parseFiles(files);
+      const data = parsedBatch.rows;
+
+      if (data.length === 0 && parsedBatch.errors.length > 0) {
+        throw new Error(parsedBatch.errors[0]);
       }
 
       const uniqueDates = getUniqueDates(data);
@@ -85,30 +177,55 @@ export default function DataManagementPanel() {
         toast({
           variant: 'destructive',
           title: 'Error de Validación',
-          description: `El archivo ${file.name} no contiene fechas válidas.`,
+          description:
+            parsedBatch.fileNames.length > 1
+              ? 'Los archivos seleccionados no contienen fechas válidas.'
+              : `El archivo ${parsedBatch.fileNames[0] ?? files[0]?.name ?? ''} no contiene fechas válidas.`,
         });
         return;
       }
 
+      const sourceManifest = buildSourceManifestEntries({
+        fileType,
+        fileSummaries: parsedBatch.fileSummaries,
+        importedAt,
+      });
+
       if (fileType === 'answered') {
-        addAnsweredCalls(processAnsweredCalls(data), uniqueDates);
+        await addAnsweredCalls(processAnsweredCalls(data), uniqueDates, sourceManifest);
       } else if (fileType === 'abandoned') {
         const { clean, raw } = processAbandonedCalls(data);
-        addAbandonedCalls({ clean, raw }, uniqueDates);
+        await addAbandonedCalls({ clean, raw }, uniqueDates, sourceManifest);
       } else if (fileType === 'transactions') {
         const { clean, raw } = processTransactions(data);
-        addTransactions({ clean, raw }, uniqueDates);
+        await addTransactions({ clean, raw }, uniqueDates, sourceManifest);
       }
 
       toast({
-        title: 'Archivo Cargado',
-        description: `${file.name} ha sido procesado exitosamente. Se actualizaron los datos para: ${summarizeLoadedDates(uniqueDates)}`,
+        title: parsedBatch.fileNames.length > 1 ? 'Archivos cargados' : 'Archivo cargado',
+        description: `${parsedBatch.fileNames.length.toLocaleString('en-US')} archivo(s) procesado(s). Se actualizaron los datos para: ${summarizeLoadedDates(uniqueDates)}.`,
       });
+
+      if (parsedBatch.saturatedLegacyFiles.length > 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Archivo saturado',
+          description: `Se detectó un .XLS al límite histórico de 65,534 filas: ${parsedBatch.saturatedLegacyFiles.join(', ')}. Ese archivo puede venir truncado; conviene exportarlo por mes o en .xlsx/.csv.`,
+        });
+      }
+
+      if (parsedBatch.errors.length > 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Carga parcial',
+          description: `${parsedBatch.errors.length.toLocaleString('en-US')} archivo(s) fallaron en esta tanda.`,
+        });
+      }
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : `No se pudo procesar el archivo ${file.name}.`;
+          : 'No se pudieron procesar los archivos seleccionados.';
 
       toast({
         variant: 'destructive',
@@ -116,24 +233,36 @@ export default function DataManagementPanel() {
         description: message,
       });
     } finally {
-      event.currentTarget.value = '';
+      input.value = '';
+      setActiveBatch(null);
+      setIsImportingBatch(false);
     }
   };
 
-  const handleLoadDemoData = () => {
+  const handleLoadDemoData = async () => {
     const dates = getUniqueDates(demoAnsweredCalls);
 
-    addAnsweredCalls(processAnsweredCalls(demoAnsweredCalls), dates);
-    const { clean: cleanAbandoned, raw: rawAbandoned } = processAbandonedCalls(
-      demoAbandonedCalls as any[]
-    );
-    addAbandonedCalls({ clean: cleanAbandoned, raw: rawAbandoned }, dates);
-    const { clean: cleanTrans, raw: rawTrans } = processTransactions(
-      demoTransactions as any[]
-    );
-    addTransactions({ clean: cleanTrans, raw: rawTrans }, dates);
+    try {
+      setIsImportingBatch(true);
+      setActiveBatch('answered');
 
-    toast({ title: 'Datos de demostración cargados' });
+      await addAnsweredCalls(processAnsweredCalls(demoAnsweredCalls), dates);
+      const { clean: cleanAbandoned, raw: rawAbandoned } = processAbandonedCalls(
+        demoAbandonedCalls as any[]
+      );
+      setActiveBatch('abandoned');
+      await addAbandonedCalls({ clean: cleanAbandoned, raw: rawAbandoned }, dates);
+      const { clean: cleanTrans, raw: rawTrans } = processTransactions(
+        demoTransactions as any[]
+      );
+      setActiveBatch('transactions');
+      await addTransactions({ clean: cleanTrans, raw: rawTrans }, dates);
+
+      toast({ title: 'Datos de demostración cargados' });
+    } finally {
+      setActiveBatch(null);
+      setIsImportingBatch(false);
+    }
   };
 
   const handleClearCurrentView = () => {
@@ -164,24 +293,27 @@ export default function DataManagementPanel() {
   const loaders = [
     {
       label: 'Contestadas',
-      description: 'Carga el archivo operativo de llamadas contestadas.',
+      description: 'Carga uno o varios archivos operativos de llamadas contestadas.',
       Icon: PhoneCall,
       accent: 'text-red-600',
       onClick: () => answeredInputRef.current?.click(),
+      type: 'answered' as const,
     },
     {
       label: 'Abandonadas',
-      description: 'Carga el archivo de llamadas abandonadas para auditoría y SL.',
+      description: 'Carga uno o varios archivos de llamadas abandonadas para auditoría y SL.',
       Icon: PhoneOff,
       accent: 'text-red-600',
       onClick: () => abandonedInputRef.current?.click(),
+      type: 'abandoned' as const,
     },
     {
       label: 'Transacciones',
-      description: 'Carga el archivo comercial con representantes y plataformas.',
+      description: 'Carga uno o varios archivos comerciales con representantes y plataformas.',
       Icon: Coins,
       accent: 'text-amber-600',
       onClick: () => transactionsInputRef.current?.click(),
+      type: 'transactions' as const,
     },
   ];
 
@@ -223,6 +355,7 @@ export default function DataManagementPanel() {
           type="file"
           ref={answeredInputRef}
           className="hidden"
+          multiple
           accept={commonFileTypes}
           onChange={(event) => handleFileChange(event, 'answered')}
         />
@@ -230,6 +363,7 @@ export default function DataManagementPanel() {
           type="file"
           ref={abandonedInputRef}
           className="hidden"
+          multiple
           accept={commonFileTypes}
           onChange={(event) => handleFileChange(event, 'abandoned')}
         />
@@ -237,6 +371,7 @@ export default function DataManagementPanel() {
           type="file"
           ref={transactionsInputRef}
           className="hidden"
+          multiple
           accept={commonFileTypes}
           onChange={(event) => handleFileChange(event, 'transactions')}
         />
@@ -256,7 +391,8 @@ export default function DataManagementPanel() {
                   key={loader.label}
                   type="button"
                   onClick={loader.onClick}
-                  className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+                  disabled={activeBatch !== null}
+                  className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white disabled:cursor-wait disabled:opacity-70"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white ${loader.accent}`}>
@@ -268,7 +404,9 @@ export default function DataManagementPanel() {
                     {loader.label}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    {loader.description}
+                    {activeBatch === loader.type
+                      ? 'Procesando el lote seleccionado...'
+                      : loader.description}
                   </p>
                 </button>
               ))}
@@ -300,6 +438,10 @@ export default function DataManagementPanel() {
               </p>
               <p className="mt-3 text-sm text-slate-500">
                 Limpia la vista para cargar nuevos archivos sin tocar el historial persistido.
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                Durante una carga grande se pausa la sincronización remota para no
+                competir con el parseo local.
               </p>
               <Button
                 type="button"

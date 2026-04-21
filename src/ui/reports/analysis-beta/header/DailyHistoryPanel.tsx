@@ -5,6 +5,7 @@ import { useAccess } from '@/hooks/useAccess';
 import { History, CalendarDays, Check, ChevronDown, Trash2 } from 'lucide-react';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
+import { Input } from '@/ui/reports/analysis-beta/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -26,6 +27,7 @@ const coverageLabels = [
 export default function DailyHistoryPanel() {
   const { canEditData } = useAccess();
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const dailyHistory = useDashboardStore((state) => state.dailyHistory);
   const dataDate = useDashboardStore((state) => state.dataDate);
   const setDataDate = useDashboardStore((state) => state.setDataDate);
@@ -37,6 +39,26 @@ export default function DailyHistoryPanel() {
     () => Object.values(dailyHistory).sort((a, b) => b.date.localeCompare(a.date)),
     [dailyHistory]
   );
+  const filteredSnapshots = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return snapshots;
+    }
+
+    return snapshots.filter((snapshot) => {
+      const monthLabel = new Intl.DateTimeFormat('es-DO', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      }).format(new Date(`${snapshot.date}T00:00:00Z`));
+
+      return (
+        snapshot.date.toLowerCase().includes(normalizedSearch) ||
+        monthLabel.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [searchTerm, snapshots]);
 
   const currentSnapshot = snapshots.find((snapshot) => snapshot.date === dataDate) ?? null;
 
@@ -120,10 +142,20 @@ export default function DailyHistoryPanel() {
           <p className="mt-2 text-[11px] text-slate-500">
             El historial se conserva aunque limpies la vista. Aquí es donde se borra de forma explícita.
           </p>
+          <Input
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Buscar por fecha o mes..."
+            className="mt-3 h-9 rounded-xl border-slate-200 bg-slate-50 text-xs font-bold text-slate-700"
+          />
         </div>
 
         <div className="max-h-[320px] overflow-y-auto p-2">
-          {snapshots.map((snapshot) => {
+          {filteredSnapshots.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+              No hay resultados para esa búsqueda.
+            </div>
+          ) : filteredSnapshots.map((snapshot) => {
             const isActive = snapshot.date === dataDate;
 
             return (

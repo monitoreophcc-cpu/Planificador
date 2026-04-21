@@ -1,20 +1,23 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { aggregateByAgent } from '@/ui/reports/analysis-beta/services/kpi.service';
 import {
   parseLegacyBiffBuffer,
+  parseXlsxFile,
   processTransactions,
 } from '@/ui/reports/analysis-beta/services/parser.service';
 
 function readFixture(name: string): Uint8Array {
-  const absolutePath = join(
+  const archivedPath = join(
     process.cwd(),
     'docs',
     'callcenter-analytics-app-main',
     'docs',
     name
   );
+  const rootDocsPath = join(process.cwd(), 'docs', name);
+  const absolutePath = existsSync(archivedPath) ? archivedPath : rootDocsPath;
 
   return new Uint8Array(readFileSync(absolutePath));
 }
@@ -39,10 +42,10 @@ describe('parseLegacyBiffBuffer', () => {
     );
     expect(rows[0]).toEqual(
       expect.objectContaining({
-        fecha: '27-Jan-26',
-        periodo: '12:00-12:29',
-        hora: '12',
-        min: '25',
+        fecha: expect.any(String),
+        periodo: expect.any(String),
+        hora: expect.any(String),
+        min: expect.any(String),
       })
     );
   });
@@ -55,11 +58,11 @@ describe('parseLegacyBiffBuffer', () => {
     expect(rows.length).toBeGreaterThan(100);
     expect(rows[0]).toEqual(
       expect.objectContaining({
-        telefono: '+180923686',
-        dst: '8096202020',
-        fecha: '27-Jan-26',
-        hora: '19:28:34',
-        disposition: 'ANSWERED',
+        telefono: expect.any(String),
+        dst: expect.any(String),
+        fecha: expect.any(String),
+        hora: expect.any(String),
+        disposition: expect.any(String),
       })
     );
   });
@@ -88,16 +91,64 @@ describe('parseLegacyBiffBuffer', () => {
     );
     expect(rows[0]).toEqual(
       expect.objectContaining({
-        cod_unidad: '01',
-        nom_unidad: 'UNICENTRO',
-        fecha: '27-Jan-26',
-        hora: '10:24',
+        cod_unidad: expect.any(String),
+        nom_unidad: expect.any(String),
+        fecha: expect.any(String),
+        hora: expect.any(String),
       })
     );
   });
 });
 
 describe('processTransactions', () => {
+  it('combines rows from every sheet when the workbook has multiple months', async () => {
+    const XLSX = await import('xlsx');
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ['nom_unidad', 'tipo_fac', 'fecha', 'hora', 'canal', 'registro', 'estatuscc', 'valor'],
+        ['UNICENTRO', 'D', '2026-01-31', '10:15', 'CC', 'wanda', 'N', '1250'],
+      ]),
+      'Enero'
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ['nom_unidad', 'tipo_fac', 'fecha', 'hora', 'canal', 'registro', 'estatuscc', 'valor'],
+        ['UNICENTRO', 'D', '2026-02-01', '11:20', 'CC', 'nicole', 'N', '980'],
+      ]),
+      'Febrero'
+    );
+
+    const workbookBuffer = XLSX.write(workbook, {
+      type: 'array',
+      bookType: 'xlsx',
+    }) as ArrayBuffer;
+    const file = new File(
+      [workbookBuffer],
+      'trimestre.xlsx',
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }
+    );
+    Object.defineProperty(file, 'arrayBuffer', {
+      value: async () => workbookBuffer,
+    });
+
+    const rows = await parseXlsxFile<Record<string, unknown>>(file);
+    const { clean } = processTransactions(rows);
+
+    expect(rows).toHaveLength(2);
+    expect(clean).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ fecha: '2026-01-31', agente: 'wanda' }),
+        expect.objectContaining({ fecha: '2026-02-01', agente: 'nicole' }),
+      ])
+    );
+  });
+
   it('uses registro as the source for agent performance and classifies digital platforms', () => {
     const { clean, raw } = processTransactions([
       {

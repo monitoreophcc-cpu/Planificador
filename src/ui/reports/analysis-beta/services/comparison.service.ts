@@ -58,6 +58,12 @@ function formatMonthYear(dateStr: string): string {
   }).format(date);
 }
 
+function formatQuarterYear(dateStr: string): string {
+  const date = parseDate(dateStr);
+  const quarter = Math.floor(date.getUTCMonth() / 3) + 1;
+  return `T${quarter} ${date.getUTCFullYear()}`;
+}
+
 function getWeekRange(dateStr: string): { start: string; end: string } {
   const date = parseDate(dateStr);
   const day = date.getUTCDay();
@@ -78,6 +84,15 @@ function getMonthRange(dateStr: string): { start: string; end: string } {
   return { start: formatDate(first), end: formatDate(last) };
 }
 
+function getQuarterRange(dateStr: string): { start: string; end: string } {
+  const date = parseDate(dateStr);
+  const year = date.getUTCFullYear();
+  const quarterStartMonth = Math.floor(date.getUTCMonth() / 3) * 3;
+  const first = new Date(Date.UTC(year, quarterStartMonth, 1));
+  const last = new Date(Date.UTC(year, quarterStartMonth + 3, 0));
+  return { start: formatDate(first), end: formatDate(last) };
+}
+
 function getExpectedDays(start: string, end: string): number {
   const diff = parseDate(end).getTime() - parseDate(start).getTime();
   return Math.floor(diff / (24 * 60 * 60 * 1000)) + 1;
@@ -89,6 +104,10 @@ function buildPeriodLabel(
 ): string {
   if (periodMode === 'month') {
     return formatMonthYear(range.start);
+  }
+
+  if (periodMode === 'quarter') {
+    return formatQuarterYear(range.start);
   }
 
   if (periodMode === 'week') {
@@ -104,6 +123,7 @@ export function resolveComparisonRange(
 ): { start: string; end: string } {
   if (periodMode === 'week') return getWeekRange(dateStr);
   if (periodMode === 'month') return getMonthRange(dateStr);
+  if (periodMode === 'quarter') return getQuarterRange(dateStr);
   return { start: dateStr, end: dateStr };
 }
 
@@ -247,7 +267,11 @@ function applyPeriodFilter(dataset: DailyDataset, config: ComparisonConfig): Dai
     };
   }
 
-  if (config.periodMode === 'week' || config.periodMode === 'month') {
+  if (
+    config.periodMode === 'week' ||
+    config.periodMode === 'month' ||
+    config.periodMode === 'quarter'
+  ) {
     return dataset;
   }
 
@@ -510,7 +534,8 @@ export function buildComparisonResult(params: {
     Boolean(dailyHistory) &&
     (config.periodMode === 'full_day' ||
       config.periodMode === 'week' ||
-      config.periodMode === 'month');
+      config.periodMode === 'month' ||
+      config.periodMode === 'quarter');
 
   const rawLoadedDates = [
     ...new Set([

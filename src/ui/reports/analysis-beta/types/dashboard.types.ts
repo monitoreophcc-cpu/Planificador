@@ -116,11 +116,48 @@ export type AgentKPIs = {
   ticketPromedio: number;
 };
 
+export type SourceManifestEntry = {
+  source: 'answered' | 'abandoned' | 'transactions';
+  fileName: string;
+  rows: number;
+  dateStart: string | null;
+  dateEnd: string | null;
+  importedAt: string;
+  saturatedLegacyXls: boolean;
+};
+
+export type MonthlyCumulativeRow = {
+  date: string;
+  recibidas: number;
+  contestadas: number;
+  abandonadas: number;
+  transaccionesCC: number;
+  ventasValidas: number;
+};
+
+export type MonthlyPlatformSnapshotRow = {
+  plataforma: string;
+  plataformaCode?: string;
+  transacciones: number;
+  ventas: number;
+  ticketPromedio: number;
+};
+
+export type MonthlyBranchSnapshotRow = {
+  sucursal: string;
+  transacciones: number;
+};
+
 export type WorkspaceView = 'executive' | 'operation' | 'analysis';
 
 export type CommercialView = 'day' | 'month';
 
-export type ComparisonPreset = 'manual' | 'day_previous' | 'week_previous' | 'month_previous';
+export type ComparisonPreset =
+  | 'manual'
+  | 'day_previous'
+  | 'week_previous'
+  | 'month_previous'
+  | 'quarter_previous';
 
 export type DataQualityLevel = 'ok' | 'warning' | 'critical';
 
@@ -149,7 +186,13 @@ export type ExecutiveFinding = {
   tone: 'critical' | 'warning' | 'positive' | 'neutral';
 };
 
-export type ComparisonPeriodMode = 'full_day' | 'shift' | 'custom_range' | 'week' | 'month';
+export type ComparisonPeriodMode =
+  | 'full_day'
+  | 'shift'
+  | 'custom_range'
+  | 'week'
+  | 'month'
+  | 'quarter';
 
 export type ComparisonConfig = {
   baseDate: string | null;
@@ -210,6 +253,37 @@ export type MonthlyOperationalSnapshot = {
     day: TimeSlotKpi[];
     night: TimeSlotKpi[];
   };
+};
+
+export type MonthlyReportSnapshot = MonthlyOperationalSnapshot & {
+  snapshotVersion: number;
+  sourceHash: string;
+  sourceManifest: SourceManifestEntry[];
+  coverage: SourceCoverage;
+  dailyCumulative: MonthlyCumulativeRow[];
+  representatives: AgentKPIs[];
+  platforms: MonthlyPlatformSnapshotRow[];
+  branches: MonthlyBranchSnapshotRow[];
+  updatedAt: string;
+};
+
+export type ReportMonthlySnapshotSyncRow = {
+  user_id: string;
+  month_key: string;
+  month_label: string;
+  snapshot_version: number;
+  source_hash: string;
+  source_manifest: SourceManifestEntry[];
+  loaded_dates: string[];
+  coverage: SourceCoverage;
+  kpis: KPIs;
+  shift_kpis: MonthlyReportSnapshot['shiftKpis'];
+  operational_detail: MonthlyReportSnapshot['operationalDetail'];
+  daily_cumulative: MonthlyCumulativeRow[];
+  representatives: AgentKPIs[];
+  platforms: MonthlyPlatformSnapshotRow[];
+  branches: MonthlyBranchSnapshotRow[];
+  updated_at: string;
 };
 
 export type ReportGlobalKpiSyncRow = {

@@ -258,6 +258,109 @@ describe('comparison.service', () => {
     ).toBe('2025-03-01');
   });
 
+  it('builds explicit quarterly options from loaded dates and resolves selections inside the same quarter', () => {
+    const options = buildComparisonSelectionOptions({
+      availableDates: [
+        '2025-01-10',
+        '2025-02-14',
+        '2025-04-01',
+        '2026-03-20',
+      ],
+      periodMode: 'quarter',
+    });
+
+    expect(options.map((option) => option.label)).toEqual([
+      'T1 2026 · 1/90 dias',
+      'T2 2025 · 1/91 dias',
+      'T1 2025 · 2/90 dias',
+    ]);
+    expect(
+      resolveComparisonSelectionValue({
+        selectedDate: '2025-02-14',
+        options,
+        periodMode: 'quarter',
+      })
+    ).toBe('2025-01-10');
+  });
+
+  it('falls back to snapshot history for quarterly comparisons when raw rows are unavailable', () => {
+    const result = buildComparisonResult({
+      config: {
+        baseDate: '2026-01-31',
+        targetDate: '2026-04-15',
+        periodMode: 'quarter',
+        shift: 'Día',
+        startTime: '09:00',
+        endTime: '23:30',
+      },
+      allAnswered: [],
+      allAbandoned: [],
+      allTransactions: [],
+      dailyHistory: {
+        '2026-01-31': createSnapshot('2026-01-31', {
+          recibidas: 10,
+          contestadas: 8,
+          abandonadas: 2,
+          transaccionesCC: 2,
+          ventasValidas: 1800,
+        }),
+        '2026-02-15': createSnapshot('2026-02-15', {
+          recibidas: 12,
+          contestadas: 9,
+          abandonadas: 3,
+          transaccionesCC: 3,
+          ventasValidas: 2400,
+        }),
+        '2026-04-10': createSnapshot('2026-04-10', {
+          recibidas: 14,
+          contestadas: 11,
+          abandonadas: 3,
+          transaccionesCC: 4,
+          ventasValidas: 3600,
+        }),
+        '2026-05-02': createSnapshot('2026-05-02', {
+          recibidas: 9,
+          contestadas: 7,
+          abandonadas: 2,
+          transaccionesCC: 2,
+          ventasValidas: 2100,
+        }),
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.basePeriod).toEqual(
+      expect.objectContaining({
+        label: 'T1 2026',
+        start: '2026-01-01',
+        end: '2026-03-31',
+        loadedDays: 2,
+      })
+    );
+    expect(result?.targetPeriod).toEqual(
+      expect.objectContaining({
+        label: 'T2 2026',
+        start: '2026-04-01',
+        end: '2026-06-30',
+        loadedDays: 2,
+      })
+    );
+    expect(result?.metrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Recibidas',
+          baseValue: 22,
+          targetValue: 23,
+        }),
+        expect.objectContaining({
+          label: 'Ventas válidas',
+          baseValue: 4200,
+          targetValue: 5700,
+        }),
+      ])
+    );
+  });
+
   it('falls back to snapshot history for monthly comparisons when raw rows are unavailable', () => {
     const result = buildComparisonResult({
       config: {

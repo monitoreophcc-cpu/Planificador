@@ -30,16 +30,47 @@ if (typeof window !== 'undefined') {
 export default function PlatformAovChart() {
   const transactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const selectedMonthKey = useDashboardStore((state) => state.selectedMonthKey);
+  const monthlySnapshots = useDashboardStore((state) => state.monthlySnapshots);
   const aovChartMode = useDashboardStore((state) => state.aovChartMode);
   const setAovChartMode = useDashboardStore((state) => state.setAovChartMode);
   const filteredTransactions = dataDate
     ? transactions.filter((record) => record.fecha === dataDate)
     : [];
+  const monthSnapshot = selectedMonthKey ? monthlySnapshots[selectedMonthKey] : null;
+  const snapshotPlatforms = monthSnapshot?.platforms ?? [];
+  const callCenterTransactions = snapshotPlatforms
+    .filter((row) => row.plataforma === 'Call center')
+    .reduce((total, row) => total + row.transacciones, 0);
+  const callCenterSales = snapshotPlatforms
+    .filter((row) => row.plataforma === 'Call center')
+    .reduce((total, row) => total + row.ventas, 0);
+  const restTransactions = snapshotPlatforms
+    .filter((row) => row.plataforma !== 'Call center')
+    .reduce((total, row) => total + row.transacciones, 0);
+  const restSales = snapshotPlatforms
+    .filter((row) => row.plataforma !== 'Call center')
+    .reduce((total, row) => total + row.ventas, 0);
 
   const chartData =
-    aovChartMode === 'agg'
-      ? getAggregatedAov(filteredTransactions)
-      : getAovByPlatform(filteredTransactions);
+    filteredTransactions.length > 0
+      ? aovChartMode === 'agg'
+        ? getAggregatedAov(filteredTransactions)
+        : getAovByPlatform(filteredTransactions)
+      : aovChartMode === 'agg'
+        ? {
+            labels: ['Call center', 'Resto de plataformas'],
+            values: [
+              callCenterTransactions > 0
+                ? callCenterSales / callCenterTransactions
+                : 0,
+              restTransactions > 0 ? restSales / restTransactions : 0,
+            ],
+          }
+        : {
+            labels: snapshotPlatforms.map((row) => row.plataforma),
+            values: snapshotPlatforms.map((row) => row.ticketPromedio),
+          };
 
   const data = {
     labels: chartData.labels,
@@ -98,7 +129,7 @@ export default function PlatformAovChart() {
     },
   };
 
-  if (filteredTransactions.length === 0) {
+  if (chartData.values.length === 0 || chartData.values.every((value) => value === 0)) {
     return null;
   }
 

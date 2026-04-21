@@ -28,14 +28,24 @@ if (typeof window !== 'undefined') {
 export default function TopBranchesChart() {
   const transactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const selectedMonthKey = useDashboardStore((state) => state.selectedMonthKey);
+  const monthlySnapshots = useDashboardStore((state) => state.monthlySnapshots);
   const filteredTransactions = dataDate
     ? transactions.filter((record) => record.fecha === dataDate)
     : [];
+  const monthSnapshot = selectedMonthKey ? monthlySnapshots[selectedMonthKey] : null;
   const toTitleCase = (label: string) =>
     label
       .toLowerCase()
       .replace(/\b\w/g, (char) => char.toUpperCase());
-  const { labels, values } = getTopSucursales(filteredTransactions);
+  const { labels, values } =
+    filteredTransactions.length > 0
+      ? getTopSucursales(filteredTransactions)
+      : {
+          labels: monthSnapshot?.branches.slice(0, 10).map((row) => row.sucursal) ?? [],
+          values:
+            monthSnapshot?.branches.slice(0, 10).map((row) => row.transacciones) ?? [],
+        };
 
   const data = {
     labels,
@@ -87,7 +97,7 @@ export default function TopBranchesChart() {
     },
   };
 
-  if (filteredTransactions.length === 0) {
+  if (values.length === 0) {
     return null;
   }
 

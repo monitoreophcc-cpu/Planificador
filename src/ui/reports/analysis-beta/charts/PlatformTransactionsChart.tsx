@@ -9,10 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 export default function PlatformTransactionsChart() {
   const transactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const selectedMonthKey = useDashboardStore((state) => state.selectedMonthKey);
+  const monthlySnapshots = useDashboardStore((state) => state.monthlySnapshots);
   const filteredTransactions = dataDate
     ? transactions.filter((record) => record.fecha === dataDate)
     : [];
-  const chartData = getTransactionsByPlatform(filteredTransactions);
+  const monthSnapshot = selectedMonthKey ? monthlySnapshots[selectedMonthKey] : null;
+  const chartData =
+    filteredTransactions.length > 0
+      ? getTransactionsByPlatform(filteredTransactions)
+      : {
+          labels: monthSnapshot?.platforms.map((row) => row.plataforma) ?? [],
+          values: monthSnapshot?.platforms.map((row) => row.transacciones) ?? [],
+        };
 
   const data = {
     labels: chartData.labels,
@@ -56,7 +65,7 @@ export default function PlatformTransactionsChart() {
     },
   };
 
-  if (filteredTransactions.length === 0) {
+  if (chartData.values.length === 0) {
     return null;
   }
 

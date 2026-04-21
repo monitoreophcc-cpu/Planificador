@@ -14,16 +14,37 @@ import { PillButton, PillToggleContainer } from '../ui/pills';
 export default function PlatformSalesChart() {
   const transactions = useDashboardStore((state) => state.transactions);
   const dataDate = useDashboardStore((state) => state.dataDate);
+  const selectedMonthKey = useDashboardStore((state) => state.selectedMonthKey);
+  const monthlySnapshots = useDashboardStore((state) => state.monthlySnapshots);
   const salesChartMode = useDashboardStore((state) => state.salesChartMode);
   const setSalesChartMode = useDashboardStore((state) => state.setSalesChartMode);
   const filteredTransactions = dataDate
     ? transactions.filter((record) => record.fecha === dataDate)
     : [];
+  const monthSnapshot = selectedMonthKey ? monthlySnapshots[selectedMonthKey] : null;
+  const snapshotPlatformSales = monthSnapshot?.platforms ?? [];
 
   const chartData =
-    salesChartMode === 'agg'
-      ? getAggregatedSales(filteredTransactions)
-      : getSalesByPlatform(filteredTransactions);
+    filteredTransactions.length > 0
+      ? salesChartMode === 'agg'
+        ? getAggregatedSales(filteredTransactions)
+        : getSalesByPlatform(filteredTransactions)
+      : salesChartMode === 'agg'
+        ? {
+            labels: ['Call center', 'Resto de plataformas'],
+            values: [
+              snapshotPlatformSales
+                .filter((row) => row.plataforma === 'Call center')
+                .reduce((total, row) => total + row.ventas, 0),
+              snapshotPlatformSales
+                .filter((row) => row.plataforma !== 'Call center')
+                .reduce((total, row) => total + row.ventas, 0),
+            ],
+          }
+        : {
+            labels: snapshotPlatformSales.map((row) => row.plataforma),
+            values: snapshotPlatformSales.map((row) => row.ventas),
+          };
 
   const data = {
     labels: chartData.labels,
@@ -82,7 +103,7 @@ export default function PlatformSalesChart() {
     },
   };
 
-  if (filteredTransactions.length === 0) {
+  if (chartData.values.length === 0 || chartData.values.every((value) => value === 0)) {
     return null;
   }
 

@@ -47,12 +47,14 @@ const periodLabels: Record<ComparisonPeriodMode, string> = {
   custom_range: 'Rango horario',
   week: 'Semana completa',
   month: 'Mes completo',
+  quarter: 'Trimestre completo',
 };
 
 const presetLabels: Record<Exclude<ComparisonPreset, 'manual'>, string> = {
   day_previous: 'Día anterior',
   week_previous: 'Semana anterior',
   month_previous: 'Mes anterior',
+  quarter_previous: 'Trimestre anterior',
 };
 
 function parseDate(dateStr: string): Date {
@@ -132,6 +134,20 @@ function buildPresetConfig(
       baseDate: findLoadedDateInRange(availableDates, range.start, range.end) ?? anchor,
       targetDate: referenceDate,
       periodMode: 'week',
+      shift: 'Día',
+      startTime: '09:00',
+      endTime: '23:30',
+    };
+  }
+
+  if (preset === 'quarter_previous') {
+    const anchor = shiftUtcMonth(referenceDate, -3);
+    const range = resolveComparisonRange(anchor, 'quarter');
+
+    return {
+      baseDate: findLoadedDateInRange(availableDates, range.start, range.end) ?? anchor,
+      targetDate: referenceDate,
+      periodMode: 'quarter',
       shift: 'Día',
       startTime: '09:00',
       endTime: '23:30',
@@ -254,7 +270,9 @@ export default function ComparisonPanel() {
   const basePeriod = comparisonResult?.basePeriod ?? basePreview;
   const targetPeriod = comparisonResult?.targetPeriod ?? targetPreview;
   const isMultiDayMode =
-    comparisonConfig.periodMode === 'week' || comparisonConfig.periodMode === 'month';
+    comparisonConfig.periodMode === 'week' ||
+    comparisonConfig.periodMode === 'month' ||
+    comparisonConfig.periodMode === 'quarter';
   const showCoverageWarning =
     isMultiDayMode &&
     Boolean(
@@ -268,6 +286,8 @@ export default function ComparisonPanel() {
       ? 'Semana'
       : comparisonConfig.periodMode === 'month'
         ? 'Mes'
+        : comparisonConfig.periodMode === 'quarter'
+          ? 'Trimestre'
         : 'Fecha';
 
   const handlePreset = (preset: Exclude<ComparisonPreset, 'manual'>) => {
@@ -328,7 +348,7 @@ export default function ComparisonPanel() {
             Comparación entre periodos
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-500">
-            Usa presets rápidos para comparar contra el día, la semana o el mes anterior, o baja al modo avanzado cuando necesites más control.
+            Usa presets rápidos para comparar contra el día, la semana, el mes o el trimestre anterior, o baja al modo avanzado cuando necesites más control.
           </DialogDescription>
         </DialogHeader>
 
@@ -374,7 +394,7 @@ export default function ComparisonPanel() {
                   </div>
 
                   <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 xl:max-w-sm">
-                    Si cargas archivos con varias fechas, cada día se acumula por separado y aquí se agrupa automáticamente por semana o por mes.
+                    Si cargas archivos con varias fechas, cada día se acumula por separado y aquí se agrupa automáticamente por semana, mes o trimestre.
                   </div>
                 </div>
 

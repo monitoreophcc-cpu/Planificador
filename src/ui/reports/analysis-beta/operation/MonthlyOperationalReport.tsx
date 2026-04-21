@@ -9,6 +9,13 @@ import ShiftTablesContainer from '@/ui/reports/analysis-beta/tables/ShiftTablesC
 import {
   getPreviousMonthlyOperationalSnapshot,
 } from '@/ui/reports/analysis-beta/services/monthly-report.service';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/ui/reports/analysis-beta/ui/select';
 
 type MonthlyOperationalReportProps = {
   showGlobalReadings?: boolean;
@@ -26,15 +33,30 @@ export default function MonthlyOperationalReport({
 }: MonthlyOperationalReportProps) {
   const dataDate = useDashboardStore((state) => state.dataDate);
   const monthlyHistory = useDashboardStore((state) => state.monthlyHistory);
-  const currentMonthKey = dataDate?.slice(0, 7) ?? null;
+  const selectedMonthKey = useDashboardStore((state) => state.selectedMonthKey);
+  const setSelectedMonthKey = useDashboardStore(
+    (state) => state.setSelectedMonthKey
+  );
+  const monthOptions = useMemo(
+    () =>
+      Object.values(monthlyHistory).sort((left, right) =>
+        right.monthKey.localeCompare(left.monthKey)
+      ),
+    [monthlyHistory]
+  );
+  const currentMonthKey = selectedMonthKey ?? dataDate?.slice(0, 7) ?? null;
 
   const monthlyReport = useMemo(
     () => (currentMonthKey ? monthlyHistory[currentMonthKey] ?? null : null),
     [currentMonthKey, monthlyHistory]
   );
   const previousMonthlyReport = useMemo(
-    () => getPreviousMonthlyOperationalSnapshot(monthlyHistory, dataDate),
-    [dataDate, monthlyHistory]
+    () =>
+      getPreviousMonthlyOperationalSnapshot(
+        monthlyHistory,
+        currentMonthKey ? `${currentMonthKey}-01` : null
+      ),
+    [currentMonthKey, monthlyHistory]
   );
 
   if (!monthlyReport) {
@@ -60,11 +82,29 @@ export default function MonthlyOperationalReport({
                   Lectura mensual
                 </p>
               </div>
-              <h3 className="text-xl font-black text-slate-900">
-                {monthlyReport.monthLabel}
-              </h3>
+              {monthOptions.length > 1 ? (
+                <Select
+                  value={monthlyReport.monthKey}
+                  onValueChange={setSelectedMonthKey}
+                >
+                  <SelectTrigger className="h-11 min-w-[240px] rounded-2xl border-slate-200 bg-white text-left text-sm font-black text-slate-900">
+                    <SelectValue placeholder="Selecciona un mes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {monthOptions.map((option) => (
+                      <SelectItem key={option.monthKey} value={option.monthKey}>
+                        {option.monthLabel}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <h3 className="text-xl font-black text-slate-900">
+                  {monthlyReport.monthLabel}
+                </h3>
+              )}
               <p className="text-sm text-slate-500">
-                El informe suma y promedia todo lo cargado del mes activo para mostrar cómo va cerrando la operación en sentido general.
+                El informe suma y promedia todo lo cargado del mes seleccionado para mostrar cómo va cerrando la operación en sentido general.
               </p>
             </div>
 

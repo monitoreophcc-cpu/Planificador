@@ -4,19 +4,17 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useAccess } from '@/hooks/useAccess';
 import { loadReportHistoryFromSupabase, syncReportHistoryToSupabase } from '@/ui/reports/analysis-beta/services/report-cloud.service';
 import {
-  loadReportSourceDataFromSupabase,
-  syncReportSourceDataToSupabase,
-} from '@/ui/reports/analysis-beta/services/report-source-cloud.service';
+  loadMonthlySnapshotsFromSupabase,
+  syncMonthlySnapshotsToSupabase,
+} from '@/ui/reports/analysis-beta/services/report-monthly-snapshot-cloud.service';
 import {
   loadManualRepresentativeLinksFromSupabase,
   syncManualRepresentativeLinksToSupabase,
 } from '@/ui/reports/analysis-beta/services/report-link-cloud.service';
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store';
 import type {
-  AbandonedCall,
-  AnsweredCall,
   DailySnapshot,
-  Transaction,
+  MonthlyReportSnapshot,
 } from '@/ui/reports/analysis-beta/types/dashboard.types';
 import type { ManualRepresentativeLink } from '@/ui/reports/analysis-beta/services/representative-link.service';
 
@@ -31,28 +29,28 @@ function buildHistorySignature(
         return {
           date,
           updatedAt: snapshot.updatedAt,
-          kpis: snapshot.kpis,
-          shiftKpis: snapshot.shiftKpis,
-          operationalDetail: snapshot.operationalDetail,
+          records: snapshot.records,
           coverage: snapshot.coverage,
         };
       })
   );
 }
 
-function buildRecordSignature<T extends { fecha: string; id: string }>(
-  records: T[]
+function buildMonthlySnapshotsSignature(
+  snapshots: Record<string, MonthlyReportSnapshot>
 ): string {
   return JSON.stringify(
-    [...records].sort((left, right) => {
-      const dateDelta = left.fecha.localeCompare(right.fecha);
-
-      if (dateDelta !== 0) {
-        return dateDelta;
-      }
-
-      return left.id.localeCompare(right.id);
-    })
+    Object.keys(snapshots)
+      .sort()
+      .map((monthKey) => {
+        const snapshot = snapshots[monthKey];
+        return {
+          monthKey,
+          sourceHash: snapshot.sourceHash,
+          updatedAt: snapshot.updatedAt,
+          loadedDates: snapshot.loadedDates,
+        };
+      })
   );
 }
 
@@ -66,29 +64,42 @@ function buildManualLinksSignature(
   );
 }
 
+function describeSyncError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === 'object') {
+    const message =
+      'message' in error ? String((error as { message?: unknown }).message ?? '') : '';
+    const code =
+      'code' in error ? String((error as { code?: unknown }).code ?? '') : '';
+
+    return [code, message].filter(Boolean).join(' - ') || 'Error desconocido';
+  }
+
+  return String(error ?? 'Error desconocido');
+}
+
 export function useDashboardCloudSync() {
   const { status, dataOwnerUserId, canEditData } = useAccess();
-  const answeredCalls = useDashboardStore((state) => state.answeredCalls);
-  const rawAbandonedCalls = useDashboardStore((state) => state.rawAbandonedCalls);
-  const rawTransactions = useDashboardStore((state) => state.rawTransactions);
   const dailyHistory = useDashboardStore((state) => state.dailyHistory);
+  const monthlySnapshots = useDashboardStore((state) => state.monthlySnapshots);
   const manualRepresentativeLinks = useDashboardStore(
     (state) => state.manualRepresentativeLinks
   );
+  const isImportingBatch = useDashboardStore((state) => state.isImportingBatch);
   const setRemoteHistory = useDashboardStore((state) => state.setRemoteHistory);
-  const setRemoteSourceData = useDashboardStore((state) => state.setRemoteSourceData);
+  const setRemoteMonthlySnapshots = useDashboardStore(
+    (state) => state.setRemoteMonthlySnapshots
+  );
   const setRemoteManualRepresentativeLinks = useDashboardStore(
     (state) => state.setRemoteManualRepresentativeLinks
   );
   const signature = useMemo(() => buildHistorySignature(dailyHistory), [dailyHistory]);
-  const sourceSignature = useMemo(
-    () =>
-      JSON.stringify({
-        answeredCalls: buildRecordSignature(answeredCalls),
-        rawAbandonedCalls: buildRecordSignature(rawAbandonedCalls),
-        rawTransactions: buildRecordSignature(rawTransactions),
-      }),
-    [answeredCalls, rawAbandonedCalls, rawTransactions]
+  const monthlySnapshotsSignature = useMemo(
+    () => buildMonthlySnapshotsSignature(monthlySnapshots),
+    [monthlySnapshots]
   );
   const manualLinksSignature = useMemo(
     () => buildManualLinksSignature(manualRepresentativeLinks),
@@ -97,7 +108,7 @@ export function useDashboardCloudSync() {
   const didHydrateRef = useRef(false);
   const isHydratingRef = useRef(false);
   const lastSyncedHistorySignatureRef = useRef<string | null>(null);
-  const lastSyncedSourceSignatureRef = useRef<string | null>(null);
+  const lastSyncedMonthlySnapshotsSignatureRef = useRef<string | null>(null);
   const lastSyncedManualLinksSignatureRef = useRef<string | null>(null);
   const syncTimerRef = useRef<number | null>(null);
 
@@ -105,7 +116,7 @@ export function useDashboardCloudSync() {
     didHydrateRef.current = false;
     isHydratingRef.current = false;
     lastSyncedHistorySignatureRef.current = null;
-    lastSyncedSourceSignatureRef.current = null;
+    lastSyncedMonthlySnapshotsSignatureRef.current = null;
     lastSyncedManualLinksSignatureRef.current = null;
   }, [dataOwnerUserId]);
 
@@ -118,16 +129,14 @@ export function useDashboardCloudSync() {
 
     void Promise.all([
       loadReportHistoryFromSupabase(dataOwnerUserId),
-      loadReportSourceDataFromSupabase(dataOwnerUserId),
+      loadMonthlySnapshotsFromSupabase(dataOwnerUserId),
       loadManualRepresentativeLinksFromSupabase(dataOwnerUserId),
     ])
-      .then(([remoteHistory, remoteSourceData, remoteManualLinks]) => {
+      .then(([remoteHistory, remoteMonthlySnapshots, remoteManualLinks]) => {
         const remoteSignature = buildHistorySignature(remoteHistory);
-        const remoteSourceSignature = JSON.stringify({
-          answeredCalls: buildRecordSignature(remoteSourceData.answeredCalls),
-          rawAbandonedCalls: buildRecordSignature(remoteSourceData.rawAbandonedCalls),
-          rawTransactions: buildRecordSignature(remoteSourceData.rawTransactions),
-        });
+        const remoteMonthlySnapshotsSignature = buildMonthlySnapshotsSignature(
+          remoteMonthlySnapshots
+        );
         const remoteManualLinksSignature = buildManualLinksSignature(
           remoteManualLinks
         );
@@ -136,12 +145,8 @@ export function useDashboardCloudSync() {
           setRemoteHistory(remoteHistory);
         }
 
-        if (
-          remoteSourceData.answeredCalls.length > 0 ||
-          remoteSourceData.rawAbandonedCalls.length > 0 ||
-          remoteSourceData.rawTransactions.length > 0
-        ) {
-          setRemoteSourceData(remoteSourceData);
+        if (Object.keys(remoteMonthlySnapshots).length > 0) {
+          setRemoteMonthlySnapshots(remoteMonthlySnapshots);
         }
 
         if (remoteManualLinks.length > 0) {
@@ -149,27 +154,44 @@ export function useDashboardCloudSync() {
         }
 
         lastSyncedHistorySignatureRef.current = remoteSignature;
-        lastSyncedSourceSignatureRef.current = remoteSourceSignature;
+        lastSyncedMonthlySnapshotsSignatureRef.current =
+          remoteMonthlySnapshotsSignature;
         lastSyncedManualLinksSignatureRef.current = remoteManualLinksSignature;
         didHydrateRef.current = true;
       })
       .catch((error) => {
-        console.error(
-          '[Call Center Sync] No se pudo rehidratar el historial remoto.',
-          error
+        console.warn(
+          '[Call Center Sync] No se pudo rehidratar el historial remoto:',
+          describeSyncError(error)
         );
         didHydrateRef.current = true;
       })
       .finally(() => {
         isHydratingRef.current = false;
       });
-  }, [dataOwnerUserId, setRemoteHistory, status]);
+  }, [
+    dataOwnerUserId,
+    setRemoteHistory,
+    setRemoteMonthlySnapshots,
+    setRemoteManualRepresentativeLinks,
+    status,
+  ]);
+
+  useEffect(() => {
+    if (!isImportingBatch || syncTimerRef.current == null) {
+      return;
+    }
+
+    window.clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = null;
+  }, [isImportingBatch]);
 
   useEffect(() => {
     if (
       status !== 'ready' ||
       !dataOwnerUserId ||
       !canEditData ||
+      isImportingBatch ||
       !didHydrateRef.current ||
       isHydratingRef.current
     ) {
@@ -178,7 +200,8 @@ export function useDashboardCloudSync() {
 
     if (
       signature === lastSyncedHistorySignatureRef.current &&
-      sourceSignature === lastSyncedSourceSignatureRef.current &&
+      monthlySnapshotsSignature ===
+        lastSyncedMonthlySnapshotsSignatureRef.current &&
       manualLinksSignature === lastSyncedManualLinksSignatureRef.current
     ) {
       return;
@@ -191,14 +214,16 @@ export function useDashboardCloudSync() {
     syncTimerRef.current = window.setTimeout(() => {
       void Promise.resolve()
         .then(async () => {
-          if (sourceSignature !== lastSyncedSourceSignatureRef.current) {
-            await syncReportSourceDataToSupabase({
+          if (
+            monthlySnapshotsSignature !==
+            lastSyncedMonthlySnapshotsSignatureRef.current
+          ) {
+            await syncMonthlySnapshotsToSupabase({
               userId: dataOwnerUserId,
-              answeredCalls,
-              rawAbandonedCalls,
-              rawTransactions,
+              monthlySnapshots,
             });
-            lastSyncedSourceSignatureRef.current = sourceSignature;
+            lastSyncedMonthlySnapshotsSignatureRef.current =
+              monthlySnapshotsSignature;
           }
 
           if (manualLinksSignature !== lastSyncedManualLinksSignatureRef.current) {
@@ -220,9 +245,9 @@ export function useDashboardCloudSync() {
         .then(() => {
         })
         .catch((error) => {
-          console.error(
-            '[Call Center Sync] No se pudo sincronizar el analisis de llamadas.',
-            error
+          console.warn(
+            '[Call Center Sync] No se pudo sincronizar el analisis de llamadas:',
+            describeSyncError(error)
           );
         });
     }, 700);
@@ -230,12 +255,24 @@ export function useDashboardCloudSync() {
     return () => {
       if (syncTimerRef.current) {
         window.clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = null;
       }
     };
-  }, [canEditData, dailyHistory, dataOwnerUserId, signature, status]);
+  }, [
+    canEditData,
+    dailyHistory,
+    dataOwnerUserId,
+    isImportingBatch,
+    manualLinksSignature,
+    manualRepresentativeLinks,
+    monthlySnapshots,
+    monthlySnapshotsSignature,
+    signature,
+    status,
+  ]);
 
   useEffect(() => {
-    if (status !== 'ready' || !dataOwnerUserId || !canEditData) {
+    if (status !== 'ready' || !dataOwnerUserId || !canEditData || isImportingBatch) {
       return;
     }
 
@@ -245,7 +282,8 @@ export function useDashboardCloudSync() {
         isHydratingRef.current ||
         (
           signature === lastSyncedHistorySignatureRef.current &&
-          sourceSignature === lastSyncedSourceSignatureRef.current &&
+          monthlySnapshotsSignature ===
+            lastSyncedMonthlySnapshotsSignatureRef.current &&
           manualLinksSignature === lastSyncedManualLinksSignatureRef.current
         )
       ) {
@@ -254,14 +292,16 @@ export function useDashboardCloudSync() {
 
       void Promise.resolve()
         .then(async () => {
-          if (sourceSignature !== lastSyncedSourceSignatureRef.current) {
-            await syncReportSourceDataToSupabase({
+          if (
+            monthlySnapshotsSignature !==
+            lastSyncedMonthlySnapshotsSignatureRef.current
+          ) {
+            await syncMonthlySnapshotsToSupabase({
               userId: dataOwnerUserId,
-              answeredCalls,
-              rawAbandonedCalls,
-              rawTransactions,
+              monthlySnapshots,
             });
-            lastSyncedSourceSignatureRef.current = sourceSignature;
+            lastSyncedMonthlySnapshotsSignatureRef.current =
+              monthlySnapshotsSignature;
           }
 
           if (manualLinksSignature !== lastSyncedManualLinksSignatureRef.current) {
@@ -283,9 +323,9 @@ export function useDashboardCloudSync() {
         .then(() => {
         })
         .catch((error) => {
-          console.error(
-            '[Call Center Sync] No se pudo reintentar la sincronización.',
-            error
+          console.warn(
+            '[Call Center Sync] No se pudo reintentar la sincronización:',
+            describeSyncError(error)
           );
         });
     };
@@ -298,16 +338,15 @@ export function useDashboardCloudSync() {
       window.removeEventListener('focus', retrySync);
     };
   }, [
-    answeredCalls,
     canEditData,
     dailyHistory,
     dataOwnerUserId,
     manualLinksSignature,
     manualRepresentativeLinks,
-    rawAbandonedCalls,
-    rawTransactions,
+    monthlySnapshots,
+    monthlySnapshotsSignature,
     signature,
-    sourceSignature,
     status,
+    isImportingBatch,
   ]);
 }

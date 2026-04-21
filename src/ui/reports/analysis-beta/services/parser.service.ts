@@ -422,45 +422,40 @@ async function parseWithXlsxFallback<T>(file: File): Promise<T[]> {
       dateNF: 'yyyy-mm-dd hh:mm:ss',
     })
   );
-  const sheetName = workbook.SheetNames[0];
+  const sheetNames = workbook.SheetNames;
 
-  if (!sheetName) {
+  if (sheetNames.length === 0) {
     return [];
   }
 
-  const worksheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json<(unknown | null)[]>(worksheet, {
-    header: 1,
-    defval: '',
-    blankrows: false,
-    raw: false,
-  });
+  return sheetNames.flatMap((sheetName) => {
+    const worksheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json<(unknown | null)[]>(worksheet, {
+      header: 1,
+      defval: '',
+      blankrows: false,
+      raw: false,
+    });
 
-  return rowsToObjects<T>(rows);
+    return rowsToObjects<T>(rows);
+  });
 }
 
 export const parseXlsxFile = async <T>(file: File): Promise<T[]> => {
   const lowerFileName = file.name.toLowerCase();
 
-  if (lowerFileName.endsWith('.xls')) {
-    try {
-      return await parseWithXlsxFallback<T>(file);
-    } catch (error) {
+  try {
+    return await parseWithXlsxFallback<T>(file);
+  } catch (error) {
+    if (lowerFileName.endsWith('.xls')) {
       const data = new Uint8Array(await file.arrayBuffer());
       const legacyRows = parseLegacyBiffBuffer<T>(data);
 
       if (legacyRows.length > 0) {
         return legacyRows;
       }
-
-      throw error;
     }
-  }
 
-  try {
-    const rows = await readSheet(file);
-    return rowsToObjects<T>(rows);
-  } catch (error) {
     const message = error instanceof Error ? error.message.toLowerCase() : '';
 
     // Some operational files arrive mislabeled as .xlsx even though they are legacy .xls.
@@ -469,10 +464,16 @@ export const parseXlsxFile = async <T>(file: File): Promise<T[]> => {
       message.includes('string record expects formula') ||
       message.includes('unrecognized cp')
     ) {
-      return parseWithXlsxFallback<T>(file);
+      const data = new Uint8Array(await file.arrayBuffer());
+      const legacyRows = parseLegacyBiffBuffer<T>(data);
+
+      if (legacyRows.length > 0) {
+        return legacyRows;
+      }
     }
 
-    throw error;
+    const rows = await readSheet(file);
+    return rowsToObjects<T>(rows);
   }
 };
 
