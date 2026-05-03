@@ -81,6 +81,7 @@ export function MonthlySummaryMetricsPanel({
 }: MonthlySummaryMetricsPanelProps) {
   return (
     <div
+      className="report-print-avoid-break"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',

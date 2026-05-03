@@ -81,6 +81,7 @@ describe('appStoreCloudSync', () => {
     const snapshotA = buildSnapshot()
     const snapshotB: CloudSnapshot = {
       representatives: [...snapshotA.representatives].reverse(),
+      commercialGoals: [...snapshotA.commercialGoals].reverse(),
       weeklyPlans: [...snapshotA.weeklyPlans].reverse(),
       incidents: [...snapshotA.incidents].reverse(),
       swaps: [...snapshotA.swaps].reverse(),
@@ -88,6 +89,38 @@ describe('appStoreCloudSync', () => {
     }
 
     expect(computeCloudSnapshotSignature(snapshotA)).toBe(
+      computeCloudSnapshotSignature(snapshotB)
+    )
+  })
+
+  it('changes the snapshot signature when representative commercial fields change', () => {
+    const snapshotA = buildSnapshot()
+    const snapshotB: CloudSnapshot = {
+      ...snapshotA,
+      representatives: snapshotA.representatives.map((representative, index) => ({
+        ...representative,
+        employmentType: index === 0 ? 'PART_TIME' : 'FULL_TIME',
+        commercialEligible: index === 0,
+      })),
+    }
+
+    expect(computeCloudSnapshotSignature(snapshotA)).not.toBe(
+      computeCloudSnapshotSignature(snapshotB)
+    )
+  })
+
+  it('changes the snapshot signature when commercial goals change', () => {
+    const snapshotA = buildSnapshot()
+    const snapshotB: CloudSnapshot = {
+      ...snapshotA,
+      commercialGoals: snapshotA.commercialGoals.map(goal =>
+        goal.id === 'DAY:FULL_TIME'
+          ? { ...goal, monthlyTarget: goal.monthlyTarget + 50 }
+          : goal
+      ),
+    }
+
+    expect(computeCloudSnapshotSignature(snapshotA)).not.toBe(
       computeCloudSnapshotSignature(snapshotB)
     )
   })
@@ -139,6 +172,20 @@ function buildSnapshot(): CloudSnapshot {
         role: 'SALES',
         isActive: true,
         orderIndex: 0,
+      },
+    ],
+    commercialGoals: [
+      {
+        id: 'DAY:PART_TIME',
+        shift: 'DAY',
+        segment: 'PART_TIME',
+        monthlyTarget: 300,
+      },
+      {
+        id: 'DAY:FULL_TIME',
+        shift: 'DAY',
+        segment: 'FULL_TIME',
+        monthlyTarget: 600,
       },
     ],
     weeklyPlans: [

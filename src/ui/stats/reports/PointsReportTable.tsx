@@ -147,6 +147,7 @@ export function PointsReportTable({
             </span>
           </div>
           <button
+            className="report-screen-only"
             onClick={() => onCopy(generatePointsMatrix(data), title)}
             style={{
               display: 'flex',

@@ -1,4 +1,5 @@
 import type {
+  CommercialGoal,
   CoverageRule,
   Incident,
   Representative,
@@ -21,8 +22,26 @@ export function serializeRepresentatives(
     base_schedule: representative.baseSchedule,
     mix_profile: representative.mixProfile ?? null,
     role: representative.role,
+    employment_type: representative.employmentType ?? 'FULL_TIME',
+    commercial_eligible: representative.commercialEligible === true,
     is_active: representative.isActive,
     order_index: representative.orderIndex,
+    updated_at: updatedAt,
+  }))
+}
+
+export function serializeCommercialGoals(
+  commercialGoals: CommercialGoal[],
+  userId: string
+): SyncRow[] {
+  const updatedAt = new Date().toISOString()
+
+  return commercialGoals.map(goal => ({
+    id: goal.id,
+    user_id: userId,
+    shift: goal.shift,
+    segment: goal.segment,
+    monthly_target: goal.monthlyTarget,
     updated_at: updatedAt,
   }))
 }

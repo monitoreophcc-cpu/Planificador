@@ -1,6 +1,6 @@
 'use client';
 
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.st
 import { exportToCsv, exportToXlsx } from '@/ui/reports/analysis-beta/services/export.service';
 import { useToast } from '@/ui/reports/analysis-beta/hooks/use-toast';
 import { CallCenterReport } from '@/ui/reports/analysis-beta/reports/CallCenterReport';
+import { downloadPdfDocument } from '@/ui/lib/downloadPdfDocument';
 
 export default function ExportModal() {
   const allAns = useDashboardStore((state) => state.answeredCalls);
@@ -24,6 +25,7 @@ export default function ExportModal() {
   const kpis = useDashboardStore((state) => state.kpis);
   const kpisByShift = useDashboardStore((state) => state.kpisByShift);
   const { toast } = useToast();
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const hasData = dataDate !== null;
 
@@ -78,6 +80,34 @@ export default function ExportModal() {
     }
   };
 
+  const handleExportPdf = async () => {
+    if (!hasData || isExportingPdf) return;
+
+    setIsExportingPdf(true);
+
+    try {
+      await downloadPdfDocument({
+        document: (
+          <CallCenterReport kpis={kpis} kpisByShift={kpisByShift} date={dataDate} />
+        ),
+        fileName: `Call_Center_${dataDate || 'General'}.pdf`,
+      });
+      toast({
+        title: 'Exportación Exitosa',
+        description: 'El PDF ha sido descargado.',
+      });
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error de Exportación',
+        description: 'No se pudo generar el PDF.',
+      });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -102,21 +132,24 @@ export default function ExportModal() {
           <DialogTitle className="text-xl font-bold text-slate-900">Opciones de Exportación</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <PDFDownloadLink
-            document={<CallCenterReport kpis={kpis} kpisByShift={kpisByShift} date={dataDate} />}
-            fileName={`Reporte_MonitoreoCC_${dataDate || 'General'}.pdf`}
+          <Button
+            variant="outline"
+            className="flex h-14 w-full items-center justify-start border-slate-200 text-lg font-semibold transition-all hover:bg-slate-50 hover:text-slate-900"
+            disabled={isExportingPdf}
+            onClick={handleExportPdf}
           >
-            {({ loading }) => (
-              <Button
-                variant="outline"
-                className="flex h-14 w-full items-center justify-start border-slate-200 text-lg font-semibold transition-all hover:bg-slate-50 hover:text-slate-900"
-                disabled={loading}
-              >
-                <Printer className="mr-4 h-6 w-6 text-slate-500" />
-                {loading ? 'Generando PDF...' : 'PDF (.pdf)'}
-              </Button>
-            )}
-          </PDFDownloadLink>
+            <FileText className="mr-4 h-6 w-6 text-slate-500" />
+            {isExportingPdf ? 'Generando PDF...' : 'PDF (.pdf)'}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex h-14 w-full items-center justify-start border-slate-200 text-lg font-semibold transition-all hover:bg-slate-50 hover:text-slate-900"
+            disabled={!hasData}
+            onClick={() => window.print()}
+          >
+            <Printer className="mr-4 h-6 w-6 text-slate-500" />
+            Imprimir
+          </Button>
           <Button
             variant="outline"
             className="flex items-center justify-start h-14 text-lg font-semibold border-slate-200 hover:bg-slate-50 hover:text-green-600 transition-all"

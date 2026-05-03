@@ -41,11 +41,12 @@ export default function ShiftCard({
   kpis,
   showReadings = false,
 }: ShiftCardProps) {
+  void showReadings;
   const formatPercent = (value: number) => `${value.toFixed(1)}%`;
   const isDay = name === 'Día';
   const isAlertSL = kpis.recibidas > 0 && kpis.atencion < 92;
   const isAlertAbandono = kpis.recibidas > 0 && kpis.abandonoPct >= 8;
-  
+
   const getAtencionColor = (p: number) => {
     if (p >= 96) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
     if (p >= 92) return 'border-amber-200 bg-amber-50 text-amber-700';
@@ -96,25 +97,6 @@ export default function ShiftCard({
         </div>
       </div>
       <div className={cn('p-6', accentTone)}>
-        {showReadings ? (
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-            <span className="rounded-full bg-white px-2.5 py-1 shadow-sm">
-              {kpis.recibidas.toLocaleString('en-US')} recibidas
-            </span>
-            <span className="rounded-full bg-white px-2.5 py-1 shadow-sm">
-              {kpis.trans.toLocaleString('en-US')} transacciones
-            </span>
-            <span
-              className={cn(
-                'rounded-full px-2.5 py-1 shadow-sm',
-                isAlertAbandono ? 'bg-red-100 text-red-700' : 'bg-white'
-              )}
-            >
-              {formatPercent(kpis.abandonoPct)} abandono
-            </span>
-          </div>
-        ) : null}
-
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           <KPIItem title="Recibidas" value={kpis.recibidas.toLocaleString('en-US')} />
           <KPIItem title="Contestadas" value={kpis.contestadas.toLocaleString('en-US')} />
@@ -123,15 +105,15 @@ export default function ShiftCard({
           <KPIItem title="Abandonadas" value={kpis.abandonadas.toLocaleString('en-US')} />
           <KPIItem title="Duplicadas" value={kpis.duplicadas.toLocaleString('en-US')} />
           <KPIItem title="< 20s" value={kpis.lt20.toLocaleString('en-US')} />
-          <KPIItem 
-            title="% Atención" 
-            value={formatPercent(kpis.atencion)} 
-            isAlert={isAlertSL} 
+          <KPIItem
+            title="% Atención"
+            value={formatPercent(kpis.atencion)}
+            isAlert={isAlertSL}
             colorClass={!isAlertSL ? getAtencionColor(kpis.atencion) : ''}
           />
-          <KPIItem 
-            title="% Abandono" 
-            value={formatPercent(kpis.abandonoPct)} 
+          <KPIItem
+            title="% Abandono"
+            value={formatPercent(kpis.abandonoPct)}
             isAlert={isAlertAbandono}
             colorClass={!isAlertAbandono ? getAbandonoColor(kpis.abandonoPct) : ''}
           />

@@ -140,7 +140,9 @@ export default function DataManagementPanel() {
     (state) => state.setIsImportingBatch
   );
   const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
   const [activeBatch, setActiveBatch] = useState<FileType | null>(null);
+  const [completedLoaders, setCompletedLoaders] = useState<FileType[]>([]);
 
   const answeredInputRef = useRef<HTMLInputElement>(null);
   const abandonedInputRef = useRef<HTMLInputElement>(null);
@@ -204,6 +206,16 @@ export default function DataManagementPanel() {
       toast({
         title: parsedBatch.fileNames.length > 1 ? 'Archivos cargados' : 'Archivo cargado',
         description: `${parsedBatch.fileNames.length.toLocaleString('en-US')} archivo(s) procesado(s). Se actualizaron los datos para: ${summarizeLoadedDates(uniqueDates)}.`,
+      });
+
+      setCompletedLoaders((current) => {
+        const next = current.includes(fileType) ? current : [...current, fileType];
+
+        if (next.length === 3) {
+          setIsOpen(false);
+        }
+
+        return next;
       });
 
       if (parsedBatch.saturatedLegacyFiles.length > 0) {
@@ -322,7 +334,16 @@ export default function DataManagementPanel() {
   }
 
   return (
-    <Dialog>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+
+        if (open) {
+          setCompletedLoaders([]);
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           variant="outline"

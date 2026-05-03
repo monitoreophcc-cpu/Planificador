@@ -33,6 +33,7 @@ export function RepresentativeManagement() {
     representatives: allReps,
     specialSchedules,
     addRepresentative,
+    bulkAssignEmploymentType,
     updateRepresentative,
     deactivateRepresentative,
     reactivateRepresentative,
@@ -40,6 +41,7 @@ export function RepresentativeManagement() {
     representatives: s.representatives ?? [],
     specialSchedules: s.specialSchedules ?? [],
     addRepresentative: s.addRepresentative,
+    bulkAssignEmploymentType: s.bulkAssignEmploymentType,
     updateRepresentative: s.updateRepresentative,
     deactivateRepresentative: s.deactivateRepresentative,
     reactivateRepresentative: s.reactivateRepresentative,
@@ -58,6 +60,7 @@ export function RepresentativeManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<RepresentativeRoleFilter>('ALL')
   const [statusFilter, setStatusFilter] = useState<RepresentativeStatusFilter>('ALL')
+  const [selectedRepresentativeIds, setSelectedRepresentativeIds] = useState<string[]>([])
   const deferredSearchQuery = useDeferredValue(searchQuery)
 
   const activeReps = useMemo(() => allReps.filter(r => r.isActive !== false), [allReps])
@@ -100,6 +103,25 @@ export function RepresentativeManagement() {
       ? 'Limpia los filtros para reordenar el turno completo.'
       : undefined
   const filteredResultsCount = filteredActiveReps.length + filteredInactiveReps.length
+  const visibleActiveReps = useMemo(() => {
+    if (activeShift === 'DAY') {
+      return dayReps
+    }
+
+    if (activeShift === 'NIGHT') {
+      return nightReps
+    }
+
+    return filteredActiveReps
+  }, [activeShift, dayReps, filteredActiveReps, nightReps])
+  const visibleActiveRepIds = useMemo(
+    () => visibleActiveReps.map(rep => rep.id),
+    [visibleActiveReps]
+  )
+  const visibleUnassignedRepIds = useMemo(
+    () => visibleActiveReps.filter(rep => !rep.employmentType).map(rep => rep.id),
+    [visibleActiveReps]
+  )
   const activeModalRepId =
     modalState.kind === 'detail' || modalState.kind === 'edit' ? modalState.repId : null
   const modalRepresentative = useMemo(
@@ -127,6 +149,14 @@ export function RepresentativeManagement() {
       setIsFormDirty(false)
     }
   }, [modalRepresentative, modalState.kind])
+
+  useEffect(() => {
+    const activeIds = new Set(activeReps.map(rep => rep.id))
+
+    setSelectedRepresentativeIds(current =>
+      current.filter(id => activeIds.has(id))
+    )
+  }, [activeReps])
 
   const confirmModalDismiss = () => {
     if (!isFormDirty || modalState.kind === 'closed' || modalState.kind === 'detail') {
@@ -207,6 +237,51 @@ export function RepresentativeManagement() {
     setRoleFilter('ALL')
     setStatusFilter('ALL')
     setShowInactive(false)
+  }
+
+  const handleToggleRepresentativeSelection = (rep: Representative) => {
+    setSelectedRepresentativeIds(current =>
+      current.includes(rep.id)
+        ? current.filter(id => id !== rep.id)
+        : [...current, rep.id]
+    )
+  }
+
+  const handleSelectVisibleRepresentatives = () => {
+    setSelectedRepresentativeIds(current => [
+      ...new Set([...current, ...visibleActiveRepIds]),
+    ])
+  }
+
+  const handleSelectVisibleRepresentativesWithoutEmployment = () => {
+    setSelectedRepresentativeIds(current => [
+      ...new Set([...current, ...visibleUnassignedRepIds]),
+    ])
+  }
+
+  const handleClearRepresentativeSelection = () => {
+    setSelectedRepresentativeIds([])
+  }
+
+  const handleBulkEmploymentAssignment = (
+    employmentType: 'FULL_TIME' | 'PART_TIME'
+  ) => {
+    if (selectedRepresentativeIds.length === 0) {
+      return
+    }
+
+    const confirmed = confirm(
+      `Se asignará ${
+        employmentType === 'PART_TIME' ? 'Part Time' : 'Full Time'
+      } a ${selectedRepresentativeIds.length} representante(s) seleccionado(s).\n\n¿Deseas continuar?`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    bulkAssignEmploymentType(selectedRepresentativeIds, employmentType)
+    setSelectedRepresentativeIds([])
   }
 
   const handleSave = (data: RepresentativeDraft, id?: string) => {
@@ -501,6 +576,172 @@ export function RepresentativeManagement() {
           }}
         />
 
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap',
+            padding: '14px 16px',
+            borderRadius: '18px',
+            border: '1px solid rgba(124, 58, 237, 0.14)',
+            background:
+              'linear-gradient(135deg, rgba(250,245,255,0.96) 0%, rgba(255,255,255,0.98) 100%)',
+          }}
+        >
+          <div style={{ display: 'grid', gap: '6px' }}>
+            <div
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#7c3aed',
+              }}
+            >
+              Asignación masiva por selección
+            </div>
+            <div
+              style={{
+                fontSize: '13px',
+                lineHeight: 1.6,
+                color: 'var(--text-muted)',
+                maxWidth: '68ch',
+              }}
+            >
+              Marca representantes desde la lista y aplica la jornada al grupo
+              seleccionado. No hace falta escribir nombres.
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <span
+              style={{
+                padding: '8px 10px',
+                borderRadius: '999px',
+                background: 'rgba(255,255,255,0.96)',
+                border: '1px solid rgba(124, 58, 237, 0.14)',
+                color: '#5b21b6',
+                fontSize: '12px',
+                fontWeight: 700,
+              }}
+            >
+              {selectedRepresentativeIds.length} seleccionado(s)
+            </span>
+            <button
+              type="button"
+              onClick={handleSelectVisibleRepresentatives}
+              disabled={!canEditData || visibleActiveRepIds.length === 0}
+              style={{
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'white',
+                color: '#334155',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontWeight: 700,
+                cursor:
+                  !canEditData || visibleActiveRepIds.length === 0
+                    ? 'not-allowed'
+                    : 'pointer',
+                opacity: !canEditData || visibleActiveRepIds.length === 0 ? 0.65 : 1,
+              }}
+            >
+              Seleccionar visibles ({visibleActiveRepIds.length})
+            </button>
+            <button
+              type="button"
+              onClick={handleSelectVisibleRepresentativesWithoutEmployment}
+              disabled={!canEditData || visibleUnassignedRepIds.length === 0}
+              style={{
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'white',
+                color: '#92400e',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontWeight: 700,
+                cursor:
+                  !canEditData || visibleUnassignedRepIds.length === 0
+                    ? 'not-allowed'
+                    : 'pointer',
+                opacity: !canEditData || visibleUnassignedRepIds.length === 0 ? 0.65 : 1,
+              }}
+            >
+              Seleccionar sin jornada ({visibleUnassignedRepIds.length})
+            </button>
+            <button
+              type="button"
+              onClick={handleClearRepresentativeSelection}
+              disabled={selectedRepresentativeIds.length === 0}
+              style={{
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'white',
+                color: '#64748b',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontWeight: 700,
+                cursor:
+                  selectedRepresentativeIds.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: selectedRepresentativeIds.length === 0 ? 0.65 : 1,
+              }}
+            >
+              Limpiar selección
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkEmploymentAssignment('FULL_TIME')}
+              disabled={!canEditData || selectedRepresentativeIds.length === 0}
+              style={{
+                border: 'none',
+                background:
+                  !canEditData || selectedRepresentativeIds.length === 0
+                    ? '#cbd5e1'
+                    : '#111827',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontWeight: 700,
+                cursor:
+                  !canEditData || selectedRepresentativeIds.length === 0
+                    ? 'not-allowed'
+                    : 'pointer',
+              }}
+            >
+              Aplicar Full Time
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkEmploymentAssignment('PART_TIME')}
+              disabled={!canEditData || selectedRepresentativeIds.length === 0}
+              style={{
+                border: 'none',
+                background:
+                  !canEditData || selectedRepresentativeIds.length === 0
+                    ? '#cbd5e1'
+                    : '#7c3aed',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontWeight: 700,
+                cursor:
+                  !canEditData || selectedRepresentativeIds.length === 0
+                    ? 'not-allowed'
+                    : 'pointer',
+              }}
+            >
+              Aplicar Part Time
+            </button>
+          </div>
+        </div>
+
         {statusFilter === 'INACTIVE' ? (
           <InactiveRepresentativesPanel
             inactiveReps={filteredInactiveReps}
@@ -522,10 +763,12 @@ export function RepresentativeManagement() {
               activeShiftReorderDisabledReason={reorderDisabledReason}
               dayReps={dayReps}
               nightReps={nightReps}
+              selectedRepresentativeIds={selectedRepresentativeIds}
               selectedRepId={activeModalRepId}
               onActiveShiftChange={setActiveShift}
               onEdit={handleEditRepresentative}
               onSelect={handleSelectRepresentative}
+              onToggleSelection={handleToggleRepresentativeSelection}
             />
 
             {statusFilter !== 'ACTIVE' ? (

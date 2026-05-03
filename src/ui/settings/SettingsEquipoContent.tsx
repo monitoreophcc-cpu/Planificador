@@ -1,10 +1,11 @@
 'use client'
 
+import { CommercialGoalsManagement } from './CommercialGoalsManagement'
 import { DemandRulesManagement } from './DemandRulesManagement'
 import { RepresentativeManagement } from './RepresentativeManagement'
 import { settingsViewStyles } from './settingsViewStyles'
 
-export type EquipoSection = 'representatives' | 'demand'
+export type EquipoSection = 'representatives' | 'demand' | 'commercialGoals'
 
 type SettingsEquipoContentProps = {
   activeEquipoSection: EquipoSection
@@ -18,7 +19,9 @@ export function SettingsEquipoContent({
   const sectionCopy =
     activeEquipoSection === 'representatives'
       ? 'Organiza el equipo operativo desde una lista maestra clara y trabaja cada ficha en ventanas emergentes mucho más enfocadas.'
-      : 'Define la cobertura mínima con un workspace propio, contexto visible y una matriz que distingue lo explícito de lo heredado.'
+      : activeEquipoSection === 'commercialGoals'
+        ? 'Configura las metas comerciales mensuales por turno y segmento desde una sola matriz, lista para alimentar el comparativo comercial.'
+        : 'Define la cobertura mínima con un workspace propio, contexto visible y una matriz que distingue lo explícito de lo heredado.'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -80,6 +83,12 @@ export function SettingsEquipoContent({
             Gestión de Representantes
           </button>
           <button
+            style={settingsViewStyles.subTab(activeEquipoSection === 'commercialGoals')}
+            onClick={() => onEquipoSectionChange('commercialGoals')}
+          >
+            Metas Comerciales
+          </button>
+          <button
             style={settingsViewStyles.subTab(activeEquipoSection === 'demand')}
             onClick={() => onEquipoSectionChange('demand')}
           >
@@ -88,11 +97,9 @@ export function SettingsEquipoContent({
         </div>
       </section>
 
-      {activeEquipoSection === 'representatives' ? (
-        <RepresentativeManagement />
-      ) : (
-        <DemandRulesManagement />
-      )}
+      {activeEquipoSection === 'representatives' ? <RepresentativeManagement /> : null}
+      {activeEquipoSection === 'commercialGoals' ? <CommercialGoalsManagement /> : null}
+      {activeEquipoSection === 'demand' ? <DemandRulesManagement /> : null}
     </div>
   )
 }

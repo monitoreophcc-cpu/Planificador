@@ -8,9 +8,11 @@ interface ShiftSectionProps {
     shift: ShiftType
     title?: string
     representatives: Representative[]
+    selectedRepresentativeIds: string[]
     selectedRepId: string | null
     onSelect: (rep: Representative) => void
     onEdit: (rep: Representative) => void
+    onToggleSelection: (rep: Representative) => void
     advancedEditMode: boolean
     allowReorder?: boolean
     reorderDisabledReason?: string
@@ -20,9 +22,11 @@ export function ShiftSection({
     shift,
     title,
     representatives,
+    selectedRepresentativeIds,
     selectedRepId,
     onSelect,
     onEdit,
+    onToggleSelection,
     advancedEditMode,
     allowReorder = advancedEditMode,
     reorderDisabledReason,
@@ -121,9 +125,11 @@ export function ShiftSection({
                                     <SortableRepCard
                                         key={rep.id}
                                         rep={rep}
+                                        isChecked={selectedRepresentativeIds.includes(rep.id)}
                                         isSelected={selectedRepId === rep.id}
                                         onSelect={onSelect}
                                         onEdit={onEdit}
+                                        onToggleSelection={onToggleSelection}
                                         advancedEditMode={advancedEditMode}
                                         sortable={allowReorder}
                                     />
@@ -153,9 +159,11 @@ export function ShiftSection({
                             <SortableRepCard
                                 key={rep.id}
                                 rep={rep}
+                                isChecked={selectedRepresentativeIds.includes(rep.id)}
                                 isSelected={selectedRepId === rep.id}
                                 onSelect={onSelect}
                                 onEdit={onEdit}
+                                onToggleSelection={onToggleSelection}
                                 advancedEditMode={advancedEditMode}
                                 sortable={false}
                             />

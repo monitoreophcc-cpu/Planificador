@@ -23,12 +23,12 @@ import {
 import type { KPIs } from '@/ui/reports/analysis-beta/types/dashboard.types';
 
 const KPI_ICONS: Record<string, LucideIcon> = {
-  'Total Recibidas': PhoneIncoming,
-  'Total Contestadas': PhoneCall,
-  'Total Abandonadas': PhoneOff,
+  'Llamadas Recibidas': PhoneIncoming,
+  'Llamadas Contestadas': PhoneCall,
+  'Llamadas Abandonadas': PhoneOff,
   '% Atención': Target,
   '% Abandono': Percent,
-  'Transacciones CC': ShoppingCart,
+  'Transacciones': ShoppingCart,
   '% Conversión': CreditCard,
 };
 
@@ -77,12 +77,12 @@ function getDeltaTone(label: string, delta: number | null) {
 
   return improved
     ? {
-        label: 'Mejora vs. fecha previa',
+        label: 'Mejor que antes',
         className: 'bg-emerald-50 text-emerald-700',
         Icon: ArrowUpRight,
       }
     : {
-        label: 'Retroceso vs. fecha previa',
+        label: 'Por debajo de antes',
         className: 'bg-red-50 text-red-700',
         Icon: ArrowDownRight,
       };
@@ -132,11 +132,11 @@ export default function KPISummary({
         return (
           <article
             key={delta.label}
-            className="rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-2">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500 xl:text-[13px]">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1 space-y-2 pr-1">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500 xl:text-[12px]">
                   {delta.label}
                 </p>
                 <p
@@ -148,8 +148,8 @@ export default function KPISummary({
                   {formatValue(delta.currentValue, delta.format)}
                 </p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-                <Icon className="h-5 w-5" />
+              <div className="ml-auto mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                <Icon className="h-5 w-5" strokeWidth={2} />
               </div>
             </div>
 
@@ -167,8 +167,8 @@ export default function KPISummary({
 
                 <p className="text-xs font-medium text-slate-500">
                   {delta.previousValue == null
-                    ? 'No hay una fecha previa cargada para calcular delta.'
-                    : `Antes: ${formatValue(delta.previousValue, delta.format)} · Delta: ${formatValue(Math.abs(delta.delta ?? 0), delta.format)}`}
+                    ? 'No hay una fecha anterior cargada para comparar.'
+                    : `Antes: ${formatValue(delta.previousValue, delta.format)} · Dif: ${formatValue(Math.abs(delta.delta ?? 0), delta.format)}`}
                 </p>
               </div>
             ) : null}

@@ -1,7 +1,10 @@
 import { createInitialState } from '@/domain/state'
 import type { PlanningBaseState } from '@/domain/types'
 import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
+import { normalizeCommercialGoals } from '@/domain/commercialGoals/defaults'
+import { normalizeRepresentatives } from '@/domain/representatives/normalizeRepresentative'
 import { openDB, type IDBPDatabase } from 'idb'
+import { DOMAIN_VERSION } from '@/store/appStoreConstants'
 
 export const DB_NAME = 'control-puntos-db'
 export const STATE_OBJECT_STORE_NAME = 'baseState'
@@ -15,15 +18,21 @@ const isBrowserWithLocalStorage =
   typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
 function normalizeLoadedState(state: PlanningBaseState): PlanningBaseState {
+  const initialState = createInitialState()
+
   state.incidents ??= []
   state.historyEvents ??= []
   state.auditLog = normalizeAuditLog(state.auditLog)
   state.swaps ??= []
   state.specialSchedules ??= []
   state.coverageRules ??= []
-  state.representatives ??= []
+  state.representatives = normalizeRepresentatives(state.representatives)
+  state.commercialGoals = normalizeCommercialGoals(
+    state.commercialGoals ?? initialState.commercialGoals
+  )
   state.managers ??= []
   state.managementSchedules ??= {}
+  state.version = DOMAIN_VERSION
 
   return state
 }
@@ -123,13 +132,19 @@ export async function loadState(): Promise<PlanningBaseState | null> {
     )
     db.close()
 
-    if (!state || !state.version || state.version < DB_VERSION) {
+    if (!state) {
       const initialState = createInitialState()
       await saveState(initialState)
       return initialState
     }
 
-    return normalizeLoadedState(structuredClone(state))
+    const normalizedState = normalizeLoadedState(structuredClone(state))
+
+    if ((state.version ?? 0) < DOMAIN_VERSION) {
+      await saveState(normalizedState)
+    }
+
+    return normalizedState
   } catch (error) {
     console.error(
       'Failed to load state from IndexedDB, returning initial state:',

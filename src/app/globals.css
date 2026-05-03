@@ -106,3 +106,81 @@
     animation-duration: var(--app-motion-duration) !important;
   }
 }
+
+.report-print-only {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .app-shell-header,
+  .report-screen-only,
+  .radix-portal,
+  [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
+
+  .report-print-only {
+    display: block !important;
+  }
+
+  .app-root,
+  .app-main-shell,
+  .app-shell-view-frame,
+  .report-print-root {
+    background: #ffffff !important;
+  }
+
+  .report-print-root,
+  .report-print-root * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .report-print-root {
+    min-height: auto !important;
+  }
+
+  .report-print-root table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .report-print-root thead {
+    display: table-header-group !important;
+  }
+
+  .report-print-root tfoot {
+    display: table-footer-group !important;
+  }
+
+  .report-print-root tr,
+  .report-print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-print-allow-break {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  [data-state='inactive'][role='tabpanel'],
+  [hidden] {
+    display: none !important;
+  }
+}

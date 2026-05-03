@@ -31,7 +31,7 @@ export function PointsReportActions({
   }
 
   return (
-    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+    <div className="report-screen-only" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
       <button
         onClick={() => onOpenReorderModal('DAY')}
         style={actionButtonStyle}

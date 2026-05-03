@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { ReportExportActions } from '@/ui/components/ReportExportActions'
 import type { PersonMonthlySummary } from '@/domain/analytics/types'
 import { useMonthlySummary } from '@/domain/analytics/useMonthlySummary'
 import { useAppStore } from '@/store/useAppStore'
@@ -10,6 +11,7 @@ import { MonthlySummaryChart } from './MonthlySummaryChart'
 import { MonthlySummaryMetricsPanel } from './MonthlySummaryMetricsPanel'
 import { MonthlySummarySearch } from './MonthlySummarySearch'
 import { MonthlySummaryTable } from './MonthlySummaryTable'
+import { exportMonthlySummaryReport } from './exportMonthlySummaryReport'
 import {
   computeMonthlySummaryMetrics,
   filterMonthlySummaryBySearch,
@@ -21,6 +23,7 @@ interface MonthlySummaryViewProps {
 
 export function MonthlySummaryView({ currentDate }: MonthlySummaryViewProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
   const openDetailModal = useAppStore(state => state.openDetailModal)
   const { incidents, representatives, allCalendarDaysForRelevantMonths } =
     useAppStore(state => ({
@@ -67,6 +70,7 @@ export function MonthlySummaryView({ currentDate }: MonthlySummaryViewProps) {
 
   return (
     <div
+      className="report-print-root"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -117,35 +121,60 @@ export function MonthlySummaryView({ currentDate }: MonthlySummaryViewProps) {
             Lectura rápida de {monthLabel} con foco en volumen, picos y personas a revisar.
           </p>
         </div>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '9px 12px',
-            borderRadius: '14px',
-            border: '1px solid rgba(var(--accent-rgb), 0.16)',
-            background: 'rgba(var(--accent-rgb), 0.08)',
-            color: 'var(--accent-strong)',
-            fontSize: '13px',
-            fontWeight: 800,
-          }}
-        >
-          {summary.totals.totalIncidents} incidencias registradas
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '9px 12px',
+              borderRadius: '14px',
+              border: '1px solid rgba(var(--accent-rgb), 0.16)',
+              background: 'rgba(var(--accent-rgb), 0.08)',
+              color: 'var(--accent-strong)',
+              fontSize: '13px',
+              fontWeight: 800,
+            }}
+          >
+            {summary.totals.totalIncidents} incidencias registradas
+          </div>
+          <ReportExportActions
+            isExportingPdf={isExportingPdf}
+            onExportPdf={async () => {
+              setIsExportingPdf(true)
+
+              try {
+                await exportMonthlySummaryReport({
+                  monthLabel,
+                  metrics,
+                  data: filteredSummary?.byPerson ?? [],
+                })
+              } finally {
+                setIsExportingPdf(false)
+              }
+            }}
+            onPrint={() => window.print()}
+            pdfLabel="Descargar PDF"
+            printLabel="Imprimir"
+          />
         </div>
       </div>
 
       <MonthlySummaryMetricsPanel metrics={metrics} />
 
-      <MonthlySummaryChart summary={summary} />
+      <div className="report-screen-only">
+        <MonthlySummaryChart summary={summary} />
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <MonthlySummarySearch
-          searchTerm={searchTerm}
-          totalCount={summary.byPerson.length}
-          filteredCount={filteredSummary?.byPerson.length ?? 0}
-          onSearchTermChange={setSearchTerm}
-        />
+        <div className="report-screen-only">
+          <MonthlySummarySearch
+            searchTerm={searchTerm}
+            totalCount={summary.byPerson.length}
+            filteredCount={filteredSummary?.byPerson.length ?? 0}
+            onSearchTermChange={setSearchTerm}
+          />
+        </div>
         <MonthlySummaryTable
           data={filteredSummary?.byPerson ?? []}
           onSelectRow={handleSelectPerson}

@@ -1,5 +1,3 @@
-import Image from 'next/image';
-
 interface CallCenterBrandProps {
   className?: string;
 }
@@ -9,17 +7,8 @@ export default function CallCenterBrand({ className }: CallCenterBrandProps) {
 
   return (
     <div className={rootClassName}>
-      <Image
-        src="/pizza-hut-symbol-official.png"
-        alt="Logo de Call Center"
-        width={88}
-        height={88}
-        priority
-        className="h-[68px] w-[68px] shrink-0 object-contain md:h-[82px] md:w-[82px]"
-      />
-
       <div className="flex flex-col">
-        <span className="text-[1.62rem] font-black uppercase leading-[0.9] tracking-[-0.08em] text-[#1b243d] md:text-[2.35rem]">
+        <span className="text-[1.45rem] font-black leading-[0.95] tracking-[-0.06em] text-[#1b243d] md:text-[2.1rem]">
           Call Center
         </span>
       </div>

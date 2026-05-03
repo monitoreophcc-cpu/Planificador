@@ -21,6 +21,7 @@ export type QueueDescriptorInput = {
 
 const syncTableLabels: Record<SyncTable, string> = {
   representatives: 'Representantes',
+  commercial_goals: 'Metas comerciales',
   weekly_plans: 'Planes semanales',
   incidents: 'Incidencias',
   swaps: 'Cambios de turno',

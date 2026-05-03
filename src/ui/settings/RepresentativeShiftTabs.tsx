@@ -13,10 +13,12 @@ interface RepresentativeShiftTabsProps {
   activeShiftReorderDisabledReason?: string
   dayReps: Representative[]
   nightReps: Representative[]
+  selectedRepresentativeIds: string[]
   selectedRepId: string | null
   onActiveShiftChange: (shift: ShiftType | 'ALL') => void
   onEdit: (rep: Representative) => void
   onSelect: (rep: Representative) => void
+  onToggleSelection: (rep: Representative) => void
 }
 
 export function RepresentativeShiftTabs({
@@ -27,10 +29,12 @@ export function RepresentativeShiftTabs({
   activeShiftReorderDisabledReason,
   dayReps,
   nightReps,
+  selectedRepresentativeIds,
   selectedRepId,
   onActiveShiftChange,
   onEdit,
   onSelect,
+  onToggleSelection,
 }: RepresentativeShiftTabsProps) {
   return (
     <div>
@@ -119,9 +123,11 @@ export function RepresentativeShiftTabs({
               shift="DAY"
               title={`Turno Día`}
               representatives={dayReps}
+              selectedRepresentativeIds={selectedRepresentativeIds}
               selectedRepId={selectedRepId}
               onSelect={onSelect}
               onEdit={onEdit}
+              onToggleSelection={onToggleSelection}
               advancedEditMode={advancedEditMode}
               allowReorder={false}
             />
@@ -129,9 +135,11 @@ export function RepresentativeShiftTabs({
               shift="NIGHT"
               title={`Turno Noche`}
               representatives={nightReps}
+              selectedRepresentativeIds={selectedRepresentativeIds}
               selectedRepId={selectedRepId}
               onSelect={onSelect}
               onEdit={onEdit}
+              onToggleSelection={onToggleSelection}
               advancedEditMode={advancedEditMode}
               allowReorder={false}
             />
@@ -141,9 +149,11 @@ export function RepresentativeShiftTabs({
         <ShiftSection
           shift={activeShift}
           representatives={activeShift === 'DAY' ? dayReps : nightReps}
+          selectedRepresentativeIds={selectedRepresentativeIds}
           selectedRepId={selectedRepId}
           onSelect={onSelect}
           onEdit={onEdit}
+          onToggleSelection={onToggleSelection}
           advancedEditMode={advancedEditMode}
           allowReorder={allowActiveShiftReorder}
           reorderDisabledReason={activeShiftReorderDisabledReason}

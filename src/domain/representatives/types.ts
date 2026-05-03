@@ -1,5 +1,6 @@
 import { DailyStatus } from '../incidents/types'
 import { ShiftType } from '../calendar/types'
+import type { EmploymentType } from '../commercialGoals/types'
 
 export type RepresentativeId = string
 
@@ -30,6 +31,8 @@ export interface Representative {
   baseShift: ShiftType
   role: RepresentativeRole
   mixProfile?: MixProfile
+  employmentType?: EmploymentType
+  commercialEligible?: boolean
   isActive: boolean
   orderIndex: number  // Orden canónico dentro del turno (alimenta UI y reportes)
 }

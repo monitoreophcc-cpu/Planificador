@@ -2,6 +2,8 @@ import { createInitialState } from '@/domain/state'
 import type { PlanningBaseState, SpecialSchedule } from '@/domain/types'
 import type { BackupPayload } from '@/application/backup/types'
 import { normalizeAuditLog } from '@/domain/audit/normalizeAuditEvent'
+import { normalizeCommercialGoals } from '@/domain/commercialGoals/defaults'
+import { normalizeRepresentatives } from '@/domain/representatives/normalizeRepresentative'
 import { useAppUiStore } from './useAppUiStore'
 import { DOMAIN_VERSION } from './appStoreConstants'
 import { normalizeLegacySpecialSchedule } from './specialScheduleSlice'
@@ -45,8 +47,9 @@ function createImportedPlanningState(data: BackupPayload): PlanningBaseState {
   return {
     ...initialState,
     representatives: Array.isArray(data.representatives)
-      ? data.representatives
+      ? normalizeRepresentatives(data.representatives)
       : [],
+    commercialGoals: normalizeCommercialGoals(data.commercialGoals),
     incidents: Array.isArray(data.incidents) ? data.incidents : [],
     calendar: data.calendar ?? initialState.calendar,
     coverageRules: data.coverageRules ?? [],
@@ -93,6 +96,8 @@ export async function initializeAppState(
   } else {
     set(state => {
       Object.assign(state, stored)
+      state.representatives = normalizeRepresentatives(state.representatives)
+      state.commercialGoals = normalizeCommercialGoals(state.commercialGoals)
       assignMissingOrderIndexes(state)
       state.specialSchedules = normalizeSpecialSchedules(state.specialSchedules)
       state.isLoading = false
@@ -106,6 +111,7 @@ export async function initializeAppState(
 export function exportPlanningState(state: AppState): PlanningBaseState {
   const {
     representatives,
+    commercialGoals,
     incidents,
     calendar,
     coverageRules,
@@ -120,6 +126,7 @@ export function exportPlanningState(state: AppState): PlanningBaseState {
 
   return {
     representatives,
+    commercialGoals,
     incidents,
     calendar,
     coverageRules,

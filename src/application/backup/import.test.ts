@@ -28,6 +28,7 @@ describe('parseBackup', () => {
     const parsed = parseBackup(
       JSON.stringify({
         ...baseBackup,
+        version: 8,
         coverages: [
           {
             id: 'cov-1',
@@ -44,5 +45,23 @@ describe('parseBackup', () => {
 
     expect(parsed.coverages).toHaveLength(1)
     expect(parsed.coverages[0].id).toBe('cov-1')
+  })
+
+  it('accepts legacy backups from version 7 during migration', () => {
+    const parsed = parseBackup(JSON.stringify(baseBackup))
+
+    expect(parsed.version).toBe(7)
+    expect(parsed.coverages).toEqual([])
+  })
+
+  it('rejects unsupported backup versions', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({
+          ...baseBackup,
+          version: 6,
+        })
+      )
+    ).toThrow('Compatibles: 7, 8')
   })
 })

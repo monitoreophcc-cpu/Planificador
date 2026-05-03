@@ -5,6 +5,9 @@
  * A prueba de idiotas: no permite rangos arbitrarios ni ventanas móviles.
  */
 
+import type { ShiftType } from '../calendar/types'
+import type { CommercialGoalSegment } from '../commercialGoals/types'
+
 /**
  * Tipo de período institucional
  */
@@ -80,4 +83,80 @@ export interface OperationalReport {
     }[]
 
     reading: string
+}
+
+export type OperationalCompetitivePeriodKind = 'DAY' | 'WEEK' | 'MONTH'
+
+export type OperationalCompetitiveComparisonPreset =
+  | 'NONE'
+  | 'DAY_PREVIOUS'
+  | 'WEEK_PREVIOUS'
+  | 'MONTH_PREVIOUS'
+
+export interface OperationalCompetitiveResolvedPeriod {
+  kind: OperationalCompetitivePeriodKind
+  anchorDate: string
+  label: string
+  from: string
+  to: string
+  loadedDays: number
+  expectedDays: number
+  loadedDates: string[]
+  isComplete: boolean
+}
+
+export interface OperationalCompetitiveRepresentativeRow {
+  representativeId: string
+  name: string
+  shift: ShiftType
+  segment: CommercialGoalSegment
+  target: number
+  validTransactions: number
+  cancelledTransactions: number
+  incidents: number
+  errors: number
+  absences: number
+  tardiness: number
+  progressPct: number
+  comparisonDelta: number | null
+  hasUnlinkedDataWarning: boolean
+}
+
+export interface OperationalCompetitiveSegmentSummary {
+  segment: CommercialGoalSegment
+  label: string
+  representatives: number
+  target: number
+  validTransactions: number
+  cancelledTransactions: number
+  incidents: number
+  errors: number
+  absences: number
+  tardiness: number
+  progressPct: number
+  comparisonDelta: number | null
+}
+
+export interface OperationalCompetitiveSegmentTable {
+  segment: CommercialGoalSegment
+  label: string
+  summary: OperationalCompetitiveSegmentSummary
+  rows: OperationalCompetitiveRepresentativeRow[]
+}
+
+export interface OperationalCompetitiveShiftTable {
+  shift: ShiftType
+  label: string
+  segments: OperationalCompetitiveSegmentTable[]
+  pendingAgentNames: string[]
+  missingAgentRegistrations: number
+}
+
+export interface OperationalCompetitiveReport {
+  currentPeriod: OperationalCompetitiveResolvedPeriod
+  comparisonPreset: OperationalCompetitiveComparisonPreset
+  comparisonPeriod: OperationalCompetitiveResolvedPeriod | null
+  tables: Record<ShiftType, OperationalCompetitiveShiftTable>
+  pendingAgentNames: string[]
+  dataQualityWarnings: string[]
 }

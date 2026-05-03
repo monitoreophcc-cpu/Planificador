@@ -3,8 +3,8 @@
 import type { CSSProperties } from 'react'
 
 interface OperationalReportModeToggleProps {
-  mode: 'INSTITUTIONAL' | 'ANALYSIS'
-  onChange: (mode: 'INSTITUTIONAL' | 'ANALYSIS') => void
+  mode: 'SUMMARY' | 'ANALYSIS'
+  onChange: (mode: 'SUMMARY' | 'ANALYSIS') => void
 }
 
 export function OperationalReportModeToggle({
@@ -12,7 +12,7 @@ export function OperationalReportModeToggle({
   onChange,
 }: OperationalReportModeToggleProps) {
   const buttonStyle = (
-    currentMode: 'INSTITUTIONAL' | 'ANALYSIS'
+    currentMode: 'SUMMARY' | 'ANALYSIS'
   ): CSSProperties => ({
     padding: '9px 14px',
     border: `1px solid ${mode === currentMode ? 'rgba(var(--accent-rgb), 0.18)' : 'transparent'}`,
@@ -42,10 +42,10 @@ export function OperationalReportModeToggle({
       }}
     >
       <button
-        onClick={() => onChange('INSTITUTIONAL')}
-        style={buttonStyle('INSTITUTIONAL')}
+        onClick={() => onChange('SUMMARY')}
+        style={buttonStyle('SUMMARY')}
       >
-        ● Reporte Operativo
+        ● Resumen operativo
       </button>
       <button
         onClick={() => onChange('ANALYSIS')}

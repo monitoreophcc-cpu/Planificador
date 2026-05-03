@@ -19,7 +19,6 @@ import {
 
 type MonthlyOperationalReportProps = {
   showGlobalReadings?: boolean;
-  showShiftReadings?: boolean;
 };
 
 function formatDisplayDate(date: string) {
@@ -29,7 +28,6 @@ function formatDisplayDate(date: string) {
 
 export default function MonthlyOperationalReport({
   showGlobalReadings = false,
-  showShiftReadings = false,
 }: MonthlyOperationalReportProps) {
   const dataDate = useDashboardStore((state) => state.dataDate);
   const monthlyHistory = useDashboardStore((state) => state.monthlyHistory);
@@ -142,10 +140,7 @@ export default function MonthlyOperationalReport({
             <h3 className="text-sm font-black uppercase tracking-[0.16em] text-slate-500">
               Rendimiento por turno del mes
             </h3>
-            <ShiftGrid
-              kpisByShift={monthlyReport.shiftKpis}
-              showReadings={showShiftReadings}
-            />
+            <ShiftGrid kpisByShift={monthlyReport.shiftKpis} />
           </div>
 
           <div className="space-y-4">

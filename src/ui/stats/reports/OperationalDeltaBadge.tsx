@@ -19,6 +19,9 @@ export function OperationalDeltaBadge({
       ? 'var(--text-success)'
       : 'var(--text-danger)'
   const Icon = isNeutral ? TrendingUp : isPositiveOutcome ? TrendingDown : TrendingUp
+  const label = isNeutral
+    ? 'Igual'
+    : `${isPositiveOutcome ? 'Mejoro' : 'Subio'} ${Math.abs(value)}`
 
   return (
     <div
@@ -45,10 +48,7 @@ export function OperationalDeltaBadge({
       }}
     >
       <Icon size={16} />
-      <span style={{ fontWeight: 700 }}>
-        {value > 0 ? '+' : ''}
-        {value}
-      </span>
+      <span style={{ fontWeight: 700 }}>{label}</span>
     </div>
   )
 }

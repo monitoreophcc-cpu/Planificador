@@ -1,4 +1,9 @@
 import type { Representative, BaseSchedule, RepresentativeRole, RepresentativeId } from './representatives/types'
+import type {
+  CommercialGoal,
+  CommercialGoalSegment,
+  EmploymentType,
+} from './commercialGoals/types'
 // This Incident type is now the "raw" data type, without calculated points.
 // Points are calculated on-the-fly by the analytics layer, not stored here.
 import type {
@@ -31,6 +36,11 @@ export type {
   BaseSchedule,
   RepresentativeRole,
 } from './representatives/types'
+export type {
+  CommercialGoal,
+  CommercialGoalSegment,
+  EmploymentType,
+} from './commercialGoals/types'
 export type { ShiftType }
 export type {
   DailyStatus,
@@ -116,6 +126,7 @@ export interface SpecialSchedule {
  */
 export type PlanningBaseState = {
   representatives: Representative[]
+  commercialGoals: CommercialGoal[]
   incidents: Incident[]
   calendar: CalendarState
   coverageRules: CoverageRule[]

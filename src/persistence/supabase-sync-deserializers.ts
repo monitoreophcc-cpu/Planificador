@@ -1,13 +1,17 @@
 import type {
+  CommercialGoal,
   CoverageRule,
   Incident,
   Representative,
   WeeklyPlan,
 } from '@/domain/types'
 import type { CloudSnapshot } from './supabase-sync-types'
+import { normalizeCommercialGoals } from '@/domain/commercialGoals/defaults'
+import { normalizeRepresentativeRecord } from '@/domain/representatives/normalizeRepresentative'
 
 type SyncSnapshotRows = {
   representativesRows: Array<Record<string, unknown>>
+  commercialGoalsRows: Array<Record<string, unknown>>
   weeklyPlansRows: Array<Record<string, unknown>>
   incidentsRows: Array<Record<string, unknown>>
   swapsRows: Array<Record<string, unknown>>
@@ -32,22 +36,39 @@ function normalizeRepresentativeRole(value: unknown): Representative['role'] {
 
 export function deserializeCloudSnapshot({
   representativesRows,
+  commercialGoalsRows,
   weeklyPlansRows,
   incidentsRows,
   swapsRows,
   coverageRulesRows,
 }: SyncSnapshotRows): CloudSnapshot {
   return {
-    representatives: representativesRows.map((row, index) => ({
-      id: String(row.id),
-      name: String(row.name),
-      baseShift: normalizeShift(row.base_shift),
-      baseSchedule: (row.base_schedule ?? {}) as Representative['baseSchedule'],
-      mixProfile: (row.mix_profile ?? undefined) as Representative['mixProfile'],
-      role: normalizeRepresentativeRole(row.role),
-      isActive: typeof row.is_active === 'boolean' ? row.is_active : true,
-      orderIndex: typeof row.order_index === 'number' ? row.order_index : index,
-    })),
+    representatives: representativesRows.map((row, index) =>
+      normalizeRepresentativeRecord({
+        id: String(row.id),
+        name: String(row.name),
+        baseShift: normalizeShift(row.base_shift),
+        baseSchedule: (row.base_schedule ?? {}) as Representative['baseSchedule'],
+        mixProfile: (row.mix_profile ?? undefined) as Representative['mixProfile'],
+        role: normalizeRepresentativeRole(row.role),
+        employmentType: row.employment_type === 'PART_TIME' ? 'PART_TIME' : 'FULL_TIME',
+        commercialEligible: row.commercial_eligible === true,
+        isActive: typeof row.is_active === 'boolean' ? row.is_active : true,
+        orderIndex: typeof row.order_index === 'number' ? row.order_index : index,
+      })
+    ),
+    commercialGoals: normalizeCommercialGoals(
+      commercialGoalsRows.map(row => ({
+        id: String(row.id),
+        shift: normalizeShift(row.shift),
+        segment:
+          row.segment === 'PART_TIME' || row.segment === 'MIXTO'
+            ? row.segment
+            : 'FULL_TIME',
+        monthlyTarget:
+          typeof row.monthly_target === 'number' ? row.monthly_target : 0,
+      })) as CommercialGoal[]
+    ),
     weeklyPlans: weeklyPlansRows.map(row => ({
       weekStart: String(row.week_start),
       agents: (row.agents ?? []) as WeeklyPlan['agents'],

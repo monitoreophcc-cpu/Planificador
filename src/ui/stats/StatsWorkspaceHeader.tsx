@@ -1,43 +1,66 @@
 'use client'
 
+import type { ComponentType } from 'react'
 import { useMemo, useRef } from 'react'
 import { addMonths, format, subMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 
-export type StatsWorkspaceMode = 'SUMMARY' | 'ANALYSIS'
+export type StatsWorkspaceReportId =
+  | 'monthly'
+  | 'points'
+  | 'operational'
+  | 'callcenter'
 
-interface StatsWorkspaceHeaderProps {
-  mode: StatsWorkspaceMode
-  currentDate: Date
-  onDateChange: (nextDate: Date) => void
-  onModeChange: (mode: StatsWorkspaceMode) => void
+export type StatsWorkspaceReportItem = {
+  id: StatsWorkspaceReportId
+  label: string
+  description: string
+  icon: ComponentType<{ size?: number }>
 }
 
-function segmentedButtonStyle(isActive: boolean) {
+interface StatsWorkspaceHeaderProps {
+  activeReport: StatsWorkspaceReportId
+  reports: StatsWorkspaceReportItem[]
+  currentDate: Date
+  showMonthControls: boolean
+  onDateChange: (nextDate: Date) => void
+  onReportChange: (report: StatsWorkspaceReportId) => void
+}
+
+function reportButtonStyle(isActive: boolean) {
   return {
-    padding: '8px 14px',
-    borderRadius: '12px',
-    border: '1px solid transparent',
-    background: isActive
-      ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.72) 100%)'
-      : 'transparent',
+    padding: '10px 14px',
+    cursor: 'pointer',
+    border: `1px solid ${
+      isActive ? 'rgba(var(--accent-rgb), 0.18)' : 'rgba(202, 189, 168, 0.3)'
+    }`,
     color: isActive ? 'var(--accent-strong)' : 'var(--text-muted)',
     fontWeight: isActive ? 700 : 600,
+    background: isActive
+      ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
+      : 'rgba(255,255,255,0.52)',
     fontSize: '13px',
-    cursor: 'pointer',
-    boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
-    whiteSpace: 'nowrap',
+    borderRadius: '14px',
+    boxShadow: isActive ? '0 10px 20px rgba(var(--accent-rgb), 0.1)' : 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    minWidth: '180px',
+    textAlign: 'left',
   } as const
 }
 
 export function StatsWorkspaceHeader({
-  mode,
+  activeReport,
+  reports,
   currentDate,
+  showMonthControls,
   onDateChange,
-  onModeChange,
+  onReportChange,
 }: StatsWorkspaceHeaderProps) {
   const monthInputRef = useRef<HTMLInputElement | null>(null)
+  const activeReportMeta = reports.find(report => report.id === activeReport) ?? reports[0]
 
   const monthControlLabel = useMemo(
     () => format(currentDate, 'MMMM yyyy', { locale: es }),
@@ -59,10 +82,11 @@ export function StatsWorkspaceHeader({
 
   return (
     <section
+      className="report-screen-only"
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '14px',
+        gap: '18px',
         padding: '18px 20px',
         borderRadius: '24px',
         border: '1px solid var(--shell-border)',
@@ -103,51 +127,92 @@ export function StatsWorkspaceHeader({
               fontWeight: 800,
             }}
           >
-            Reportes y tendencias
+            Reportes unificados
           </h1>
           <p
             style={{
               margin: '6px 0 0',
-              maxWidth: '540px',
+              maxWidth: '620px',
               color: 'var(--text-muted)',
               fontSize: '13px',
-              lineHeight: 1.45,
+              lineHeight: 1.5,
             }}
           >
-            El período manda la lectura mensual; el resto del contenido solo ayuda a entender qué pasó y dónde mirar primero.
+            Todos los reportes viven en la misma cinta para reducir clics. Elige la
+            vista principal aquí y entra directo al contexto correcto.
           </p>
         </div>
 
         <div
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '4px',
-            borderRadius: '14px',
+            padding: '10px 12px',
+            borderRadius: '16px',
             border: '1px solid var(--shell-border)',
-            background: 'var(--surface-tint)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+            background: 'rgba(255,255,255,0.72)',
+            maxWidth: '320px',
           }}
         >
-          <button
-            type="button"
-            style={segmentedButtonStyle(mode === 'SUMMARY')}
-            onClick={() => onModeChange('SUMMARY')}
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent)',
+              marginBottom: '6px',
+            }}
           >
-            Resumen
-          </button>
-          <button
-            type="button"
-            style={segmentedButtonStyle(mode === 'ANALYSIS')}
-            onClick={() => onModeChange('ANALYSIS')}
-          >
-            Análisis
-          </button>
+            Vista activa
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>
+            {activeReportMeta?.label}
+          </div>
+          <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
+            {activeReportMeta?.description}
+          </div>
         </div>
       </div>
 
-      {mode === 'SUMMARY' ? (
+      <div
+        style={{
+          display: 'flex',
+          gap: '8px',
+          flexWrap: 'wrap',
+        }}
+      >
+        {reports.map(report => {
+          const Icon = report.icon
+
+          return (
+            <button
+              key={report.id}
+              type="button"
+              style={reportButtonStyle(activeReport === report.id)}
+              aria-pressed={activeReport === report.id}
+              onClick={() => onReportChange(report.id)}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <Icon size={14} />
+                <span>{report.label}</span>
+              </span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color:
+                    activeReport === report.id
+                      ? 'var(--text-main)'
+                      : 'var(--text-muted)',
+                }}
+              >
+                {report.description}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {showMonthControls ? (
         <div
           style={{
             display: 'flex',
@@ -288,10 +353,12 @@ export function StatsWorkspaceHeader({
               fontWeight: 700,
             }}
           >
-            Análisis enfocado en comparativos y datos cargados
+            {activeReport === 'operational'
+              ? 'Resumen operativo alineado con el historial cargado de Call Center'
+              : 'Call Center mantiene sus subpestañas internas dentro de esta misma entrada'}
           </div>
           <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-            Sin controles temporales duplicados dentro del contenido.
+            Sin controles temporales duplicados en la cinta principal.
           </div>
         </div>
       )}

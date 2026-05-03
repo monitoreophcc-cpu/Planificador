@@ -1,6 +1,7 @@
 import { createBaseSchedule } from '@/domain/state'
 import type {
   BaseSchedule,
+  EmploymentType,
   Representative,
   RepresentativeRole,
   ShiftType,
@@ -8,7 +9,13 @@ import type {
 
 export type RepresentativeDraft = Pick<
   Representative,
-  'name' | 'baseShift' | 'role' | 'baseSchedule' | 'mixProfile'
+  | 'name'
+  | 'baseShift'
+  | 'role'
+  | 'baseSchedule'
+  | 'mixProfile'
+  | 'employmentType'
+  | 'commercialEligible'
 >
 
 const WEEKDAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'] as const
@@ -22,6 +29,8 @@ export function createRepresentativeDraft(
     role: rep?.role ?? 'SALES',
     baseSchedule: { ...(rep?.baseSchedule ?? createBaseSchedule([1])) },
     mixProfile: rep?.mixProfile ? { ...rep.mixProfile } : undefined,
+    employmentType: rep ? rep.employmentType : 'FULL_TIME',
+    commercialEligible: rep?.commercialEligible === true,
   }
 }
 
@@ -40,6 +49,18 @@ export function getRepresentativeRoleLabel(role: RepresentativeRole) {
     default:
       return 'Ventas'
   }
+}
+
+export function getRepresentativeEmploymentLabel(employmentType?: EmploymentType) {
+  if (!employmentType) {
+    return 'Sin jornada'
+  }
+
+  return employmentType === 'PART_TIME' ? 'Part Time' : 'Full Time'
+}
+
+export function getRepresentativeCommercialLabel(commercialEligible: boolean) {
+  return commercialEligible ? 'Ranking comercial activo' : 'Fuera del ranking comercial'
 }
 
 export function getRepresentativeMixLabel(rep?: Pick<Representative, 'mixProfile'> | null) {
@@ -82,6 +103,17 @@ export function getRepresentativeDraftChanges(
 
   if (initialDraft.mixProfile?.type !== currentDraft.mixProfile?.type) {
     changes.push('Patron mixto')
+  }
+
+  if (initialDraft.employmentType !== currentDraft.employmentType) {
+    changes.push('Jornada contractual')
+  }
+
+  if (
+    (initialDraft.commercialEligible ?? false) !==
+    (currentDraft.commercialEligible ?? false)
+  ) {
+    changes.push('Elegibilidad comercial')
   }
 
   const scheduleChanged = Array.from({ length: 7 }, (_, index) => index).some(

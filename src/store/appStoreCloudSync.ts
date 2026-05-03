@@ -1,6 +1,7 @@
 'use client'
 
 import type {
+  CommercialGoal,
   CoverageRule,
   Incident,
   Representative,
@@ -24,6 +25,7 @@ import { useSyncHealthStore } from './useSyncHealthStore'
 
 type CloudStateSlice = {
   representatives: Representative[]
+  commercialGoals: CommercialGoal[]
   incidents: Incident[]
   swaps: SwapEvent[]
   coverageRules: CoverageRule[]
@@ -93,6 +95,7 @@ async function readPendingSummaryForUser(userId?: string) {
 
 type CloudComparableData = {
   representatives: Representative[]
+  commercialGoals: CommercialGoal[]
   incidents: Incident[]
   swaps: SwapEvent[]
   coverageRules: CoverageRule[]
@@ -138,11 +141,30 @@ function normalizeComparableData(
   data: CloudComparableData
 ): CloudComparableData {
   return {
-    representatives: [...data.representatives].sort((left, right) => {
-      const orderDelta = (left.orderIndex ?? 0) - (right.orderIndex ?? 0)
+    representatives: [...data.representatives]
+      .map(representative => ({
+        id: representative.id,
+        name: representative.name,
+        baseShift: representative.baseShift,
+        baseSchedule: representative.baseSchedule,
+        mixProfile: representative.mixProfile,
+        role: representative.role,
+        employmentType: representative.employmentType ?? 'FULL_TIME',
+        commercialEligible: representative.commercialEligible === true,
+        isActive: representative.isActive,
+        orderIndex: representative.orderIndex,
+      }))
+      .sort((left, right) => {
+        const orderDelta = (left.orderIndex ?? 0) - (right.orderIndex ?? 0)
 
-      if (orderDelta !== 0) return orderDelta
-      return left.id.localeCompare(right.id)
+        if (orderDelta !== 0) return orderDelta
+        return left.id.localeCompare(right.id)
+      }),
+    commercialGoals: [...data.commercialGoals].sort((left, right) => {
+      const shiftDelta = left.shift.localeCompare(right.shift)
+
+      if (shiftDelta !== 0) return shiftDelta
+      return left.segment.localeCompare(right.segment)
     }),
     incidents: [...data.incidents].sort((left, right) => {
       const dateDelta = left.startDate.localeCompare(right.startDate)
@@ -178,6 +200,7 @@ function resetCloudSignatures() {
 export function computeCloudSignature(state: CloudStateSlice): string {
   return computeCloudDataSignature({
     representatives: state.representatives,
+    commercialGoals: state.commercialGoals,
     incidents: state.incidents,
     swaps: state.swaps,
     coverageRules: state.coverageRules,
@@ -192,6 +215,7 @@ export function computeCloudSnapshotSignature(snapshot: CloudSnapshot): string {
 function hasLocalCloudData(state: CloudStateSlice): boolean {
   return (
     state.representatives.length > 0 ||
+    state.commercialGoals.some(goal => goal.monthlyTarget > 0) ||
     state.incidents.length > 0 ||
     state.swaps.length > 0 ||
     state.coverageRules.length > 0 ||
@@ -202,6 +226,7 @@ function hasLocalCloudData(state: CloudStateSlice): boolean {
 export function hasCloudSnapshotData(snapshot: CloudSnapshot): boolean {
   return (
     snapshot.representatives.length > 0 ||
+    snapshot.commercialGoals.some(goal => goal.monthlyTarget > 0) ||
     snapshot.incidents.length > 0 ||
     snapshot.swaps.length > 0 ||
     snapshot.coverageRules.length > 0 ||

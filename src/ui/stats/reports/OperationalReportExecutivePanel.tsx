@@ -136,14 +136,14 @@ export function OperationalReportExecutivePanel({
         }}
       >
         <ExecutiveMetricCard
-          label="Incidencias del período"
+          label="Incidencias del periodo"
           value={report.current.metrics.incidents}
           delta={report.comparison.previous.delta.incidents}
           icon={AlertTriangle}
           tone="danger"
         />
         <ExecutiveMetricCard
-          label="Puntos del período"
+          label="Puntos acumulados"
           value={report.current.metrics.points}
           delta={report.comparison.previous.delta.points}
           icon={TrendingDown}
@@ -191,7 +191,7 @@ export function OperationalReportExecutivePanel({
               marginBottom: '10px',
             }}
           >
-            Resumen del período
+            Resumen del periodo
           </div>
           <div
             style={{
@@ -269,7 +269,7 @@ export function OperationalReportExecutivePanel({
               marginBottom: '10px',
             }}
           >
-            Turno más exigido
+            Turno con mas carga
           </div>
           <div
             style={{
@@ -322,8 +322,8 @@ export function OperationalReportExecutivePanel({
           </div>
           <p style={{ margin: '14px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
             {leadingShiftStats.points > 0 || leadingShiftStats.incidents > 0
-              ? `Es el turno que concentra más incidencias y puntos en este período.`
-              : 'No hay incidencias relevantes por turno en este período.'}
+              ? `Es el turno que concentra mas incidencias y puntos en este periodo.`
+              : 'No hay incidencias relevantes por turno en este periodo.'}
           </p>
         </div>
 
@@ -347,7 +347,7 @@ export function OperationalReportExecutivePanel({
               marginBottom: '10px',
             }}
           >
-            Incidencia más repetida
+            Falta mas repetida
           </div>
           <div style={{ fontSize: '19px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
             {leadingIncidentLabel}
@@ -370,7 +370,7 @@ export function OperationalReportExecutivePanel({
                     fontSize: '13px',
                   }}
                 >
-                  <span style={{ color: 'var(--text-muted)' }}>Eventos registrados</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Veces que aparecio</span>
                   <strong style={{ color: 'var(--text-main)' }}>{leadingIncident.count}</strong>
                 </div>
                 <div
@@ -381,7 +381,7 @@ export function OperationalReportExecutivePanel({
                     fontSize: '13px',
                   }}
                 >
-                  <span style={{ color: 'var(--text-muted)' }}>Puntos vinculados</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Puntos que genero</span>
                   <strong style={{ color: 'var(--text-main)' }}>{leadingIncident.points}</strong>
                 </div>
                 <div
@@ -411,7 +411,7 @@ export function OperationalReportExecutivePanel({
               </>
             ) : (
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                No hay incidencias en el período actual.
+                No hay incidencias en el periodo actual.
               </div>
             )}
           </div>

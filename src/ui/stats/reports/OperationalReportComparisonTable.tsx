@@ -13,7 +13,7 @@ const COMPARISON_ROWS = [
   { label: 'Licencias', key: 'licenses', inverse: true },
 ] as const
 
-function DeltaBadge({ value, inverse }: { value: number; inverse?: boolean }) {
+function ChangeBadge({ value, inverse }: { value: number; inverse?: boolean }) {
   const isNeutral = value === 0
   const isPositiveOutcome = inverse ? value < 0 : value > 0
   const color = isNeutral
@@ -22,6 +22,9 @@ function DeltaBadge({ value, inverse }: { value: number; inverse?: boolean }) {
       ? 'var(--text-success)'
       : 'var(--text-danger)'
   const Icon = isNeutral ? TrendingUp : isPositiveOutcome ? TrendingDown : TrendingUp
+  const label = isNeutral
+    ? 'Igual'
+    : `${isPositiveOutcome ? 'Mejoro' : 'Subio'} ${Math.abs(value)}`
 
   return (
     <div
@@ -48,10 +51,7 @@ function DeltaBadge({ value, inverse }: { value: number; inverse?: boolean }) {
       }}
     >
       <Icon size={16} />
-      <span style={{ fontWeight: 700 }}>
-        {value > 0 ? '+' : ''}
-        {value}
-      </span>
+      <span style={{ fontWeight: 700 }}>{label}</span>
     </div>
   )
 }
@@ -109,7 +109,7 @@ export function OperationalReportComparisonTable({
                 marginBottom: '8px',
               }}
             >
-              Evolución del período
+              Lectura comparada
             </div>
             <div
               style={{
@@ -119,10 +119,10 @@ export function OperationalReportComparisonTable({
                 letterSpacing: '-0.02em',
               }}
             >
-              Comparación operativa
+              Como va el periodo
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>
-              Contrasta el período actual con una referencia anterior para detectar variaciones rápido.
+              Compara este periodo con otro para ver rapido si subio, bajo o se mantuvo igual.
             </div>
           </div>
           <div
@@ -156,7 +156,7 @@ export function OperationalReportComparisonTable({
                 fontWeight: 700,
               }}
             >
-              vs Período Anterior
+              Periodo anterior
             </button>
             <button
               onClick={() => setCompareMode('YEAR_AGO')}
@@ -177,7 +177,7 @@ export function OperationalReportComparisonTable({
                 fontWeight: 700,
               }}
             >
-              vs Año Anterior
+              Mismo periodo del ano pasado
             </button>
           </div>
         </div>
@@ -216,7 +216,7 @@ export function OperationalReportComparisonTable({
                   background: 'rgba(244, 238, 228, 0.7)',
                 }}
               >
-                Actual
+                Este periodo
               </th>
               <th
                 style={{
@@ -230,7 +230,7 @@ export function OperationalReportComparisonTable({
                   background: 'rgba(244, 238, 228, 0.7)',
                 }}
               >
-                Referencia
+                Periodo comparado
               </th>
               <th
                 style={{
@@ -244,7 +244,7 @@ export function OperationalReportComparisonTable({
                   background: 'rgba(244, 238, 228, 0.7)',
                 }}
               >
-                Variación
+                Cambio
               </th>
             </tr>
           </thead>
@@ -276,7 +276,7 @@ export function OperationalReportComparisonTable({
                   {selectedComparison.metrics[row.key]}
                 </td>
                 <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                  <DeltaBadge
+                  <ChangeBadge
                     value={selectedComparison.delta[row.key]}
                     inverse={row.inverse}
                   />

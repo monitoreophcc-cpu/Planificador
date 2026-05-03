@@ -26,6 +26,10 @@ import {
   RepresentativeSlice,
   createRepresentativeSlice,
 } from './representativeSlice'
+import {
+  CommercialGoalSlice,
+  createCommercialGoalSlice,
+} from './commercialGoalSlice'
 import { IncidentSlice, createIncidentSlice } from './incidentSlice'
 import {
   SpecialScheduleSlice,
@@ -56,6 +60,7 @@ export type AppState = PlanningBaseState &
   ManagerEntitySlice &
   PlanningCalendarSlice &
   RepresentativeSlice &
+  CommercialGoalSlice &
   IncidentSlice &
   SpecialScheduleSlice &
   SwapSlice & {
@@ -123,6 +128,7 @@ export const useAppStore = create<AppState>()(
       ...createManagerEntitySlice(setWithCloudSync, get, api),
       ...createPlanningCalendarSlice(setWithCloudSync, get, api),
       ...createRepresentativeSlice(setWithCloudSync, get, api),
+      ...createCommercialGoalSlice(setWithCloudSync, get, api),
       ...createIncidentSlice(setWithCloudSync, get, api),
       ...createSpecialScheduleSlice(setWithCloudSync, get, api),
       ...createSwapSlice(setWithCloudSync, get, api),
@@ -153,6 +159,7 @@ export const useAppStore = create<AppState>()(
           const applyCloudSnapshot = (cloudState: CloudSnapshot) => {
             set(state => {
               state.representatives = cloudState.representatives
+              state.commercialGoals = cloudState.commercialGoals
               state.incidents = cloudState.incidents
               state.swaps = cloudState.swaps
               state.coverageRules = cloudState.coverageRules

@@ -1,4 +1,5 @@
 import type {
+  CommercialGoal,
   CoverageRule,
   Incident,
   PlanningBaseState,
@@ -14,6 +15,7 @@ export type SyncResult = {
 
 export type CloudSnapshot = {
   representatives: Representative[]
+  commercialGoals: CommercialGoal[]
   weeklyPlans: WeeklyPlan[]
   incidents: Incident[]
   swaps: SwapEvent[]
@@ -22,6 +24,7 @@ export type CloudSnapshot = {
 
 export type SyncTable =
   | 'representatives'
+  | 'commercial_goals'
   | 'weekly_plans'
   | 'incidents'
   | 'swaps'
@@ -41,7 +44,12 @@ export type PendingQueueSummary = {
 
 export type SyncableStoreState = Pick<
   PlanningBaseState,
-  'representatives' | 'incidents' | 'swaps' | 'coverageRules' | 'historyEvents'
+  | 'representatives'
+  | 'commercialGoals'
+  | 'incidents'
+  | 'swaps'
+  | 'coverageRules'
+  | 'historyEvents'
 >
 
 export type SyncRow = Record<string, unknown>

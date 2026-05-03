@@ -8,18 +8,22 @@ import { Tooltip } from '@/ui/components/Tooltip'
 
 interface SortableRepCardProps {
     rep: Representative
+    isChecked: boolean
     isSelected: boolean
     onEdit: (rep: Representative) => void
     onSelect: (rep: Representative) => void
+    onToggleSelection: (rep: Representative) => void
     advancedEditMode: boolean
     sortable?: boolean
 }
 
 export function SortableRepCard({
     rep,
+    isChecked,
     isSelected,
     onEdit,
     onSelect,
+    onToggleSelection,
     advancedEditMode,
     sortable = false,
 }: SortableRepCardProps) {
@@ -50,6 +54,12 @@ export function SortableRepCard({
             : rep.mixProfile?.type === 'WEEKEND'
                 ? 'Mixto V-D'
                 : null
+    const employmentLabel =
+        rep.employmentType === 'PART_TIME'
+            ? 'Part Time'
+            : rep.employmentType === 'FULL_TIME'
+                ? 'Full Time'
+                : 'Sin jornada'
     const dayOffCount = Object.values(rep.baseSchedule).filter(day => day === 'OFF').length
     const ShiftIcon = rep.baseShift === 'DAY' ? Sun : Moon
 
@@ -75,6 +85,21 @@ export function SortableRepCard({
         >
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => onToggleSelection(rep)}
+                        onClick={event => event.stopPropagation()}
+                        style={{
+                            width: '16px',
+                            height: '16px',
+                            cursor: 'pointer',
+                            accentColor: '#7c3aed',
+                            flexShrink: 0,
+                            marginTop: sortable ? '0' : '2px',
+                        }}
+                        aria-label={`Seleccionar a ${rep.name}`}
+                    />
                     {/* Handle de drag visible solo cuando la lista completa del turno es reordenable */}
                     {sortable && (
                         <Tooltip content="Arrastra para reordenar">
@@ -156,6 +181,34 @@ export function SortableRepCard({
                                     }}
                                 >
                                     {roleLabel}
+                                </span>
+                                <span
+                                    style={{
+                                        padding: '5px 8px',
+                                        borderRadius: '999px',
+                                        background:
+                                            rep.employmentType === 'PART_TIME'
+                                                ? 'rgba(255,247,237,0.95)'
+                                                : rep.employmentType === 'FULL_TIME'
+                                                    ? 'rgba(240,253,244,0.95)'
+                                                    : 'rgba(248,250,252,0.95)',
+                                        border:
+                                            rep.employmentType === 'PART_TIME'
+                                                ? '1px solid rgba(249, 115, 22, 0.18)'
+                                                : rep.employmentType === 'FULL_TIME'
+                                                    ? '1px solid rgba(34, 197, 94, 0.18)'
+                                                    : '1px solid rgba(148, 163, 184, 0.18)',
+                                        color:
+                                            rep.employmentType === 'PART_TIME'
+                                                ? '#c2410c'
+                                                : rep.employmentType === 'FULL_TIME'
+                                                    ? '#15803d'
+                                                    : '#64748b',
+                                        fontSize: '11px',
+                                        fontWeight: 700,
+                                    }}
+                                >
+                                    {employmentLabel}
                                 </span>
                                 <span
                                     style={{

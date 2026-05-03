@@ -22,6 +22,7 @@ import ExportModal from '@/ui/reports/analysis-beta/header/ExportModal';
 import DataManagementPanel from '@/ui/reports/analysis-beta/header/DataManagementPanel';
 import MonthlyOperationalReport from '@/ui/reports/analysis-beta/operation/MonthlyOperationalReport';
 import CommercialPerformancePanel from '@/ui/reports/analysis-beta/tables/CommercialPerformancePanel';
+import ShiftTablesContainer from '@/ui/reports/analysis-beta/tables/ShiftTablesContainer';
 import { Button } from '@/ui/reports/analysis-beta/ui/button';
 import { Toaster } from '@/ui/reports/analysis-beta/ui/toaster';
 import { useDashboardCloudSync } from '@/ui/reports/analysis-beta/hooks/useDashboardCloudSync';
@@ -97,13 +98,16 @@ export function CallCenterAnalysisView() {
   const [mounted, setMounted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [showGlobalReadings, setShowGlobalReadings] = useState(false);
-  const [showShiftReadings, setShowShiftReadings] = useState(false);
+  const [operationView, setOperationView] = useState<'monthly' | 'representatives'>(
+    'monthly'
+  );
   const _hasHydrated = useDashboardStore((s) => s._hasHydrated);
   const dataDate = useDashboardStore((s) => s.dataDate);
   const availableDates = useDashboardStore((s) => s.availableDates);
   const dailyHistory = useDashboardStore((s) => s.dailyHistory);
   const activeWorkspaceView = useDashboardStore((s) => s.activeWorkspaceView);
   const setActiveWorkspaceView = useDashboardStore((s) => s.setActiveWorkspaceView);
+  const currentDailySnapshot = dataDate ? dailyHistory[dataDate] ?? null : null;
 
   const analyzedPeriodLabel = useMemo(
     () => buildAnalyzedPeriodLabel(availableDates),
@@ -127,7 +131,7 @@ export function CallCenterAnalysisView() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] pb-12 font-sans">
+    <main className="report-print-root min-h-screen bg-[#f8fafc] pb-12 font-sans">
       {/* Professional Header */}
       <header className="bg-white border-b border-slate-200 px-4 md:px-8 py-6 sticky top-0 z-50 backdrop-blur-md bg-white/80">
         <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -144,10 +148,12 @@ export function CallCenterAnalysisView() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            <DailyHistoryPanel />
-            <ComparisonPanel />
-            <ExportModal />
-            {canEditData ? <DataManagementPanel /> : null}
+            <div className="report-screen-only flex flex-wrap items-center gap-3">
+              <DailyHistoryPanel />
+              <ComparisonPanel />
+              <ExportModal />
+              {canEditData ? <DataManagementPanel /> : null}
+            </div>
           </div>
         </div>
       </header>
@@ -190,7 +196,7 @@ export function CallCenterAnalysisView() {
           >
             <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
               <DateRangeBadge />
-              <TabsList>
+              <TabsList className="report-screen-only">
                 <TabsTrigger value="executive">Resumen ejecutivo</TabsTrigger>
                 <TabsTrigger value="operation">Operación</TabsTrigger>
                 <TabsTrigger value="analysis">Gráficas</TabsTrigger>
@@ -225,7 +231,7 @@ export function CallCenterAnalysisView() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="ml-auto h-8 w-8 rounded-xl p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                    className="report-screen-only ml-auto h-8 w-8 rounded-xl p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     onClick={() => setShowGlobalReadings((current) => !current)}
                     aria-label={showGlobalReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
                     title={showGlobalReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
@@ -246,26 +252,39 @@ export function CallCenterAnalysisView() {
                   <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
                     Rendimiento por turno
                   </h2>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="ml-auto h-8 w-8 rounded-xl p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                    onClick={() => setShowShiftReadings((current) => !current)}
-                    aria-label={showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
-                    title={showShiftReadings ? 'Ocultar lecturas' : 'Mostrar lecturas'}
-                  >
-                    {showShiftReadings ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
                 </div>
-                <ShiftGrid showReadings={showShiftReadings} />
+                <ShiftGrid />
               </section>
 
               <section className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-1 rounded-full bg-red-600" />
+                  <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                    Distribución de llamadas
+                  </h2>
+                </div>
+                <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  {currentDailySnapshot ? (
+                    <div className="space-y-5">
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-black text-slate-900">
+                          Detalle operativo de la jornada
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          Aquí se ve cómo se repartieron las llamadas y los abandonos por franja en el día activo.
+                        </p>
+                      </div>
+                      <ShiftTablesContainer detail={currentDailySnapshot.operationalDetail} />
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-sm text-slate-500">
+                      No hay una jornada activa lista para mostrar este detalle.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="report-screen-only space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-1 rounded-full bg-red-600" />
                   <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
@@ -282,14 +301,56 @@ export function CallCenterAnalysisView() {
             </TabsContent>
 
             <TabsContent value="operation" className="space-y-10 focus-visible:outline-none">
-              <MonthlyOperationalReport
-                showGlobalReadings={showGlobalReadings}
-                showShiftReadings={showShiftReadings}
-              />
-              <CommercialPerformancePanel />
+              <section className="space-y-4">
+                <div className="report-screen-only flex flex-col gap-3 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                      Operación
+                    </p>
+                    <h2 className="text-lg font-black text-slate-900">
+                      Workspace operativo
+                    </h2>
+                    <p className="text-sm text-slate-500">
+                      Aquí manda el acumulado del mes. El seguimiento por representante queda como apoyo para revisar quién vende más en el día y en el mes.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 rounded-2xl bg-slate-100 p-1.5">
+                    {[
+                      { id: 'monthly', label: 'Acumulado' },
+                      { id: 'representatives', label: 'Representantes' },
+                    ].map((tab) => (
+                      <Button
+                        key={tab.id}
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-xl px-3 text-[10px] font-black uppercase tracking-[0.16em] ${
+                          operationView === tab.id
+                            ? 'bg-white text-red-600 shadow-sm hover:bg-white'
+                            : 'text-slate-500 hover:bg-slate-200'
+                        }`}
+                        onClick={() =>
+                          setOperationView(tab.id as 'monthly' | 'representatives')
+                        }
+                      >
+                        {tab.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {operationView === 'monthly' ? (
+                  <MonthlyOperationalReport
+                    showGlobalReadings={showGlobalReadings}
+                  />
+                ) : null}
+
+                {operationView === 'representatives' ? <CommercialPerformancePanel /> : null}
+              </section>
             </TabsContent>
 
-            <TabsContent value="analysis" className="focus-visible:outline-none">
+            <TabsContent value="analysis" className="report-screen-only focus-visible:outline-none">
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <MonthlyCumulativeChart />
                 <QuarterlyComparisonChart />

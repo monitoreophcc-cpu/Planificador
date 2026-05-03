@@ -8,11 +8,14 @@ import {
   Shield,
   Sparkles,
   Sun,
+  Target,
   Trash2,
   UserRound,
 } from 'lucide-react'
 import {
   countRepresentativeDayOffs,
+  getRepresentativeCommercialLabel,
+  getRepresentativeEmploymentLabel,
   getRepresentativeMixLabel,
   getRepresentativeOffDayLabels,
   getRepresentativeRoleLabel,
@@ -151,6 +154,19 @@ export function RepresentativeDetailPanel({
                 style={{
                   padding: '7px 10px',
                   borderRadius: '999px',
+                  background: 'rgba(255,255,255,0.9)',
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                  color: '#334155',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                }}
+              >
+                {getRepresentativeEmploymentLabel(representative.employmentType)}
+              </span>
+              <span
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '999px',
                   background: isActive
                     ? 'rgba(236, 253, 245, 0.92)'
                     : 'rgba(248, 250, 252, 0.92)',
@@ -263,7 +279,7 @@ export function RepresentativeDetailPanel({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '12px',
         }}
       >
@@ -290,6 +306,11 @@ export function RepresentativeDetailPanel({
                 ? 'Sin ajustes'
                 : `${specialScheduleCount} activo(s)`,
             icon: <Calendar size={14} />,
+          },
+          {
+            label: 'Ranking comercial',
+            value: representative.commercialEligible ? 'Participa' : 'No participa',
+            icon: <Target size={14} />,
           },
         ].map(item => (
           <div
@@ -448,6 +469,21 @@ export function RepresentativeDetailPanel({
           >
             <Sparkles size={15} color="#7c3aed" />
             {getRepresentativeMixLabel(representative)}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#475569',
+              fontSize: '13px',
+              fontWeight: 600,
+            }}
+          >
+            <Target size={15} color={representative.commercialEligible ? '#0f766e' : '#64748b'} />
+            {getRepresentativeCommercialLabel(
+              representative.commercialEligible === true
+            )}
           </div>
           <p
             style={{

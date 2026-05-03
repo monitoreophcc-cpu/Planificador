@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { AlertTriangle, Award } from 'lucide-react'
 import type { OperationalReport } from '@/domain/reports/operationalTypes'
 import { exportOperationalReport } from './exportOperationalReport'
@@ -17,12 +18,24 @@ export function OperationalInstitutionalView({
   report,
   onPeriodChange,
 }: OperationalInstitutionalViewProps) {
+  const [isExporting, setIsExporting] = useState(false)
+
   return (
     <>
       <OperationalReportHeader
+        isExporting={isExporting}
         onPeriodChange={onPeriodChange}
         currentPeriodLabel={report.current.period.label}
-        onExport={() => exportOperationalReport(report)}
+        onExport={async () => {
+          setIsExporting(true)
+
+          try {
+            await exportOperationalReport(report)
+          } finally {
+            setIsExporting(false)
+          }
+        }}
+        onPrint={() => window.print()}
       />
 
       <OperationalReportExecutivePanel report={report} />

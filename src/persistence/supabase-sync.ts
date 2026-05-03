@@ -3,6 +3,7 @@ import {
   createEmptySnapshot,
   deserializeCloudSnapshot,
   extractWeeklyPlansFromHistoryEvents,
+  serializeCommercialGoals,
   serializeCoverageRules,
   serializeIncidents,
   serializeRepresentatives,
@@ -29,11 +30,23 @@ export { extractWeeklyPlansFromHistoryEvents } from './supabase-sync-data'
 
 const SNAPSHOT_TABLES = [
   'representatives',
+  'commercial_goals',
   'weekly_plans',
   'incidents',
   'swaps',
   'coverage_rules',
 ] as const
+const OPTIONAL_SNAPSHOT_TABLES = ['commercial_goals'] as const
+
+function errorMessageIncludesTable(message: string, table: string): boolean {
+  const normalizedMessage = message.toLowerCase()
+  const normalizedTable = table.toLowerCase()
+
+  return (
+    normalizedMessage.includes(normalizedTable) ||
+    normalizedMessage.includes(`public.${normalizedTable}`)
+  )
+}
 
 function isMissingSnapshotTableError(error: unknown): boolean {
   if (!(error instanceof Error) && typeof error !== 'object') {
@@ -52,10 +65,31 @@ function isMissingSnapshotTableError(error: unknown): boolean {
 
   return (
     code === '42P01' ||
+    code === 'PGRST204' ||
     SNAPSHOT_TABLES.some(tableName =>
       normalizedMessage.includes(tableName.toLowerCase())
     )
   )
+}
+
+function isMissingOptionalSnapshotTableError(
+  table: (typeof OPTIONAL_SNAPSHOT_TABLES)[number],
+  error: unknown
+): boolean {
+  if (!error || !isMissingSnapshotTableError(error)) {
+    return false
+  }
+
+  if (!(error instanceof Error) && typeof error !== 'object') {
+    return false
+  }
+
+  const message =
+    error instanceof Error
+      ? error.message
+      : String((error as { message?: unknown }).message ?? '')
+
+  return errorMessageIncludesTable(message, table)
 }
 
 export async function loadFromSupabase(
@@ -69,6 +103,7 @@ export async function loadFromSupabase(
 
   const [
     representativesRes,
+    commercialGoalsRes,
     weeklyPlansRes,
     incidentsRes,
     swapsRes,
@@ -79,6 +114,12 @@ export async function loadFromSupabase(
       .select('*')
       .eq('user_id', dataOwnerUserId)
       .order('order_index', { ascending: true }),
+    supabase
+      .from('commercial_goals')
+      .select('*')
+      .eq('user_id', dataOwnerUserId)
+      .order('shift', { ascending: true })
+      .order('segment', { ascending: true }),
     supabase
       .from('weekly_plans')
       .select('*')
@@ -106,7 +147,13 @@ export async function loadFromSupabase(
     weeklyPlansRes.error ??
     incidentsRes.error ??
     swapsRes.error ??
-    coverageRulesRes.error
+    coverageRulesRes.error ??
+    (isMissingOptionalSnapshotTableError(
+      'commercial_goals',
+      commercialGoalsRes.error
+    )
+      ? null
+      : commercialGoalsRes.error)
 
   if (firstError) {
     if (isMissingSnapshotTableError(firstError)) {
@@ -118,6 +165,12 @@ export async function loadFromSupabase(
 
   return deserializeCloudSnapshot({
     representativesRows: (representativesRes.data ?? []) as Array<Record<string, unknown>>,
+    commercialGoalsRows: isMissingOptionalSnapshotTableError(
+      'commercial_goals',
+      commercialGoalsRes.error
+    )
+      ? []
+      : ((commercialGoalsRes.data ?? []) as Array<Record<string, unknown>>),
     weeklyPlansRows: (weeklyPlansRes.data ?? []) as Array<Record<string, unknown>>,
     incidentsRows: (incidentsRes.data ?? []) as Array<Record<string, unknown>>,
     swapsRows: (swapsRes.data ?? []) as Array<Record<string, unknown>>,
@@ -135,6 +188,10 @@ export async function syncAll(
     {
       table: 'representatives',
       rows: serializeRepresentatives(storeState.representatives, dataOwnerUserId),
+    },
+    {
+      table: 'commercial_goals',
+      rows: serializeCommercialGoals(storeState.commercialGoals, dataOwnerUserId),
     },
     {
       table: 'weekly_plans',

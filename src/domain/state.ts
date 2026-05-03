@@ -9,8 +9,9 @@ import type {
 import type { Representative } from './representatives/types'
 import type { HistoryEvent } from './history/types'
 import type { AuditEvent } from './audit/types'
+import { createDefaultCommercialGoals } from './commercialGoals/defaults'
 
-const CURRENT_VERSION = 7 // New CoverageRule structure
+const CURRENT_VERSION = 8 // Commercial goals + representative commercial flags
 
 // Helper to create a full base schedule from a list of off-days
 function createBaseSchedule(
@@ -79,6 +80,7 @@ const initialSwaps: SwapEvent[] = []
 export function createInitialState(): PlanningBaseState {
   return {
     representatives: initialRepresentatives,
+    commercialGoals: createDefaultCommercialGoals(),
     incidents: initialIncidents,
     specialSchedules: initialSpecialSchedules,
     calendar: initialCalendarState,

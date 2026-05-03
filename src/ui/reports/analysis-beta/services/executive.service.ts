@@ -11,12 +11,12 @@ const KPI_CONFIG: Array<{
   label: string;
   format: KPIDelta['format'];
 }> = [
-  { key: 'recibidas', label: 'Total Recibidas', format: 'number' },
-  { key: 'contestadas', label: 'Total Contestadas', format: 'number' },
-  { key: 'abandonadas', label: 'Total Abandonadas', format: 'number' },
+  { key: 'recibidas', label: 'Llamadas Recibidas', format: 'number' },
+  { key: 'contestadas', label: 'Llamadas Contestadas', format: 'number' },
+  { key: 'abandonadas', label: 'Llamadas Abandonadas', format: 'number' },
   { key: 'nivelDeServicio', label: '% Atención', format: 'percent' },
   { key: 'abandonoPct', label: '% Abandono', format: 'percent' },
-  { key: 'transaccionesCC', label: 'Transacciones CC', format: 'number' },
+  { key: 'transaccionesCC', label: 'Transacciones', format: 'number' },
   { key: 'conversion', label: '% Conversión', format: 'percent' },
 ];
 

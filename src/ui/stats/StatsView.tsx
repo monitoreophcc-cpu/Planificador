@@ -1,17 +1,17 @@
 'use client'
 
-import React, { startTransition, useMemo, useState } from 'react'
-import { BarChart3, LineChart } from 'lucide-react'
+import React, { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import { BarChart3, Building2, LineChart, PhoneCall } from 'lucide-react'
 import { useAccess } from '@/hooks/useAccess'
+import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store'
 import dynamic from 'next/dynamic'
-import { type StatsTab } from './StatsTabs'
 import { ReadOnlyNotice } from '@/ui/system/ReadOnlyNotice'
 import {
   StatsWorkspaceHeader,
-  type StatsWorkspaceMode,
+  type StatsWorkspaceReportId,
 } from './StatsWorkspaceHeader'
 
-export type ExtendedStatsTab = StatsTab | 'points' | 'executive' | 'callcenter'
+const STATS_LAST_REPORT_KEY = 'stats:last-report'
 
 function StatsPanelLoading() {
   return <div className="app-shell-loading">Cargando reporte...</div>
@@ -37,100 +37,105 @@ const CallCenterAnalysisView = dynamic(
   { loading: () => <StatsPanelLoading /> }
 )
 
+function isStatsReportId(value: string | null): value is StatsWorkspaceReportId {
+  return (
+    value === 'monthly' ||
+    value === 'points' ||
+    value === 'operational' ||
+    value === 'callcenter'
+  )
+}
+
 export function StatsView() {
   const { isReadOnly } = useAccess()
-  const [activeMode, setActiveMode] = useState<StatsWorkspaceMode>('SUMMARY')
-  const [activeTab, setActiveTab] = useState<ExtendedStatsTab>('monthly')
+  const dashboardHydrated = useDashboardStore(state => state._hasHydrated)
+  const commercialHistoryDates = useDashboardStore(state => state.availableDates)
+  const hasCommercialHistory = commercialHistoryDates.length > 0
+  const [activeReport, setActiveReport] = useState<StatsWorkspaceReportId>('monthly')
   const [currentDate, setCurrentDate] = useState(new Date())
+  const hasRestoredReportRef = useRef(false)
 
-  const tabs = useMemo<
-    Record<
-      StatsWorkspaceMode,
-      Array<{
-        id: ExtendedStatsTab
-        label: string
-        description: string
-        icon: React.ComponentType<{ size?: number }>
-      }>
-    >
-  >(
-    () => ({
-      SUMMARY: [
-        {
-          id: 'monthly',
-          label: 'Resumen mensual',
-          description: 'KPIs, picos y ranking del mes',
-          icon: BarChart3,
-        },
-        {
-          id: 'points',
-          label: 'Incidencias',
-          description: 'Detalle mensual por rol y turno',
-          icon: LineChart,
-        },
-      ],
-      ANALYSIS: [
-        {
-          id: 'callcenter',
-          label: 'Call Center',
-          description: 'Lectura diaria del tablero cargado',
-          icon: LineChart,
-        },
-        {
-          id: 'executive',
-          label: 'Comparativos',
-          description: 'Resumen institucional y comparación',
-          icon: BarChart3,
-        },
-      ],
-    }),
+  const reports = useMemo(
+    () => [
+      {
+        id: 'monthly',
+        label: 'Resumen mensual',
+        description: 'KPIs, picos y lectura general del mes',
+        icon: BarChart3,
+      },
+      {
+        id: 'points',
+        label: 'Incidencias',
+        description: 'Detalle mensual por rol y turno',
+        icon: LineChart,
+      },
+      {
+        id: 'operational',
+        label: 'Resumen operativo',
+        description: 'Competitividad por turno y comparativos institucionales',
+        icon: Building2,
+      },
+      {
+        id: 'callcenter',
+        label: 'Call Center',
+        description: 'Carga, operación y gráficas del tablero de llamadas',
+        icon: PhoneCall,
+      },
+    ] satisfies Array<{
+      id: StatsWorkspaceReportId
+      label: string
+      description: string
+      icon: React.ComponentType<{ size?: number }>
+    }>,
     []
   )
 
-  const visibleTabs = tabs[activeMode]
+  useEffect(() => {
+    if (
+      hasRestoredReportRef.current ||
+      typeof window === 'undefined' ||
+      !dashboardHydrated
+    ) {
+      return
+    }
 
-  const tabStyle = (isActive: boolean): React.CSSProperties => ({
-    padding: '10px 14px',
-    cursor: 'pointer',
-    border: `1px solid ${
-      isActive ? 'rgba(var(--accent-rgb), 0.18)' : 'rgba(202, 189, 168, 0.3)'
-    }`,
-    color: isActive ? 'var(--accent-strong)' : 'var(--text-muted)',
-    fontWeight: isActive ? 700 : 600,
-    background: isActive
-      ? 'linear-gradient(180deg, var(--surface-raised) 0%, rgba(255,255,255,0.68) 100%)'
-      : 'rgba(255,255,255,0.52)',
-    fontSize: '13px',
-    borderRadius: '14px',
-    boxShadow: isActive ? '0 10px 20px rgba(var(--accent-rgb), 0.1)' : 'none',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    minWidth: '180px',
-    textAlign: 'left',
-  })
+    const savedReport = window.localStorage.getItem(STATS_LAST_REPORT_KEY)
+    const fallbackReport: StatsWorkspaceReportId = hasCommercialHistory
+      ? 'operational'
+      : 'monthly'
 
-  const setMode = (nextMode: StatsWorkspaceMode) => {
-    startTransition(() => {
-      setActiveMode(nextMode)
-      setActiveTab(nextMode === 'SUMMARY' ? 'monthly' : 'callcenter')
-    })
-  }
+    setActiveReport(isStatsReportId(savedReport) ? savedReport : fallbackReport)
+    hasRestoredReportRef.current = true
+  }, [dashboardHydrated, hasCommercialHistory])
 
-  const renderTabContent = () => {
-    if (activeTab === 'monthly') {
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hasRestoredReportRef.current) {
+      return
+    }
+
+    window.localStorage.setItem(STATS_LAST_REPORT_KEY, activeReport)
+  }, [activeReport])
+
+  const showMonthControls = activeReport === 'monthly' || activeReport === 'points'
+
+  const renderReport = () => {
+    if (activeReport === 'monthly') {
       return <MonthlySummaryView currentDate={currentDate} />
     }
 
-    if (activeTab === 'points') {
+    if (activeReport === 'points') {
       return <PointsReportView currentDate={currentDate} />
     }
 
-    if (activeTab === 'callcenter') {
+    if (activeReport === 'callcenter') {
       return <CallCenterAnalysisView />
     }
 
-    return <OperationalReportView />
+    return (
+      <OperationalReportView
+        onOpenCallCenter={() => startTransition(() => setActiveReport('callcenter'))}
+      />
+    )
   }
 
   return (
@@ -140,16 +145,20 @@ export function StatsView() {
         flexDirection: 'column',
         gap: '16px',
       }}
-    >
+      >
       {isReadOnly ? (
-        <ReadOnlyNotice description="Puedes consultar, exportar e imprimir reportes, pero no cargar, limpiar ni reordenar datos." />
+        <div className="report-screen-only">
+          <ReadOnlyNotice description="Puedes consultar, exportar e imprimir reportes, pero no cargar, limpiar ni reordenar datos." />
+        </div>
       ) : null}
 
       <StatsWorkspaceHeader
-        mode={activeMode}
+        activeReport={activeReport}
+        reports={reports}
         currentDate={currentDate}
+        showMonthControls={showMonthControls}
         onDateChange={setCurrentDate}
-        onModeChange={setMode}
+        onReportChange={report => startTransition(() => setActiveReport(report))}
       />
 
       <div
@@ -160,62 +169,10 @@ export function StatsView() {
           border: '1px solid var(--shell-border)',
           boxShadow: 'var(--shadow-sm)',
           overflow: 'hidden',
+          minHeight: '420px',
         }}
       >
-        <div
-          style={{
-            padding: '16px 18px 0',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              gap: '8px',
-              flexWrap: 'wrap',
-              padding: '0 0 12px',
-              borderBottom: '1px solid rgba(202, 189, 168, 0.42)',
-            }}
-          >
-            {visibleTabs.map(tab => {
-              const Icon = tab.icon
-
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  style={tabStyle(activeTab === tab.id)}
-                  aria-pressed={activeTab === tab.id}
-                  onClick={() => startTransition(() => setActiveTab(tab.id))}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                    <Icon size={14} />
-                    <span>{tab.label}</span>
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color:
-                        activeTab === tab.id
-                          ? 'var(--text-main)'
-                          : 'var(--text-muted)',
-                    }}
-                  >
-                    {tab.description}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        <div
-          style={{
-            minHeight: '420px',
-          }}
-        >
-          {renderTabContent()}
-        </div>
+        {renderReport()}
       </div>
     </div>
   )

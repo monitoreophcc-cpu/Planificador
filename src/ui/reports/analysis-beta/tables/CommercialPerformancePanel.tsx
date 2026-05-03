@@ -30,12 +30,12 @@ import MonthlyRepresentativeTable from './MonthlyRepresentativeTable';
 const tabs = [
   {
     value: 'day',
-    label: 'Representantes del día',
+    label: 'Día actual',
     Icon: BriefcaseBusiness,
   },
   {
     value: 'month',
-    label: 'Representantes del mes',
+    label: 'Acumulado del mes',
     Icon: BarChart3,
   },
 ] as const;
@@ -107,7 +107,7 @@ export default function CommercialPerformancePanel() {
       <div className="flex items-center gap-2">
         <div className="h-4 w-1 rounded-full bg-red-600" />
         <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-          Rendimiento de representantes
+          Seguimiento por representante
         </h2>
       </div>
 
@@ -115,7 +115,7 @@ export default function CommercialPerformancePanel() {
         <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-black text-slate-900">Representantes</h3>
+              <h3 className="text-lg font-black text-slate-900">Desempeño por representante</h3>
               <button
                 type="button"
                 onClick={() => setIsLinkManagerOpen(true)}
@@ -127,7 +127,7 @@ export default function CommercialPerformancePanel() {
               </button>
             </div>
             <p className="text-sm text-slate-500">
-              Enlaza representantes del sistema con nombres del reporte para mantener transacciones y ventas actualizadas por persona.
+              Revisa transacciones por representante en el día activo o en el acumulado del mes.
             </p>
           </div>
 

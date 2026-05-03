@@ -1,7 +1,7 @@
 'use client'
 
-import { FileText } from 'lucide-react'
 import type { PeriodKind } from '@/domain/reports/operationalTypes'
+import { ReportExportActions } from '@/ui/components/ReportExportActions'
 
 const PERIOD_OPTIONS: Array<{ label: string; value: PeriodKind }> = [
   { label: 'Mes actual', value: 'MONTH' },
@@ -10,13 +10,17 @@ const PERIOD_OPTIONS: Array<{ label: string; value: PeriodKind }> = [
 
 interface OperationalReportHeaderProps {
   currentPeriodLabel: string
-  onExport: () => void
+  isExporting?: boolean
+  onExport: () => void | Promise<void>
+  onPrint: () => void
   onPeriodChange: (kind: PeriodKind) => void
 }
 
 export function OperationalReportHeader({
   currentPeriodLabel,
+  isExporting = false,
   onExport,
+  onPrint,
   onPeriodChange,
 }: OperationalReportHeaderProps) {
   return (
@@ -42,38 +46,25 @@ export function OperationalReportHeader({
               marginBottom: '8px',
             }}
           >
-            Resumen general
+            Reporte operativo
           </div>
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-            Resumen operativo
+            Resumen del equipo
           </h2>
           <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-            Vista del período <strong>{currentPeriodLabel}</strong>
+            Vista general de <strong>{currentPeriodLabel}</strong>
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <button
-            onClick={onExport}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '10px 14px',
-              border: '1px solid var(--shell-border)',
-              borderRadius: '16px',
-              background: 'linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-veil) 100%)',
-              color: 'var(--text-main)',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 700,
-              boxShadow: 'var(--shadow-sm)',
-            }}
-            title="Descargar PDF"
-          >
-            <FileText size={16} />
-            Descargar PDF
-          </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <ReportExportActions
+            isExportingPdf={isExporting}
+            onExportPdf={onExport}
+            onPrint={onPrint}
+            pdfLabel="Descargar PDF"
+            printLabel="Imprimir"
+          />
           <select
+            className="report-screen-only"
             onChange={event => onPeriodChange(event.target.value as PeriodKind)}
             defaultValue="MONTH"
             style={{

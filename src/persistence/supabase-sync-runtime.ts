@@ -7,10 +7,12 @@ import type {
   SyncTable,
 } from './supabase-sync-types'
 
+type PersistedSyncTable = SyncTable
+
 type PendingOperation = {
   key: string
   userId: string
-  table: SyncTable
+  table: PersistedSyncTable
   rows: SyncRow[]
 }
 
@@ -23,6 +25,15 @@ interface SyncQueueDb extends DBSchema {
 
 const DB_NAME = 'cloud-sync-queue'
 const DB_VERSION = 2
+const SUPPORTED_SYNC_TABLES = [
+  'representatives',
+  'commercial_goals',
+  'weekly_plans',
+  'incidents',
+  'swaps',
+  'coverage_rules',
+] as const satisfies readonly SyncTable[]
+const OPTIONAL_SYNC_TABLES = ['commercial_goals'] as const satisfies readonly SyncTable[]
 
 export function isBrowserOffline(): boolean {
   return typeof navigator !== 'undefined' && !navigator.onLine
@@ -32,8 +43,64 @@ export function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'unexpected_sync_error'
 }
 
-function queueKey(userId: string, table: SyncTable): string {
+function isMissingTableError(table: SyncTable, error: unknown): boolean {
+  if (!(error instanceof Error) && typeof error !== 'object') {
+    return false
+  }
+
+  const message =
+    error instanceof Error
+      ? error.message
+      : String((error as { message?: unknown }).message ?? '')
+  const code =
+    error instanceof Error
+      ? ''
+      : String((error as { code?: unknown }).code ?? '')
+  const normalizedMessage = message.toLowerCase()
+  const normalizedTable = table.toLowerCase()
+
+  return (
+    code === '42P01' ||
+    code === 'PGRST204' ||
+    normalizedMessage.includes(normalizedTable) ||
+    normalizedMessage.includes(`public.${normalizedTable}`)
+  )
+}
+
+function isMissingOptionalSyncTableError(
+  table: SyncTable,
+  error: unknown
+): boolean {
+  return (
+    (OPTIONAL_SYNC_TABLES as readonly SyncTable[]).includes(table) &&
+    isMissingTableError(table, error)
+  )
+}
+
+function isSupportedSyncTable(value: unknown): value is SyncTable {
+  return SUPPORTED_SYNC_TABLES.includes(value as SyncTable)
+}
+
+function queueKey(userId: string, table: PersistedSyncTable): string {
   return `${userId}:${table}`
+}
+
+async function pruneUnsupportedPendingOperations(
+  db: IDBPDatabase<SyncQueueDb>,
+  pending: PendingOperation[]
+): Promise<Array<PendingOperation & { table: SyncTable }>> {
+  const supported: Array<PendingOperation & { table: SyncTable }> = []
+
+  for (const operation of pending) {
+    if (isSupportedSyncTable(operation.table)) {
+      supported.push(operation as PendingOperation & { table: SyncTable })
+      continue
+    }
+
+    await db.delete('pending_sync', operation.key)
+  }
+
+  return supported
 }
 
 async function getQueueDb(): Promise<IDBPDatabase<SyncQueueDb> | null> {
@@ -92,11 +159,12 @@ export async function getPendingQueueSummary(
   }
 
   const pending = await db.getAll('pending_sync')
+  const supportedPending = await pruneUnsupportedPendingOperations(db, pending)
   db.close()
 
   const relevant = userId
-    ? pending.filter(operation => operation.userId === userId)
-    : pending
+    ? supportedPending.filter(operation => operation.userId === userId)
+    : supportedPending
 
   const tableBreakdownMap = relevant.reduce<Map<SyncTable, number>>((acc, operation) => {
     acc.set(operation.table, (acc.get(operation.table) ?? 0) + operation.rows.length)
@@ -166,6 +234,12 @@ export async function syncRowsSnapshot(
     .eq('user_id', userId)
 
   if (listError) {
+    if (isMissingOptionalSyncTableError(table, listError)) {
+      await clearPending(userId, table)
+      await logSyncAudit(userId, table, { stage: 'skip_missing_optional_table' })
+      return { success: true }
+    }
+
     if (queueOnFailure) {
       await enqueuePending(userId, table, rows)
     }
@@ -180,6 +254,12 @@ export async function syncRowsSnapshot(
       .upsert(rows, { onConflict: 'user_id,id' })
 
     if (upsertError) {
+      if (isMissingOptionalSyncTableError(table, upsertError)) {
+        await clearPending(userId, table)
+        await logSyncAudit(userId, table, { stage: 'skip_missing_optional_table' })
+        return { success: true }
+      }
+
       if (queueOnFailure) {
         await enqueuePending(userId, table, rows)
       }
@@ -206,6 +286,12 @@ export async function syncRowsSnapshot(
       .in('id', idsToDelete)
 
     if (deleteError) {
+      if (isMissingOptionalSyncTableError(table, deleteError)) {
+        await clearPending(userId, table)
+        await logSyncAudit(userId, table, { stage: 'skip_missing_optional_table' })
+        return { success: true }
+      }
+
       if (queueOnFailure) {
         await enqueuePending(userId, table, rows)
       }
@@ -235,9 +321,10 @@ export async function flushPendingQueue(userId: string): Promise<void> {
   if (!db) return
 
   const pending = await db.getAll('pending_sync')
+  const supportedPending = await pruneUnsupportedPendingOperations(db, pending)
   db.close()
 
-  const relevant = pending.filter(operation => operation.userId === userId)
+  const relevant = supportedPending.filter(operation => operation.userId === userId)
 
   for (const operation of relevant) {
     const result = await syncRowsSnapshot(

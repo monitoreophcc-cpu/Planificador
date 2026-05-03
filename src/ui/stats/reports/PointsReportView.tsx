@@ -1,11 +1,14 @@
 'use client'
 
 import { useAccess } from '@/hooks/useAccess'
+import { ReportExportActions } from '@/ui/components/ReportExportActions'
+import { exportPointsReport } from './exportPointsReport'
 import { ReorderAgentsModal } from './components/ReorderAgentsModal'
 import { PointsReportActions } from './PointsReportActions'
 import { PointsReportCopyToast } from './PointsReportCopyToast'
 import { PointsReportTable } from './PointsReportTable'
 import { usePointsReportView } from './usePointsReportView'
+import { useState } from 'react'
 
 interface PointsReportViewProps {
   currentDate: Date
@@ -13,6 +16,7 @@ interface PointsReportViewProps {
 
 export function PointsReportView({ currentDate }: PointsReportViewProps) {
   const { canEditData } = useAccess()
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
   const {
     copiedTitle,
     monthLabel,
@@ -25,6 +29,7 @@ export function PointsReportView({ currentDate }: PointsReportViewProps) {
 
   return (
     <div
+      className="report-print-root"
       style={{
         padding: '18px',
         display: 'flex',
@@ -40,7 +45,7 @@ export function PointsReportView({ currentDate }: PointsReportViewProps) {
           gap: '12px',
           flexWrap: 'wrap',
         }}
-      >
+        >
         <div>
           <div
             style={{
@@ -69,6 +74,21 @@ export function PointsReportView({ currentDate }: PointsReportViewProps) {
             Vista mensual compacta de {monthLabel} para copiar, revisar y reordenar sin navegar dentro del panel.
           </p>
         </div>
+        <ReportExportActions
+          isExportingPdf={isExportingPdf}
+          onExportPdf={async () => {
+            setIsExportingPdf(true)
+
+            try {
+              await exportPointsReport({ monthLabel, summary })
+            } finally {
+              setIsExportingPdf(false)
+            }
+          }}
+          onPrint={() => window.print()}
+          pdfLabel="Descargar PDF"
+          printLabel="Imprimir"
+        />
       </div>
 
       <PointsReportActions
@@ -107,7 +127,11 @@ export function PointsReportView({ currentDate }: PointsReportViewProps) {
         />
       )}
 
-      {copiedTitle && <PointsReportCopyToast copiedTitle={copiedTitle} />}
+      {copiedTitle ? (
+        <div className="report-screen-only">
+          <PointsReportCopyToast copiedTitle={copiedTitle} />
+        </div>
+      ) : null}
     </div>
   )
 }

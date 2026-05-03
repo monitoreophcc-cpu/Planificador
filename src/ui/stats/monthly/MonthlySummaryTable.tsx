@@ -147,6 +147,7 @@ export function MonthlySummaryTable({
 
   return (
     <div
+      className="report-print-allow-break"
       style={{
         borderRadius: '20px',
         border: '1px solid rgba(202, 189, 168, 0.42)',
@@ -222,7 +223,12 @@ export function MonthlySummaryTable({
               <th style={{ ...headerStyle, textAlign: 'center' }}>Tardanzas</th>
               <th style={{ ...headerStyle, textAlign: 'center' }}>Errores</th>
               <th style={{ ...headerStyle, textAlign: 'center' }}>Estado</th>
-              <th style={{ ...headerStyle, textAlign: 'center' }}>Acción</th>
+              <th
+                className="report-screen-only"
+                style={{ ...headerStyle, textAlign: 'center' }}
+              >
+                Acción
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -281,7 +287,7 @@ export function MonthlySummaryTable({
                 <td style={{ ...cellStyle, textAlign: 'center' }}>
                   <RiskBadge level={person.riskLevel} />
                 </td>
-                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                <td className="report-screen-only" style={{ ...cellStyle, textAlign: 'center' }}>
                   <button
                     onClick={() => onSelectRow(person)}
                     style={{

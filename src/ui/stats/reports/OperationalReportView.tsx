@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { selectOperationalReport } from '@/store/selectors/selectOperationalReport'
 import OperationalAnalysisView from './OperationalAnalysisView'
+import { OperationalCompetitivePanel } from './OperationalCompetitivePanel'
 import { OperationalInstitutionalView } from './OperationalInstitutionalView'
 import { OperationalReportModeToggle } from './OperationalReportModeToggle'
 
@@ -11,14 +12,19 @@ import { OperationalReportModeToggle } from './OperationalReportModeToggle'
 // MAIN VIEW
 // ============================================================================
 
-export function OperationalReportView() {
-  const [mode, setMode] = useState<'INSTITUTIONAL' | 'ANALYSIS'>('INSTITUTIONAL')
+interface OperationalReportViewProps {
+  onOpenCallCenter: () => void
+}
+
+export function OperationalReportView({ onOpenCallCenter }: OperationalReportViewProps) {
+  const [mode, setMode] = useState<'SUMMARY' | 'ANALYSIS'>('SUMMARY')
   const [periodKind, setPeriodKind] = useState<'MONTH' | 'QUARTER'>('MONTH')
 
   const report = useAppStore(state => selectOperationalReport(state, periodKind))
 
   return (
     <div
+      className="report-print-root"
       style={{
         padding: '24px',
         display: 'flex',
@@ -28,14 +34,21 @@ export function OperationalReportView() {
           'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)',
       }}
     >
-      <OperationalReportModeToggle mode={mode} onChange={setMode} />
+      <div className="report-screen-only">
+        <OperationalReportModeToggle mode={mode} onChange={setMode} />
+      </div>
 
-      {mode === 'INSTITUTIONAL' ? (
+      {mode === 'SUMMARY' ? (
         report ? (
-          <OperationalInstitutionalView
-            report={report}
-            onPeriodChange={setPeriodKind}
-          />
+          <>
+            <div className="report-screen-only">
+              <OperationalCompetitivePanel onOpenCallCenter={onOpenCallCenter} />
+            </div>
+            <OperationalInstitutionalView
+              report={report}
+              onPeriodChange={setPeriodKind}
+            />
+          </>
         ) : (
           <div className="app-shell-loading" style={{ margin: '24px 0' }}>
             Cargando reporte...

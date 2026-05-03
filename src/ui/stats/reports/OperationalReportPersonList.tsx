@@ -142,7 +142,7 @@ export function OperationalReportPersonList({
                     {representative.name}
                   </div>
                   <div style={{ marginTop: '2px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Seguimiento del período
+                    Puntos en este periodo
                   </div>
                 </div>
                 <div
@@ -164,10 +164,10 @@ export function OperationalReportPersonList({
                         ? 'var(--text-danger)'
                         : 'var(--text-main)',
                     fontSize: '12px',
-                    fontWeight: 800,
-                  }}
-                >
-                  {representative.points > 0 ? `${representative.points} pts` : 'Sin puntos'}
+                  fontWeight: 800,
+                }}
+              >
+                  {representative.points > 0 ? `${representative.points} puntos` : 'Sin puntos'}
                 </div>
               </div>
             ))}

@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand'
 import { READ_ONLY_ACTION_MESSAGE } from '@/lib/access/access'
-import type { Representative } from '@/domain/types'
+import type { EmploymentType, Representative } from '@/domain/types'
 import { repName } from '@/application/presenters/humanizeStore'
 import type { AppState } from './useAppStore'
 import { canCurrentUserEditData } from './useAccessStore'
@@ -8,6 +8,10 @@ import { canCurrentUserEditData } from './useAccessStore'
 export interface RepresentativeSlice {
   addRepresentative: (data: Omit<Representative, 'id' | 'isActive'>) => void
   updateRepresentative: (rep: Representative) => void
+  bulkAssignEmploymentType: (
+    representativeIds: string[],
+    employmentType: EmploymentType
+  ) => void
   deactivateRepresentative: (repId: string) => Promise<void>
   reactivateRepresentative: (repId: string) => Promise<void>
   reorderRepresentatives: (
@@ -55,6 +59,36 @@ export const createRepresentativeSlice: StateCreator<
           ...updatedRep,
         }
       }
+    })
+  },
+
+  bulkAssignEmploymentType: (representativeIds, employmentType) => {
+    if (!canCurrentUserEditData()) {
+      console.warn(
+        '[Access] bulkAssignEmploymentType bloqueado:',
+        READ_ONLY_ACTION_MESSAGE
+      )
+      return
+    }
+
+    if (representativeIds.length === 0) {
+      return
+    }
+
+    const uniqueIds = [...new Set(representativeIds)]
+
+    set(state => {
+      state.representatives.forEach(representative => {
+        if (uniqueIds.includes(representative.id)) {
+          representative.employmentType = employmentType
+        }
+      })
+    })
+
+    get().addHistoryEvent({
+      category: 'SETTINGS',
+      title: 'Jornadas actualizadas por lote',
+      description: `Se asignó ${employmentType === 'PART_TIME' ? 'Part Time' : 'Full Time'} a ${uniqueIds.length} representante(s).`,
     })
   },
 

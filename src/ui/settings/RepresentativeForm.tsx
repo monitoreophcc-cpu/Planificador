@@ -1,7 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type { RepresentativeRole, ShiftType, Representative } from '@/domain/types'
+import type {
+  EmploymentType,
+  RepresentativeRole,
+  ShiftType,
+  Representative,
+} from '@/domain/types'
 import { RepresentativeDayScheduleSelector } from './RepresentativeDayScheduleSelector'
 import { RepresentativeFormActions } from './RepresentativeFormActions'
 import { RepresentativeFormHeader } from './RepresentativeFormHeader'
@@ -10,7 +15,9 @@ import { RepresentativeRoleField } from './RepresentativeRoleField'
 import { RepresentativeShiftSelector } from './RepresentativeShiftSelector'
 import {
   countRepresentativeDayOffs,
+  getRepresentativeCommercialLabel,
   createRepresentativeDraft,
+  getRepresentativeEmploymentLabel,
   getRepresentativeDraftChanges,
   getRepresentativeMixLabel,
   getRepresentativeRoleLabel,
@@ -41,6 +48,12 @@ export function RepresentativeForm({
   const [mixProfile, setMixProfile] = useState<'' | 'WEEKDAY' | 'WEEKEND'>(
     initialDraft.mixProfile?.type || ''
   )
+  const [employmentType, setEmploymentType] = useState<EmploymentType | ''>(
+    initialDraft.employmentType ?? ''
+  )
+  const [commercialEligible, setCommercialEligible] = useState(
+    initialDraft.commercialEligible === true
+  )
 
   useEffect(() => {
     setName(initialDraft.name)
@@ -48,6 +61,8 @@ export function RepresentativeForm({
     setRole(initialDraft.role)
     setBaseSchedule(initialDraft.baseSchedule)
     setMixProfile(initialDraft.mixProfile?.type || '')
+    setEmploymentType(initialDraft.employmentType ?? '')
+    setCommercialEligible(initialDraft.commercialEligible === true)
   }, [initialDraft])
 
   const currentDraft = useMemo<RepresentativeDraft>(
@@ -57,8 +72,10 @@ export function RepresentativeForm({
       role,
       baseSchedule,
       mixProfile: mixProfile ? { type: mixProfile } : undefined,
+      employmentType: employmentType || undefined,
+      commercialEligible,
     }),
-    [baseSchedule, baseShift, mixProfile, name, role]
+    [baseSchedule, baseShift, commercialEligible, employmentType, mixProfile, name, role]
   )
 
   const pendingChanges = useMemo(
@@ -103,6 +120,8 @@ export function RepresentativeForm({
     setRole(initialDraft.role)
     setBaseSchedule(initialDraft.baseSchedule)
     setMixProfile(initialDraft.mixProfile?.type || '')
+    setEmploymentType(initialDraft.employmentType ?? '')
+    setCommercialEligible(initialDraft.commercialEligible === true)
   }
 
   const handleCancel = () => {
@@ -137,8 +156,10 @@ export function RepresentativeForm({
         {[
           `Turno ${getRepresentativeShiftLabel(baseShift)}`,
           getRepresentativeRoleLabel(role),
+          getRepresentativeEmploymentLabel(employmentType || undefined),
           `${dayOffCount} dia(s) OFF base`,
           getRepresentativeMixLabel({ mixProfile: mixProfile ? { type: mixProfile } : undefined }),
+          getRepresentativeCommercialLabel(commercialEligible),
         ].map(item => (
           <span key={item} style={representativeFormStyles.liveSummaryChip}>
             {item}
@@ -184,7 +205,11 @@ export function RepresentativeForm({
       </div>
 
       <div
-        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '16px',
+        }}
       >
         <RepresentativeRoleField role={role} onChange={setRole} />
         <RepresentativeShiftSelector
@@ -195,6 +220,33 @@ export function RepresentativeForm({
           mixProfile={mixProfile}
           onChange={setMixProfile}
         />
+        <div>
+          <label style={representativeFormStyles.sectionTitle}>Jornada</label>
+          <select
+            value={employmentType}
+            onChange={event =>
+              setEmploymentType(event.target.value as EmploymentType | '')
+            }
+            style={representativeFormStyles.select}
+          >
+            <option value="">Sin definir</option>
+            <option value="FULL_TIME">Full Time</option>
+            <option value="PART_TIME">Part Time</option>
+          </select>
+        </div>
+        <div>
+          <label style={representativeFormStyles.sectionTitle}>
+            Ranking comercial
+          </label>
+          <select
+            value={commercialEligible ? 'YES' : 'NO'}
+            onChange={event => setCommercialEligible(event.target.value === 'YES')}
+            style={representativeFormStyles.select}
+          >
+            <option value="YES">Participa</option>
+            <option value="NO">Solo operativo</option>
+          </select>
+        </div>
       </div>
 
       <div>
