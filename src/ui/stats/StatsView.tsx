@@ -77,7 +77,7 @@ export function StatsView() {
       },
       {
         id: 'callcenter',
-        label: 'Call Center',
+        label: 'Análisis de llamadas',
         description: 'Carga, operación y gráficas del tablero de llamadas',
         icon: PhoneCall,
       },
