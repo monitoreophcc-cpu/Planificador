@@ -62,6 +62,19 @@ function normalizeName(value: string): string {
 }
 
 function isRepresentativeTransaction(transaction: Transaction): boolean {
+  const normalizedPlatformCode = String(transaction.plataformaCode || '')
+    .trim()
+    .toUpperCase()
+  const normalizedPlatform = String(transaction.plataforma || '').trim().toLowerCase()
+
+  if (normalizedPlatformCode && normalizedPlatformCode !== 'CC') {
+    return false
+  }
+
+  if (normalizedPlatform && normalizedPlatform !== 'call center') {
+    return false
+  }
+
   if (transaction.agenteTipo) {
     return transaction.agenteTipo === 'agente'
   }
@@ -70,7 +83,7 @@ function isRepresentativeTransaction(transaction: Transaction): boolean {
     return false
   }
 
-  return !transaction.plataformaCode || transaction.plataformaCode === 'CC'
+  return true
 }
 
 function resolveTransactionShift(time: string): ShiftType | null {
