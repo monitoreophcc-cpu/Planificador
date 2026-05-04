@@ -112,6 +112,9 @@ export interface OperationalCompetitiveRepresentativeRow {
   segment: CommercialGoalSegment
   target: number
   validTransactions: number
+  lastLoadedDayTransactions: number
+  weeklyTransactions: number
+  monthlyTransactions: number
   cancelledTransactions: number
   incidents: number
   errors: number
