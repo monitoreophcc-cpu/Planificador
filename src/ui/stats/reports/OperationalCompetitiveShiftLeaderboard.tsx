@@ -152,6 +152,16 @@ export function OperationalCompetitiveShiftLeaderboard({
   comparisonLabel,
   table,
 }: OperationalCompetitiveShiftLeaderboardProps) {
+  const printHiddenColumns = new Set([
+    'Meta',
+    'Últ. día',
+    'Sem.',
+    'Mes',
+    'Anul.',
+    'Err.',
+    'Aus.',
+    'Tard.',
+  ])
   const shiftTheme = SHIFT_THEME[table.shift]
   const totalRepresentatives = table.segments.reduce(
     (total, segment) => total + segment.summary.representatives,
@@ -182,6 +192,14 @@ export function OperationalCompetitiveShiftLeaderboard({
       }}
     >
       <div
+        className="report-print-only report-print-summary-strip"
+      >
+        <span>Ranking operativo por turno · {table.label}</span>
+        <span>{comparisonEnabled ? `Comparado con ${comparisonLabel}` : 'Sin comparativa'}</span>
+      </div>
+
+      <div
+        className="report-screen-only"
         style={{
           padding: '18px 18px 16px',
           background: `linear-gradient(180deg, ${shiftTheme.accent} 0%, ${shiftTheme.accentDark} 100%)`,
@@ -368,6 +386,7 @@ export function OperationalCompetitiveShiftLeaderboard({
                       ].map(column => (
                         <th
                           key={column}
+                          className={printHiddenColumns.has(column) ? 'report-print-hide' : undefined}
                           style={{
                             padding: '12px 14px',
                             textAlign:
@@ -500,6 +519,7 @@ export function OperationalCompetitiveShiftLeaderboard({
                             </div>
                           </td>
                           <td
+                            className="report-print-hide"
                             style={{
                               padding: '13px 14px',
                               textAlign: 'center',
@@ -561,6 +581,7 @@ export function OperationalCompetitiveShiftLeaderboard({
                             </div>
                           </td>
                           <td
+                            className="report-print-hide"
                             style={{
                               padding: '13px 14px',
                               textAlign: 'center',
@@ -571,6 +592,7 @@ export function OperationalCompetitiveShiftLeaderboard({
                             {row.cancelledTransactions > 0 ? (<span className="report-flag-badge">{row.cancelledTransactions.toLocaleString('en-US')}</span>) : '—'}
                           </td>
                           <td
+                            className="report-print-hide"
                             style={{
                               padding: '13px 14px',
                               textAlign: 'center',
@@ -581,6 +603,7 @@ export function OperationalCompetitiveShiftLeaderboard({
                             {row.errors > 0 ? (<span className="report-flag-badge">{row.errors.toLocaleString('en-US')}</span>) : '—'}
                           </td>
                           <td
+                            className="report-print-hide"
                             style={{
                               padding: '13px 14px',
                               textAlign: 'center',
@@ -591,6 +614,7 @@ export function OperationalCompetitiveShiftLeaderboard({
                             {row.absences > 0 ? (<span className="report-flag-badge">{row.absences.toLocaleString('en-US')}</span>) : '—'}
                           </td>
                           <td
+                            className="report-print-hide"
                             style={{
                               padding: '13px 14px',
                               textAlign: 'center',
