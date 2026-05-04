@@ -265,6 +265,7 @@ function buildTransactionStats(params: {
       )
       .map(link => normalizeName(link.agentName))
   )
+  // Importante para evitar lecturas infladas en WEEK/MONTH: limitar al período activo.
   const periodDateSet = new Set(params.period.loadedDates)
   const periodTransactions = params.transactions.filter(tx => periodDateSet.has(tx.fecha))
   const lastLoadedDate = [...new Set(periodTransactions.map(tx => tx.fecha))]

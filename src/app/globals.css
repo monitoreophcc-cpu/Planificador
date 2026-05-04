@@ -219,6 +219,7 @@
   }
 
   .report-print-hide {
+    /* Mantener: usado por tablas densas para ocultar columnas secundarias solo en impresión */
     display: none !important;
   }
 
