@@ -539,13 +539,13 @@ export function OperationalCompetitiveShiftLeaderboard({
                           >
                             {row.validTransactions.toLocaleString('en-US')}
                           </td>
-                          <td style={{ padding: '13px 14px', textAlign: 'center', fontWeight: 700, color: '#334155' }}>
+                          <td className="report-print-hide" style={{ padding: '13px 14px', textAlign: 'center', fontWeight: 700, color: '#334155' }}>
                             {row.lastLoadedDayTransactions.toLocaleString('en-US')}
                           </td>
-                          <td style={{ padding: '13px 14px', textAlign: 'center', fontWeight: 700, color: '#334155' }}>
+                          <td className="report-print-hide" style={{ padding: '13px 14px', textAlign: 'center', fontWeight: 700, color: '#334155' }}>
                             {row.weeklyTransactions.toLocaleString('en-US')}
                           </td>
-                          <td style={{ padding: '13px 14px', textAlign: 'center', fontWeight: 700, color: '#334155' }}>
+                          <td className="report-print-hide" style={{ padding: '13px 14px', textAlign: 'center', fontWeight: 700, color: '#334155' }}>
                             {row.monthlyTransactions.toLocaleString('en-US')}
                           </td>
                           <td

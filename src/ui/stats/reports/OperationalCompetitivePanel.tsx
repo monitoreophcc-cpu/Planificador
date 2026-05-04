@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { AlertTriangle, ArrowRight, CalendarRange, Download, Link2, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CalendarRange, Download, Link2, Printer, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store'
 import {
@@ -829,6 +829,34 @@ export function OperationalCompetitivePanel({
               >
                 <Download size={14} />
                 {isExportingImage ? 'Generando imagen...' : 'Descargar imagen'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                disabled={!competitiveReport || !hasCurrentTransactionCoverage}
+                style={{
+                  padding: '11px 12px',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  background: 'rgba(255,255,255,0.95)',
+                  color: '#0f172a',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor:
+                    !competitiveReport || !hasCurrentTransactionCoverage
+                      ? 'not-allowed'
+                      : 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: !competitiveReport || !hasCurrentTransactionCoverage ? 0.72 : 1,
+                }}
+              >
+                <Printer size={14} />
+                Imprimir / PDF
               </button>
             </div>
           </div>

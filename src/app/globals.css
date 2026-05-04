@@ -218,6 +218,23 @@
     page-break-before: always;
   }
 
+  .report-print-hide {
+    /* Mantener: usado por tablas densas para ocultar columnas secundarias solo en impresión */
+    display: none !important;
+  }
+
+  .report-print-summary-strip {
+    display: flex !important;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 0 10px;
+    border-bottom: 1px solid #cbd5e1;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
   [data-state='inactive'][role='tabpanel'],
   [hidden] {
     display: none !important;
