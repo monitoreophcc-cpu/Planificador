@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { AlertTriangle, ArrowRight, CalendarRange, Download, Link2, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CalendarRange, Download, Link2, Printer, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { useDashboardStore } from '@/ui/reports/analysis-beta/store/dashboard.store'
 import {
@@ -231,6 +231,7 @@ const legendChipStyle: CSSProperties = {
 type OperationalCompetitivePanelProps = {
   onOpenCallCenter: () => void
 }
+const OMIT_REPRESENTATIVE_LINK = '__OMITIR__'
 
 export function OperationalCompetitivePanel({
   onOpenCallCenter,
@@ -829,6 +830,34 @@ export function OperationalCompetitivePanel({
                 <Download size={14} />
                 {isExportingImage ? 'Generando imagen...' : 'Descargar imagen'}
               </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                disabled={!competitiveReport || !hasCurrentTransactionCoverage}
+                style={{
+                  padding: '11px 12px',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  background: 'rgba(255,255,255,0.95)',
+                  color: '#0f172a',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor:
+                    !competitiveReport || !hasCurrentTransactionCoverage
+                      ? 'not-allowed'
+                      : 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: !competitiveReport || !hasCurrentTransactionCoverage ? 0.72 : 1,
+                }}
+              >
+                <Printer size={14} />
+                Imprimir / PDF
+              </button>
             </div>
           </div>
         </div>
@@ -1278,6 +1307,9 @@ export function OperationalCompetitivePanel({
                 <SelectValue placeholder="Selecciona representante del sistema" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={OMIT_REPRESENTATIVE_LINK}>
+                  Omitir de ranking (supervisor / apoyo)
+                </SelectItem>
                 {activeRepresentatives.map(representative => (
                   <SelectItem key={representative.id} value={representative.name}>
                     {representative.name}
@@ -1320,7 +1352,11 @@ export function OperationalCompetitivePanel({
                 {manualRepresentativeLinks.map(link => (
                   <tr key={link.agentName} className="border-t border-slate-100">
                     <td className="px-3 py-2">{link.agentName}</td>
-                    <td className="px-3 py-2">{link.representativeName}</td>
+                    <td className="px-3 py-2">
+                      {link.representativeName === OMIT_REPRESENTATIVE_LINK
+                        ? 'Omitido del ranking'
+                        : link.representativeName}
+                    </td>
                     <td className="px-3 py-2 text-right">
                       <button
                         type="button"

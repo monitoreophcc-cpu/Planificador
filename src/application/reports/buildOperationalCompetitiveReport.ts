@@ -51,6 +51,7 @@ type BuilderInput = {
   comparisonTransactions?: Transaction[]
   manualRepresentativeLinks?: ManualRepresentativeLink[]
 }
+const OMIT_REPRESENTATIVE_LINK = '__OMITIR__'
 
 function normalizeName(value: string): string {
   return value
@@ -156,6 +157,9 @@ function addDays(date: string, days: number) {
   nextDate.setUTCDate(nextDate.getUTCDate() + days)
   return nextDate.toISOString().slice(0, 10)
 }
+function isSameMonth(date: string, monthRef: string) {
+  return date.slice(0, 7) === monthRef.slice(0, 7)
+}
 
 function incidentTouchesLoadedPeriod(
   incident: Incident,
@@ -228,6 +232,7 @@ function buildTransactionStats(params: {
   representatives: Representative[]
   manualRepresentativeLinks: ManualRepresentativeLink[]
   collectWarnings: boolean
+  period: OperationalCompetitiveResolvedPeriod
 }) {
   const resolveRepresentative = createRepresentativeResolver(
     params.representatives,
@@ -235,7 +240,13 @@ function buildTransactionStats(params: {
   )
   const stats = new Map<
     string,
-    { validTransactions: number; cancelledTransactions: number }
+    {
+      validTransactions: number
+      cancelledTransactions: number
+      lastLoadedDayTransactions: number
+      weeklyTransactions: number
+      monthlyTransactions: number
+    }
   >()
   const pendingAgentNames: Record<ShiftType, Set<string>> = {
     DAY: new Set<string>(),
@@ -245,8 +256,28 @@ function buildTransactionStats(params: {
     DAY: 0,
     NIGHT: 0,
   }
+  const ignoredAgentNames = new Set(
+    params.manualRepresentativeLinks
+      .filter(
+        link =>
+          normalizeName(link.representativeName) ===
+          normalizeName(OMIT_REPRESENTATIVE_LINK)
+      )
+      .map(link => normalizeName(link.agentName))
+  )
+  const periodDateSet = new Set(params.period.loadedDates)
+  const periodTransactions = params.transactions.filter(tx => periodDateSet.has(tx.fecha))
+  const lastLoadedDate = [...new Set(periodTransactions.map(tx => tx.fecha))]
+    .sort()
+    .at(-1) ?? null
+  const weekWindowStart = params.period.kind === 'DAY'
+    ? lastLoadedDate
+      ? addDays(lastLoadedDate, -6)
+      : null
+    : params.period.from
+  const monthReference = params.period.anchorDate
 
-  params.transactions.forEach(transaction => {
+  periodTransactions.forEach(transaction => {
     const shift = resolveTransactionShift(transaction.hora)
 
     if (!shift || !isRepresentativeTransaction(transaction)) {
@@ -256,6 +287,10 @@ function buildTransactionStats(params: {
     const representative = resolveRepresentative(transaction.agente)
 
     if (!representative) {
+      const normalizedAgentName = normalizeName(transaction.agente ?? '')
+      if (normalizedAgentName && ignoredAgentNames.has(normalizedAgentName)) {
+        return
+      }
       if (params.collectWarnings) {
         if (transaction.agente) {
           pendingAgentNames[shift].add(transaction.agente)
@@ -270,10 +305,22 @@ function buildTransactionStats(params: {
     const current = stats.get(key) ?? {
       validTransactions: 0,
       cancelledTransactions: 0,
+      lastLoadedDayTransactions: 0,
+      weeklyTransactions: 0,
+      monthlyTransactions: 0,
     }
 
     if (transaction.estatus === 'N') {
       current.validTransactions += 1
+      if (lastLoadedDate && transaction.fecha === lastLoadedDate) {
+        current.lastLoadedDayTransactions += 1
+      }
+      if (weekWindowStart && transaction.fecha >= weekWindowStart) {
+        current.weeklyTransactions += 1
+      }
+      if (monthReference && isSameMonth(transaction.fecha, monthReference)) {
+        current.monthlyTransactions += 1
+      }
     } else {
       current.cancelledTransactions += 1
     }
@@ -340,12 +387,14 @@ export function buildOperationalCompetitiveReport({
     representatives: eligibleRepresentatives,
     manualRepresentativeLinks,
     collectWarnings: true,
+    period: currentPeriod,
   })
   const comparisonTransactionState = buildTransactionStats({
     transactions: comparisonTransactions,
     representatives: eligibleRepresentatives,
     manualRepresentativeLinks,
     collectWarnings: false,
+    period: comparisonPeriod ?? currentPeriod,
   })
 
   const tables = (['DAY', 'NIGHT'] as const).reduce<
@@ -357,6 +406,9 @@ export function buildOperationalCompetitiveReport({
           currentTransactionState.stats.get(`${representative.id}:${shift}`) ?? {
             validTransactions: 0,
             cancelledTransactions: 0,
+            lastLoadedDayTransactions: 0,
+            weeklyTransactions: 0,
+            monthlyTransactions: 0,
           }
         const comparisonStats =
           comparisonTransactionState.stats.get(`${representative.id}:${shift}`) ?? {
@@ -413,6 +465,9 @@ export function buildOperationalCompetitiveReport({
             segment,
             target,
             validTransactions: currentStats.validTransactions,
+            lastLoadedDayTransactions: currentStats.lastLoadedDayTransactions,
+            weeklyTransactions: currentStats.weeklyTransactions,
+            monthlyTransactions: currentStats.monthlyTransactions,
             cancelledTransactions: currentStats.cancelledTransactions,
             incidents: incidentStats.incidents,
             errors: incidentStats.errors,
