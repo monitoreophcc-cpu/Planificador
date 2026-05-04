@@ -255,12 +255,18 @@ export function OperationalCompetitivePanel({
   )
   const hasHydrated = useDashboardStore(state => state._hasHydrated)
 
+  const transactionAvailableDates = useMemo(() => {
+    return [...new Set(rawTransactions.map(transaction => transaction.fecha))].sort()
+  }, [rawTransactions])
+
   const latestCompleteDate = useMemo(() => {
     return [...availableDates]
       .sort()
       .reverse()
-      .find(date => dailyHistory[date]?.coverage.isComplete) ?? availableDates.at(-1) ?? null
-  }, [availableDates, dailyHistory])
+      .find(date => dailyHistory[date]?.coverage.isComplete) ??
+      transactionAvailableDates.at(-1) ??
+      null
+  }, [availableDates, dailyHistory, transactionAvailableDates])
   const [periodKind, setPeriodKind] = useState<OperationalCompetitivePeriodKind>('DAY')
   const [selectedAnchorDate, setSelectedAnchorDate] = useState<string | null>(null)
   const [comparisonEnabled, setComparisonEnabled] = useState(true)
@@ -284,15 +290,15 @@ export function OperationalCompetitivePanel({
   )
 
   const periodOptions = useMemo(() => {
-    if (availableDates.length === 0) {
+    if (transactionAvailableDates.length === 0) {
       return []
     }
 
     return buildComparisonSelectionOptions({
-      availableDates,
+      availableDates: transactionAvailableDates,
       periodMode: getComparisonMode(periodKind),
     })
-  }, [availableDates, periodKind])
+  }, [periodKind, transactionAvailableDates])
 
   useEffect(() => {
     if (periodOptions.length === 0) {
@@ -336,9 +342,9 @@ export function OperationalCompetitivePanel({
     return buildResolvedPeriod({
       anchorDate: selectedAnchorDate,
       kind: periodKind,
-      availableDates,
+      availableDates: transactionAvailableDates,
     })
-  }, [availableDates, periodKind, selectedAnchorDate])
+  }, [periodKind, selectedAnchorDate, transactionAvailableDates])
 
   const comparisonPeriod = useMemo(() => {
     if (!comparisonEnabled || !selectedAnchorDate) {
@@ -353,9 +359,9 @@ export function OperationalCompetitivePanel({
     return buildResolvedPeriod({
       anchorDate: comparisonAnchorDate,
       kind: periodKind,
-      availableDates,
+      availableDates: transactionAvailableDates,
     })
-  }, [availableDates, comparisonEnabled, periodKind, selectedAnchorDate])
+  }, [comparisonEnabled, periodKind, selectedAnchorDate, transactionAvailableDates])
 
   useEffect(() => {
     let cancelled = false
@@ -562,7 +568,7 @@ export function OperationalCompetitivePanel({
     )
   }
 
-  if (availableDates.length === 0) {
+  if (transactionAvailableDates.length === 0) {
     return (
       <section
         style={{
